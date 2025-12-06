@@ -62,7 +62,7 @@ const latestStores = computed(() =>
 </script>
 
 <template>
-  <main class="bg-gray-50 min-h-screen pb-12">
+  <main class="bg-gray-100 dark:bg-gray-900 min-h-screen pb-12">
     <HeroCarousel />
 
     <TitledContainer title="Sản phẩm nổi bật" linkTo="/products">
@@ -106,7 +106,7 @@ const latestStores = computed(() =>
         </div>
       </TitledContainer>
     </div>
-
+   
     <TitledContainer title="Hệ thống cửa hàng" linkTo="/aboutUs">
       <div v-if="latestStores.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StoreCard v-for="s in latestStores" :key="s.id" :store="s" />

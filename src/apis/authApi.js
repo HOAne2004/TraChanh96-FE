@@ -22,10 +22,8 @@ function extractToken(payload) {
 export async function login(payload) {
   try {
     const r = await api.post(`${AUTH_ENDPOINT}/login`, payload)
-    // r.data might be { token: '...' } or { data: { token: '...' } } or other
     const token = extractToken(r.data)
     if (!token) {
-      // maybe server returned structure with token at r.data.data or r.data.token
       throw new Error('Không nhận được token từ server.')
     }
     return token
@@ -85,14 +83,12 @@ export async function updateProfile(data) {
  */
 export async function fetchAllUsersForAdmin(params = {}) {
   try {
-    // Gọi API để lấy danh sách users, server sẽ kiểm tra quyền Admin
     const response = await api.get(`${ADMIN_ENDPOINT}/users`, { params })
 
     console.log(`API: Tải ${response.data.length} người dùng cho Admin thành công.`)
-    // Trả về cả headers để Store có thể lấy X-Total-Count cho phân trang (Nếu Backend hỗ trợ)
     return {
       data: response.data,
-      totalCount: response.headers['x-total-count'], // Giả định server trả về header này
+      totalCount: response.headers['x-total-count'],
     }
   } catch (error) {
     console.error('❌ Lỗi tải danh sách người dùng Admin:', error.response?.data || error.message)
@@ -109,7 +105,6 @@ export async function fetchAllUsersForAdmin(params = {}) {
  */
 export async function updateUserRoleAndStatus(userId, updateDto) {
   try {
-    // Sử dụng PATCH để chỉ cập nhật các trường được chỉ định
     const response = await api.patch(`${ADMIN_ENDPOINT}/users/${userId}`, updateDto)
     return response.data
   } catch (err) {
@@ -118,13 +113,18 @@ export async function updateUserRoleAndStatus(userId, updateDto) {
   }
 }
 
-export async function fetchUsersForAdmin() {
-    try {
-      // Giả định endpoint backend là /api/users
-      const { data } = await api.get('/users')
-      return data
-    } catch (err) {
-      console.error('Lỗi fetch users:', err)
-      throw err
-    }
+/**
+ * ADMIN: Xóa người dùng
+ * Endpoint giả định: DELETE /api/users/{userId}
+ * @param {number|string} userId - ID hoặc PublicId của người dùng cần xóa
+ * @returns {Promise<object>} Người dùng đã được xóa
+ */
+export async function deleteUser(userId) {
+  try {
+    const response = await api.delete(`${ADMIN_ENDPOINT}/users/${userId}`)
+    return response.data
+  } catch (err) {
+    console.error(`❌ Lỗi xóa người dùng #${userId}:`, err.response?.data || err.message)
+    throw new Error(err.response?.data?.message || 'Không thể xóa người dùng.')
   }
+}

@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, computed } from 'vue'
+import { defineProps, defineEmits } from 'vue'
 import StatusBadge from './StatusBadge.vue' // Giả định component này đã được tạo
 
 // Khai báo các sự kiện (events) mà component này sẽ phát ra
@@ -135,6 +135,7 @@ const getUniqueKey = (item, index) => {
             <button
               v-for="action in actions"
               :key="action"
+              type="button"
               @click="handleAction(action, item)"
               :class="[
                 'ml-3 inline-flex items-center text-xs font-medium rounded-full p-2',

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue' // Thêm computed
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useAppStore } from '@/stores/appStore'
 import { storeToRefs } from 'pinia'
 
@@ -14,20 +14,34 @@ const { carousel: slides } = storeToRefs(appStore)
 
 // Tạo một computed để quyết định hiển thị slides thật hay ảnh mặc định
 const displaySlides = computed(() => {
+  const baseUrl = 'https://trachanh96-be-production.up.railway.app'
+
   if (slides.value && slides.value.length > 0) {
-    return slides.value
+    return slides.value.map(s => {
+      // ⭐️ FIX: Kiểm tra s.image TRƯỚC khi gọi bất kỳ method nào
+      const imageUrl = s.image;
+
+      return {
+        ...s,
+        image: imageUrl
+               && imageUrl.startsWith('http')
+               ? imageUrl
+               : `${baseUrl}${imageUrl || ''}` // Nếu null, dùng link base + rỗng
+      };
+    });
   }
-  // Nếu không có dữ liệu, trả về mảng chứa 1 phần tử ảnh mặc định
+
+  // Nếu không có dữ liệu, trả về mảng chứa 2 phần tử ảnh mặc định
   return [
     {
     id: 'default',
     image: defaultHero, // Sử dụng ảnh import
-    title: 'Chào mừng đến với Trà Chanh 96' // Title mặc định
+    title: 'Chào mừng đến với Trà Chanh 96'
   },
   {
     id: 'default2',
-    image: defaultHero2, // Sử dụng ảnh import
-    title: 'Tận hưởng hương trà' // Title mặc định
+    image: defaultHero2,
+    title: 'Tận hưởng hương trà'
   },
 
 ]
@@ -61,6 +75,8 @@ onUnmounted(() =>{
         :src="s.image"
         alt="Banner"
         class="w-full h-full object-cover"
+        @error="(e) => { e.target.src = defaultHero }"
+        loading="lazy"
       />
 
       <div

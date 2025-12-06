@@ -1,11 +1,10 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useProductStore } from '@/stores/productStore'
 
 const props = defineProps({
   isOpen: Boolean,
   type: String, // 'size', 'sugar', 'ice'
-  // ⭐️ THÊM PROP NÀY: Nhận dữ liệu cần sửa (nếu có)
   itemData: {
     type: Object,
     default: null
@@ -15,15 +14,16 @@ const props = defineProps({
 const emit = defineEmits(['close', 'created', 'updated'])
 const productStore = useProductStore()
 
-// State
+// Refs cho input để xử lý focus
+const labelInput = ref(null)
+const valueInput = ref(null)
+
 const isLoading = ref(false)
 const label = ref('')
 const valueData = ref(0)
 
-// ⭐️ CHECK MODE: Có dữ liệu => Đang sửa
 const isEditMode = computed(() => !!props.itemData)
 
-// Tiêu đề động
 const title = computed(() => {
   const action = isEditMode.value ? 'Cập nhật' : 'Thêm mới'
   if (props.type === 'size') return `${action} Kích cỡ (Size)`
@@ -36,68 +36,68 @@ const valueLabel = computed(() => {
   return 'Giá trị (%)'
 })
 
-// ⭐️ WATCHER QUAN TRỌNG: Đồng bộ dữ liệu khi mở modal
-watch(() => props.itemData, (newItem) => {
-  if (newItem) {
-    // --- CHẾ ĐỘ SỬA ---
-    label.value = newItem.label
-    // Size dùng 'priceModifier', Sugar/Ice dùng 'value'
-    if (props.type === 'size') {
-        valueData.value = newItem.priceModifier
+// Đồng bộ dữ liệu khi mở modal
+watch(() => props.isOpen, (newVal) => {
+  if (newVal) {
+    // Reset hoặc Fill data
+    if (props.itemData) {
+        label.value = props.itemData.label
+        valueData.value = props.type === 'size' ? props.itemData.priceModifier : props.itemData.value
     } else {
-        valueData.value = newItem.value
+        label.value = ''
+        valueData.value = 0
     }
-  } else {
-    // --- CHẾ ĐỘ TẠO MỚI (Reset form) ---
-    label.value = ''
-    valueData.value = 0
+    // Focus vào ô đầu tiên khi mở modal
+    nextTick(() => labelInput.value?.focus())
   }
-}, { immediate: true })
+})
+
+// ⭐️ XỬ LÝ ENTER: Chuyển focus xuống ô dưới
+const focusNextInput = () => {
+  valueInput.value?.focus()
+}
 
 const handleSubmit = async () => {
   isLoading.value = true
   try {
-    const numberValue = Number(valueData.value) || 0
-    let result = null
+    const numberValue = Number(valueData.value)
+    // Validate cơ bản
+    if (props.type !== 'size' && (numberValue < 0 || numberValue > 100)) {
+        alert("Giá trị % phải từ 0 đến 100")
+        isLoading.value = false
+        return
+    }
 
-    // 1. LOGIC CHO SIZE
+    let result = null
+    const id = props.itemData?.id // Lấy ID nếu đang sửa
+
+    // 1. LOGIC SIZE
     if (props.type === 'size') {
       const payload = { label: label.value, priceModifier: numberValue }
-      if (isEditMode.value) {
-        result = await productStore.updateSizeAction(props.itemData.id, payload)
-      } else {
-        result = await productStore.createSizeAction(payload)
-      }
+      if (isEditMode.value) result = await productStore.updateSizeAction(id, payload)
+      else result = await productStore.createSizeAction(payload)
     }
-    // 2. LOGIC CHO SUGAR
+    // 2. LOGIC SUGAR
     else if (props.type === 'sugar') {
       const payload = { label: label.value, value: numberValue }
-      if (isEditMode.value) {
-        result = await productStore.updateSugarLevelAction(props.itemData.id, payload)
-      } else {
-        result = await productStore.createSugarLevelAction(payload)
-      }
+      if (isEditMode.value) result = await productStore.updateSugarLevelAction(id, payload)
+      else result = await productStore.createSugarLevelAction(payload)
     }
-    // 3. LOGIC CHO ICE
+    // 3. LOGIC ICE
     else {
       const payload = { label: label.value, value: numberValue }
-      if (isEditMode.value) {
-        result = await productStore.updateIceLevelAction(props.itemData.id, payload)
-      } else {
-        result = await productStore.createIceLevelAction(payload)
-      }
+      if (isEditMode.value) result = await productStore.updateIceLevelAction(id, payload)
+      else result = await productStore.createIceLevelAction(payload)
     }
 
-    // Emit sự kiện tương ứng
-    if (isEditMode.value) {
-        emit('updated', { type: props.type, data: result })
-    } else {
-        emit('created', { type: props.type, data: result })
-    }
+    // Emit event reload
+    if (isEditMode.value) emit('updated', { type: props.type, data: result })
+    else emit('created', { type: props.type, data: result })
 
     emit('close')
   } catch (err) {
     console.error(err)
+    // Lỗi đã được Store hiển thị Toast
   } finally {
     isLoading.value = false
   }
@@ -113,16 +113,19 @@ const handleSubmit = async () => {
         <div>
           <label class="block text-sm font-medium mb-1 dark:text-gray-300">Tên hiển thị</label>
           <input
+            ref="labelInput"
             v-model="label"
             required
             placeholder="VD: Lớn, 50%..."
             class="w-full border p-2 rounded focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+            @keydown.enter.prevent="focusNextInput"
           />
         </div>
 
         <div>
           <label class="block text-sm font-medium mb-1 dark:text-gray-300">{{ valueLabel }}</label>
           <input
+            ref="valueInput"
             v-model="valueData"
             type="number"
             required
@@ -144,7 +147,7 @@ const handleSubmit = async () => {
              class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center"
            >
              <span v-if="isLoading" class="mr-2">...</span>
-             {{ isEditMode ? 'Lưu thay đổi' : 'Tạo mới' }}
+             {{ isEditMode ? 'Lưu' : 'Tạo mới' }}
            </button>
         </div>
       </form>

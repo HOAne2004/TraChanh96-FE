@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProductStore } from '@/stores/productStore'
 import { formatPrice } from '@/utils/formatters'
+import { formatDate } from '@/utils/formatters'
 
 import AdminDataContainer from '@/components/admin/ui/AdminDataContainer.vue'
 import AdminDataTable from '@/components/admin/ui/AdminDataTable.vue'

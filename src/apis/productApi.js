@@ -67,10 +67,6 @@ const productApi = {
   },
 
   // --- ADMIN CRUD ACTIONS ---
-  // ⭐️ TIN TỐT: Các hàm CRUD này (create, update, delete)
-  // đã hoàn toàn tương thích với ProductsController của C#
-  // (POST /products, PUT /products/{id}, DELETE /products/{id})
-  // => Không cần thay đổi!
 
   /**
    * TẠO: Tạo sản phẩm mới (POST /products)

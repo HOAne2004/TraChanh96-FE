@@ -1,6 +1,6 @@
 import api from './index'
 
-const NEWS_ENDPOINT = '/news'
+const NEWS_ENDPOINT = 'api/news'
 
 const handleError = (error, name) => {
   console.error(`❌ Lỗi khi fetch ${name}:`, error.message)
@@ -10,7 +10,7 @@ const handleError = (error, name) => {
 const newsApi = {
   async fetchNews() {
     try {
-      const { data } = await api.get('/news')
+      const { data } = await api.get(NEWS_ENDPOINT)
       return data
     } catch (err) {
       handleError(err, 'news')

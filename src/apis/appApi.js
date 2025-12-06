@@ -9,23 +9,24 @@ const handleError = (error, name) => {
 const appApi = {
   async fetchFooterInfo() {
     try {
-      const { data } = await api.get('/footerInfo')
+      const { data } = await api.get('api/footerInfo')
       return data
     } catch (err) {
       handleError(err, 'footerInfo')
     }
   },
-  async fetchStorePolicies() {
+  async fetchPolicy() {
     try {
-      const { data } = await api.get('/storePolicies')
+      const { data } = await api.get('api/policy')
       return data
     } catch (err) {
-      handleError(err, 'storePolicies')
+      handleError(err, 'policy')
     }
   },
+
   async fetchCarousel() {
     try {
-      const { data } = await api.get('/carousel')
+      const { data } = await api.get('api/carousel')
       return data
     } catch (error) {
       console.error('❌ Lỗi khi fetch carousel:', error.message)
@@ -34,7 +35,7 @@ const appApi = {
   },
   async getAppConfig() {
     try {
-      const { data } = await api.get('/appConfig')
+      const { data } = await api.get('api/appConfig')
       return data
     } catch (error) {
       console.error('❌ Lỗi khi fetch appConfig:', error.message)

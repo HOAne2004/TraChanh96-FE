@@ -194,21 +194,6 @@ const toggleItem = (array, itemId) => {
     IMAGE UPLOAD
 ----------------------------------------- */
 
-const fullImageUrl = computed(() => {
-  const url = formData.imageUrl
-  if (!url) return ''
-
-  // 1. Nếu url bắt đầu bằng http (ảnh mạng hoặc blob) -> hiển thị luôn
-  if (url.startsWith('http') || url.startsWith('blob:')) return url
-
-  // 2. ⭐️ CHỐT CỨNG DOMAIN BACKEND VÀO ĐÂY
-  // Vì backend bạn chạy https://localhost:7004, hãy điền chính xác vào.
-  // Đừng dùng biến môi trường vội cho đỡ rối.
-  const backendUrl = 'https://localhost:7004'
-
-  // Kết quả sẽ là: https://localhost:7004/uploads/ten-anh.jpg
-  return `${backendUrl}${url}`
-})
 const fileInputRef = ref(null)
 
 // ⭐️ ACTION: Hàm kích hoạt input (Dùng cho nút)
@@ -219,23 +204,43 @@ const triggerFileInput = () => {
   }
 }
 
+// Thêm một ref riêng để lưu ảnh preview
+const previewImage = ref(null)
+
+// Cập nhật logic hiển thị ảnh
+const displayImage = computed(() => {
+  // 1. Nếu đang có ảnh preview (vừa chọn/chụp) -> Ưu tiên hiển thị
+  if (previewImage.value) return previewImage.value
+
+  // 2. Nếu không, lấy ảnh từ dữ liệu form (ảnh cũ từ server)
+  const url = formData.imageUrl
+  if (!url) return ''
+
+  if (url.startsWith('http')) return url
+  return `https://trachanh96-be-production.up.railway.app${url}`
+})
+
+// Hàm xử lý khi chọn file
 const handleFileUpload = async (e) => {
   const file = e.target.files[0]
   if (!file) return
 
+  // 1. Tạo link ảo để hiện ngay lập tức (User thấy nhanh)
+  previewImage.value = URL.createObjectURL(file)
+
   isUploading.value = true
   try {
+    // 2. Upload ngầm lên server
     const publicUrl = await uploadApi.uploadImage(file)
-    formData.imageUrl = publicUrl
+    formData.imageUrl = publicUrl // Lưu đường dẫn thật vào form để gửi đi
+
     productStore.modalStore?.showToast('Tải ảnh thành công!', 'success')
   } catch (err) {
     productStore.modalStore?.showToast('Tải ảnh thất bại.', 'error')
+    previewImage.value = null // Reset nếu lỗi
   } finally {
     isUploading.value = false
-    // Reset giá trị file input sau khi hoàn thành
-    if (fileInputRef.value) {
-      fileInputRef.value.value = null
-    }
+    if (fileInputRef.value) fileInputRef.value.value = null
   }
 }
 </script>
@@ -333,7 +338,7 @@ const handleFileUpload = async (e) => {
                 >
                   <img
                     v-if="formData.imageUrl"
-                    :src="fullImageUrl"
+                    :src="displayImage"
                     class="w-full h-full object-cover"
                   />
                   <span v-else class="text-gray-400">Tải ảnh lên</span>
@@ -467,12 +472,12 @@ const handleFileUpload = async (e) => {
         </div>
       </form>
     </div>
-    <OptionsFormModal
-      v-if="isOptionModalOpen"
-      :is-open="isOptionModalOpen"
-      :type="currentOptionType"
-      @close="isOptionModalOpen = false"
-      @created="handleOptionCreated"
-    />
   </div>
+  <OptionsFormModal
+    v-if="isOptionModalOpen"
+    :is-open="isOptionModalOpen"
+    :type="currentOptionType"
+    @close="isOptionModalOpen = false"
+    @created="handleOptionCreated"
+  />
 </template>

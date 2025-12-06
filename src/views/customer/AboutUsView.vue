@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useStoreStore } from '@/stores/storeStore'
 import { useAppStore } from '@/stores/appStore'
 import { storeToRefs } from 'pinia'
@@ -7,49 +7,48 @@ import { storeToRefs } from 'pinia'
 // Components
 import StoreCard from '@/components/customer/card/StoreCard.vue'
 import Button from '@/components/common/Button.vue'
+import CustomerEmptyState from '@/components/common/CustomerEmptyState.vue' // Import Empty State
 
 const storeStore = useStoreStore()
 const appStore = useAppStore()
 
-// Lấy dữ liệu cần thiết
-const { stores } = storeToRefs(storeStore)
+// Lấy dữ liệu và loading state
+const { stores, loading: storeLoading } = storeToRefs(storeStore)
 const { appConfig } = storeToRefs(appStore)
 
+const pageLoading = ref(true)
+
 onMounted(async () => {
-  // Tải tất cả dữ liệu cần thiết
-  await Promise.all([storeStore.fetchStores(), appStore.fetchAppConfig()])
+  try {
+    // Dùng Promise.all để tải song song
+    await Promise.all([storeStore.fetchStores(), appStore.fetchAppConfig()])
+  } catch (error) {
+    console.error("Lỗi tải trang About Us:", error)
+  } finally {
+    pageLoading.value = false
+  }
 })
-//Check dữ liệu gọi từ API
-// watch(
-//   [appConfig],
-//   () => {
-//     console.log('AppConfig:', appConfig.value)
-//   },
-//   { deep: true },
-// )
 
-// ----- LOGIC SẮP XẾP DỰA TRÊN THỜI GIAN KHAI TRƯƠNG (openDate) -----
-
-// 1. Lịch sử hình thành (Gom nhóm theo năm)
+// 1. Lịch sử hình thành
 const yearlyHistory = computed(() => {
-  if (!stores.value.length) return []
+  if (!stores.value || !stores.value.length) return []
 
-  // Tạo bản đồ Map: { "2019": [store1, store2], "2020": [store3], ... }
   const groups = stores.value.reduce((acc, store) => {
-    // Lấy năm từ openDate (ví dụ: "2025-09-25" -> 2025)
+    // Kiểm tra openDate hợp lệ trước khi dùng
+    if (!store.openDate) return acc;
+
     const year = new Date(store.openDate).getFullYear()
     if (!acc[year]) acc[year] = []
     acc[year].push(store)
     return acc
   }, {})
 
-  // Chuyển đổi thành mảng để hiển thị (Sắp xếp từ mới nhất)
+  // Sắp xếp năm giảm dần (Mới nhất lên đầu)
   const sortedYears = Object.keys(groups).sort((a, b) => b - a)
 
   return sortedYears.map((year) => ({
     year: year,
     count: groups[year].length,
-    // Lấy tên các cửa hàng, giới hạn 2-3 tên
     stores: groups[year]
       .slice(0, 3)
       .map((s) => s.name)
@@ -57,135 +56,162 @@ const yearlyHistory = computed(() => {
   }))
 })
 
-// 2. Cột mốc quan trọng (3 cửa hàng đầu tiên tại 3 khu vực/mốc thời gian quan trọng)
+// 2. Cột mốc quan trọng (Sắp xếp theo thời gian tăng dần để thấy quá trình phát triển)
 const sortedStores = computed(() => {
-  return [...stores.value].sort((a, b) => new Date(b.openDate) - new Date(a.openDate))
+  if (!stores.value) return []
+  return [...stores.value].sort((a, b) => new Date(a.openDate) - new Date(b.openDate))
 })
+
 const milestones = computed(() => {
-  if (!stores.value.length) return [] // 🚨 KHẮC PHỤC: Sử dụng sortedStores.value
-  // Giả lập 3 cửa hàng mới nhất làm cột mốc
+  if (!sortedStores.value.length) return []
+  // Lấy 3 cửa hàng ĐẦU TIÊN (cũ nhất) làm cột mốc khởi nghiệp
   return sortedStores.value.slice(0, 3).map((store) => ({
     date: new Date(store.openDate).toLocaleDateString('vi-VN'),
-    title: `Khai trương cửa hàng: ${store.name}`,
+    title: `Khai trương chi nhánh: ${store.name}`,
     address: store.address,
   }))
 })
 
-// 3. Hệ thống cửa hàng
-// 🚨 BƯỚC MỚI: State quản lý số lượng cửa hàng hiển thị
-const INITIAL_COUNT = 3 // Số bài hiển thị ban đầu
-const itemsToShow = ref(INITIAL_COUNT) // State hiện tại
-const visibleStore = computed(() => sortedStores.value.slice(0, itemsToShow.value))
-// ----- LOGIC ĐIỀU KHIỂN XEM THÊM -----
-const totalAvailable = computed(() => stores.value.length)
+// 3. Hệ thống cửa hàng (Pagination)
+const INITIAL_COUNT = 3
+const itemsToShow = ref(INITIAL_COUNT)
 
+// Danh sách hiển thị (Sắp xếp MỚI NHẤT lên đầu cho khách dễ tìm)
+const storesForDisplay = computed(() => {
+    if (!stores.value) return []
+    return [...stores.value].sort((a, b) => new Date(b.openDate) - new Date(a.openDate))
+})
+
+const visibleStore = computed(() => storesForDisplay.value.slice(0, itemsToShow.value))
+const totalAvailable = computed(() => storesForDisplay.value.length)
 const hasMore = computed(() => visibleStore.value.length < totalAvailable.value)
 
 const loadMore = () => {
-  const remainingCount = totalAvailable.value - visibleStore.value.length
-  const itemsToAdd = Math.min(3, remainingCount) // Số cửa hàng hiển thị thêm
-  itemsToShow.value += itemsToAdd
+  itemsToShow.value += 3
 }
 
-// Hành động Ẩn bớt: Quay về số lượng ban đầu
 const showLess = () => {
   itemsToShow.value = INITIAL_COUNT
-  // Cuộn lên đầu trang (UX tốt)
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  // Cuộn nhẹ về tiêu đề danh sách
+  const el = document.getElementById('system-title')
+  if(el) el.scrollIntoView({ behavior: 'smooth' })
 }
 </script>
 
 <template>
-  <main class="py-8">
-    <section class="max-w-4xl mx-auto mb-10">
-      <h1 class="text-3xl font-bold text-center mb-6">Câu chuyện thương hiệu</h1>
-      <div class="h-64 bg-gray-200 dark:bg-gray-700 rounded-xl overflow-hidden mb-6">
+  <main class="py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
+
+    <section class="max-w-4xl mx-auto mb-12 px-4">
+      <h1 class="text-3xl md:text-4xl font-bold text-center mb-6 text-gray-800 dark:text-white">Câu chuyện thương hiệu</h1>
+
+      <div class="h-64 md:h-80 bg-gray-200 dark:bg-gray-700 rounded-2xl overflow-hidden mb-6 shadow-lg">
         <img
-          src="https://picsum.photos/1200/500?random=1"
+          :src="appConfig?.logoUrl || 'https://picsum.photos/1200/500?random=1'"
           alt="Câu chuyện thương hiệu"
-          class="w-full h-full object-cover"
+          class="w-full h-full object-cover transition-transform hover:scale-105 duration-700"
         />
       </div>
-      <p class="text-gray-700 dark:text-gray-300 leading-relaxed text-center">
-        {{ appConfig?.brandStory || 'Chúng tôi cam kết mang đến những trải nghiệm tốt nhất...' }}
-      </p>
+
+      <div class="prose dark:prose-invert max-w-none text-center">
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
+            {{ appConfig?.slogan || 'Hành trình mang hương vị trà chanh phố cổ đến với mọi miền tổ quốc.' }}
+          </p>
+      </div>
     </section>
 
     <section
-      class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-xl mb-10"
+      v-if="yearlyHistory.length > 0"
+      class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 p-6 md:p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-xl mb-12 mx-4"
     >
       <div class="md:col-span-1">
-        <h2 class="text-xl font-bold mb-4 border-b pb-2 text-green-600 dark:text-green-400">
+        <h2 class="text-xl font-bold mb-6 border-b pb-3 text-green-600 dark:text-green-400">
           Lịch sử hình thành
         </h2>
-        <div class="space-y-6">
-          <div v-for="(item, index) in yearlyHistory" :key="item.year" class="relative pl-6">
-            <div class="absolute left-0 top-0 h-full w-0.5 bg-green-200 dark:bg-green-700"></div>
-            <div
-              class="absolute left-0 top-0 w-3 h-3 bg-green-600 rounded-full transform -translate-x-1/2"
-            ></div>
-            <p class="text-lg font-bold">{{ item.year }}</p>
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-              Khai trương thêm
-              <span class="font-semibold text-green-700 dark:text-green-400">{{ item.count }}</span>
-              cửa hàng mới.
+        <div class="space-y-8 relative pl-2">
+           <div class="absolute left-[11px] top-2 bottom-2 w-0.5 bg-green-200 dark:bg-green-700"></div>
+
+           <div v-for="item in yearlyHistory" :key="item.year" class="relative pl-8 group">
+             <div class="absolute left-0 top-1.5 w-6 h-6 bg-white dark:bg-gray-800 border-4 border-green-500 rounded-full z-10 group-hover:scale-110 transition-transform"></div>
+
+            <p class="text-xl font-bold text-gray-800 dark:text-white">{{ item.year }}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Mở rộng thêm <span class="font-bold text-green-600">{{ item.count }}</span> chi nhánh.
             </p>
-            <p class="text-xs italic text-gray-500">Ví dụ: {{ item.stores }}...</p>
+            <p class="text-xs text-gray-400 italic mt-1 truncate">VD: {{ item.stores }}...</p>
           </div>
         </div>
       </div>
 
       <div class="md:col-span-2">
-        <h2 class="text-xl font-bold mb-4 border-b pb-2 text-green-600 dark:text-green-400">
-          Cột mốc quan trọng
+        <h2 class="text-xl font-bold mb-6 border-b pb-3 text-green-600 dark:text-green-400">
+          Cột mốc đáng nhớ
         </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div
             v-for="(item, index) in milestones"
             :key="index"
-            class="p-3 bg-green-50 dark:bg-gray-800 rounded-lg shadow-sm"
+            class="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-800 hover:shadow-md transition-all"
           >
-            <p class="text-lg font-bold text-green-700 dark:text-green-500">{{ item.date }}</p>
-            <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">{{ item.title }}</p>
-          </div>
-          <div v-if="!milestones.length" class="col-span-3 text-center text-gray-400 italic">
-            Chưa có dữ liệu cột mốc.
+            <div class="flex items-center gap-2 mb-2">
+                <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">{{ item.date }}</span>
+            </div>
+            <p class="font-bold text-gray-800 dark:text-white mb-1">{{ item.title }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                📍 {{ item.address }}
+            </p>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="max-w-6xl mx-auto text-center my-8">
-      <h2 class="text-4xl font-extrabold text-green-700 dark:text-green-400">
-        {{ appConfig?.chainCount || '30' }}+ Chuỗi cửa hàng trên toàn quốc
-      </h2>
-      <p class="text-gray-500 mt-2">{{ appConfig?.chainCountNote || 'Liên tục mở rộng...' }}</p>
+    <section class="max-w-6xl mx-auto text-center my-16 px-4">
+       <div class="inline-block p-8 bg-gradient-to-br from-green-600 to-teal-700 rounded-3xl shadow-lg text-white transform hover:-translate-y-1 transition-transform duration-300">
+          <h2 class="text-5xl font-extrabold mb-2 drop-shadow-md">
+            {{ totalAvailable || '0' }}+
+          </h2>
+          <p class="text-xl font-medium opacity-90">Chi nhánh trên toàn quốc</p>
+          <p class="text-sm mt-2 opacity-75">Và đang tiếp tục mở rộng...</p>
+       </div>
     </section>
 
-    <!-- Thử nghiệm -->
-    <section class="mt-12">
-      <h2
-        class="text-2xl font-bold mb-6 border-b pb-2 text-green-700 dark:text-green-400 dark:border-gray-700"
-      >
+    <section id="system-title" class="max-w-6xl mx-auto px-4 pb-12">
+      <h2 class="text-2xl font-bold mb-8 border-l-4 border-green-600 pl-4 text-gray-800 dark:text-white">
         Hệ thống cửa hàng
       </h2>
 
-      <div v-if="visibleStore?.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <StoreCard v-for="store in visibleStore" :key="store.id" :store="store" />
+      <div v-if="pageLoading || storeLoading" class="flex justify-center py-12">
+         <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
       </div>
 
-      <div v-else class="text-center py-10 text-gray-500">Đang tải dữ liệu...</div>
-    </section>
+      <div v-else-if="visibleStore.length > 0">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <StoreCard v-for="store in visibleStore" :key="store.id" :store="store" />
+        </div>
 
-    <div v-if="totalAvailable > INITIAL_COUNT" class="mt-10 flex justify-center space-x-4">
-      <Button
-        v-if="itemsToShow > INITIAL_COUNT"
-        @click="showLess"
-        label="Ẩn bớt"
-        variant="secondary"
+        <div v-if="totalAvailable > INITIAL_COUNT" class="mt-10 flex justify-center space-x-4">
+          <Button
+            v-if="itemsToShow > INITIAL_COUNT"
+            @click="showLess"
+            label="Thu gọn"
+            variant="secondary"
+            :rounded="true"
+          />
+          <Button
+            v-if="hasMore"
+            @click="loadMore"
+            label="Xem thêm chi nhánh"
+            variant="primary"
+            :rounded="true"
+          />
+        </div>
+      </div>
+
+      <CustomerEmptyState
+        v-else
+        type="search"
+        title="Đang cập nhật hệ thống"
+        message="Danh sách cửa hàng đang được chúng tôi cập nhật. Vui lòng quay lại sau."
       />
-
-      <Button v-if="hasMore" @click="loadMore" label="Xem thêm" variant="primary" />
-    </div>
+    </section>
   </main>
 </template>

@@ -1,6 +1,6 @@
 import api from './index'
 
-const STORES_ENDPOINT = '/stores'
+const STORES_ENDPOINT = 'api/stores'
 
 const handleError = (error, name) => {
   console.error(`❌ Lỗi khi fetch ${name}:`, error.message)
@@ -11,7 +11,7 @@ const storeApi = {
   // READ
   async fetchStores() {
     try {
-      const { data } = await api.get('/stores')
+      const { data } = await api.get(STORES_ENDPOINT)
       return data
     } catch (err) {
       handleError(err, 'stores')

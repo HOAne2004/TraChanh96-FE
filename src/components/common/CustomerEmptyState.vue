@@ -7,7 +7,7 @@ import Button from '@/components/common/Button.vue'
 import imgCart from '@/assets/images/empty-states/empty-cart.png'
 import imgSearch from '@/assets/images/empty-states/empty-search.png'
 import imgOrder from '@/assets/images/empty-states/empty-order.png'
-import imgDefault from '@/assets/images/empty-states/empty-search.png'
+import imgDefault from '@/assets/images/others/error-404.png'
 
 const props = defineProps({
   // 'cart', 'search', 'order', 'default'

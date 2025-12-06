@@ -90,7 +90,7 @@ const displayedSections = computed(() => {
 
           <div v-else class="py-10">
             <CustomerEmptyState
-              type="search"
+              type="default"
               title="Không tìm thấy sản phẩm nào"
               :message="
                 selectedCategories.length > 0

@@ -60,18 +60,19 @@ const emitUpdate = () => {
       <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2">
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5 text-green-600"
           fill="none"
           viewBox="0 0 24 24"
+          stroke-width="1.5"
           stroke="currentColor"
+          class="size-6"
         >
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
-            stroke-width="2"
-            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+            d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75"
           />
         </svg>
+
         {{ title }}
       </h3>
 
@@ -86,8 +87,8 @@ const emitUpdate = () => {
 
     <!-- Content -->
     <div class="p-5">
-      <div v-if="categories.length === 0" class="text-center text-gray-400 text-sm py-4">
-        Đang tải danh mục...
+      <div v-if="categories.length === 0" class="text-center text-red-500 text-sm py-4">
+        Hiện tại chưa có danh mục sản phẩm
       </div>
 
       <div v-else class="flex flex-wrap gap-2">

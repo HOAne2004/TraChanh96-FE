@@ -1,6 +1,6 @@
 import api from './index'
 
-const SHOP_TABLE_ENDPOINT = '/ShopTable'
+const SHOP_TABLE_ENDPOINT = 'api/shoptable'
 
 const handleError = (error, actionName) => {
   console.error(`❌ Lỗi khi ${actionName}:`, error.message)

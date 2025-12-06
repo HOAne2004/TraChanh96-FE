@@ -1,6 +1,6 @@
 import api from './index'
 
-const RESERVATION_ENDPOINT = '/Reservation'
+const RESERVATION_ENDPOINT = 'api/reservation'
 
 const handleError = (error, actionName) => {
   console.error(`❌ Lỗi khi ${actionName}:`, error.message)

@@ -109,9 +109,9 @@ onUnmounted(() => {
   <div
     class="relative container mx-auto my-8 p-4 bg-slate-50 pt-16 rounded-3xl shadow dark:bg-gray-800 dark:shadow-slate-300 transition-colors duration-300"
   >
-    <div class="absolute -top-6 left-1/2 -translate-x-1/2 mb-6 flex justify-center z-10">
+    <div class="absolute -top-6 left-1/2 -translate-x-1/2 mb-6 flex justify-center">
       <span
-        class="px-10 py-3 rounded-full text-lg lg:text-2xl font-bold bg-gray-100 dark:bg-gray-900 text-primary_hover dark:text-white whitespace-nowrap shadow-sm border border-gray-200 dark:border-gray-700"
+        class="px-10 py-3 rounded-full text-lg lg:text-2xl font-bold bg-gray-100 dark:bg-gray-900 text-primary_hover dark:text-white whitespace-nowrap"
       >
         {{ title }}
       </span>
