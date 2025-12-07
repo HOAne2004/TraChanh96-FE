@@ -34,10 +34,17 @@ const yearlyHistory = computed(() => {
   if (!stores.value || !stores.value.length) return []
 
   const groups = stores.value.reduce((acc, store) => {
-    // Kiểm tra createdAt hợp lệ trước khi dùng
-    if (!store.createdAt) return acc
+    // ⭐️ FIX: Sử dụng OpenDate (nếu có) hoặc fallback về CreatedAt
+    const dateSource = store.openDate || store.createdAt
 
-    const year = new Date(store.createdAt).getFullYear()
+    // Kiểm tra phải là giá trị hợp lệ, không phải null/undefined
+    if (!dateSource) return acc
+
+    const year = new Date(dateSource).getFullYear()
+
+    // Thêm check để đảm bảo năm là số (tránh NaN)
+    if (isNaN(year)) return acc
+
     if (!acc[year]) acc[year] = []
     acc[year].push(store)
     return acc
@@ -59,17 +66,32 @@ const yearlyHistory = computed(() => {
 // 2. Cột mốc quan trọng (Sắp xếp theo thời gian tăng dần để thấy quá trình phát triển)
 const sortedStores = computed(() => {
   if (!stores.value) return []
-  return [...stores.value].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+
+  // Lọc bỏ những cửa hàng không có ngày tháng (nếu OpenDate là null)
+  return stores.value
+    .filter((s) => s.openDate || s.createdAt)
+    .sort((a, b) => {
+      // ⭐️ FIX: Sắp xếp dựa trên OpenDate (ưu tiên) hoặc CreatedAt
+      const dateA = new Date(a.openDate || a.createdAt)
+      const dateB = new Date(b.openDate || b.createdAt)
+      return dateA - dateB
+    })
 })
 
 const milestones = computed(() => {
   if (!sortedStores.value.length) return []
-  // Lấy 3 cửa hàng ĐẦU TIÊN (cũ nhất) làm cột mốc khởi nghiệp
-  return sortedStores.value.slice(0, 3).map((store) => ({
-    date: new Date(store.createdAt).toLocaleDateString('vi-VN'),
-    title: `Khai trương chi nhánh: ${store.name}`,
-    address: store.address,
-  }))
+  return sortedStores.value.slice(0, 3).map((store) => {
+    // ⭐️ FIX: Lấy ngày đã được lọc/sắp xếp
+    const dateSource = store.openDate || store.createdAt
+
+    return {
+      // Kiểm tra Date hợp lệ trước khi gọi toLocaleDateString
+      date: new Date(dateSource).toLocaleDateString('vi-VN'),
+      title: `Khai trương chi nhánh: ${store.name}`,
+      address: store.address,
+      imageUrl: store.imageUrl,
+    }
+  })
 })
 
 // 3. Hệ thống cửa hàng (Pagination)
@@ -133,15 +155,30 @@ const showLess = () => {
         <h2 class="text-xl font-bold mb-6 border-b pb-3 text-green-600 dark:text-green-400">
           Lịch sử hình thành
         </h2>
-        <div class="space-y-8 relative pl-2">
+        <div class="space-y-8 relative pl-0">
           <div
-            class="absolute left-[11px] top-2 bottom-2 w-0.5 bg-green-200 dark:bg-green-700"
+            class="absolute left-[15px] top-2 bottom-2 w-0.5 bg-green-200 dark:bg-green-700"
           ></div>
 
-          <div v-for="item in yearlyHistory" :key="item.year" class="relative pl-8 group">
+          <div v-for="item in yearlyHistory" :key="item.year" class="relative pl-10 group">
             <div
-              class="absolute left-0 top-1.5 w-6 h-6 bg-white dark:bg-gray-800 border-4 border-green-500 rounded-full z-10 group-hover:scale-110 transition-transform"
-            ></div>
+              class="absolute left-0 top-1.5 w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-800 border-4 border-green-500 rounded-full z-10 group-hover:scale-125 transition-transform"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="size-4 text-green-600 dark:text-green-400"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z"
+                />
+              </svg>
+            </div>
 
             <p class="text-xl font-bold text-gray-800 dark:text-white">{{ item.year }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -160,38 +197,38 @@ const showLess = () => {
           <div
             v-for="(item, index) in milestones"
             :key="index"
-            class="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-800 hover:shadow-md transition-all"
+            class="p-4 rounded-xl border border-green-100 dark:border-green-800 hover:shadow-md transition-all relative overflow-hidden"
+            :style="{
+              // ✅ FIX 1: Thêm màu nền fallback (bg-color)
+              backgroundColor: '#f6fffa',
+
+              // ✅ FIX 2: Áp dụng ảnh nền chỉ khi tồn tại
+              backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : 'none',
+
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }"
           >
-            <div class="flex items-center gap-2 mb-2">
-              <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">{{
-                item.date
-              }}</span>
-            </div>
-            <p class="font-bold text-gray-800 dark:text-white mb-1">{{ item.title }}</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              <span
-                ><svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="w-5 h-5 flex-shrink-0 mt-0.5 text-green-600"
+            <div v-if="item.imageUrl" class="absolute inset-0 bg-black/30 rounded-xl"></div>
+
+            <div class="relative z-10 space-y-2">
+              <div class="flex items-center gap-2 mb-2">
+                <span
+                  class="px-2 py-0.5 rounded text-xs font-bold"
+                  :class="
+                    item.imageUrl ? 'bg-white/90 text-green-700' : 'bg-green-100 text-green-700'
+                  "
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
-                  />
-                </svg>
-              </span>
-              {{ item.address }}
-            </p>
+                  {{ item.date }}
+                </span>
+              </div>
+              <p
+                class="font-bold mb-1"
+                :class="item.imageUrl ? 'text-white' : 'text-gray-800 dark:text-white'"
+              >
+                {{ item.title }}
+              </p>
+            </div>
           </div>
         </div>
       </div>
