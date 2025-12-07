@@ -66,9 +66,9 @@ const checkScroll = () => {
   const isScrollable = el.scrollWidth > el.clientWidth
 
   if (!isScrollable) {
-      canScrollLeft.value = false
-      canScrollRight.value = false
-      return
+    canScrollLeft.value = false
+    canScrollRight.value = false
+    return
   }
 
   // Dùng Math.ceil để làm tròn, tránh lỗi 1px trên một số màn hình
@@ -93,7 +93,7 @@ onMounted(() => {
 
 // ⭐️ THÊM: Kiểm tra lại khi DOM cập nhật (VD: khi API tải xong dữ liệu)
 onUpdated(() => {
-    checkScroll()
+  checkScroll()
 })
 
 onUnmounted(() => {
@@ -117,7 +117,7 @@ onUnmounted(() => {
       </span>
     </div>
 
-    <div class="relative group">
+    <div class="relative titled-container-group">
       <div
         ref="scrollContainer"
         class="flex gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory cursor-grab select-none px-2 py-4 scroll-smooth items-stretch"
@@ -131,7 +131,14 @@ onUnmounted(() => {
           class="absolute -left-4 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-700 shadow-md hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full p-3 text-primary dark:text-white transition z-20 opacity-0 group-hover:opacity-100"
           @click="scroll('prev')"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2.5"
+            stroke="currentColor"
+            class="w-5 h-5"
+          >
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
         </button>
@@ -141,14 +148,24 @@ onUnmounted(() => {
           class="absolute -right-4 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-700 shadow-md hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full p-3 text-primary dark:text-white transition z-20 opacity-0 group-hover:opacity-100"
           @click="scroll('next')"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2.5"
+            stroke="currentColor"
+            class="w-5 h-5"
+          >
             <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
           </svg>
         </button>
       </template>
     </div>
 
-    <div v-if="controls !== 'hidden' && (canScrollLeft || canScrollRight)" class="mt-6 flex justify-center">
+    <div
+      v-if="controls !== 'hidden' && (canScrollLeft || canScrollRight)"
+      class="mt-6 flex justify-center"
+    >
       <NavLink :label="linkText" :to="linkTo" variant="primary"> </NavLink>
     </div>
   </div>

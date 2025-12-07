@@ -6,6 +6,7 @@ import { storeToRefs } from 'pinia'
 // Import ảnh mặc định
 import defaultHero from '@/assets/images/banners/default-hero.jpg'
 import defaultHero2 from '@/assets/images/banners/default-hero-2.jpg'
+import funDefault from '@/assets/images/banners/fun-default.png'
 const appStore = useAppStore()
 const currentIndex = ref(0)
 let intervalId
@@ -75,7 +76,7 @@ onUnmounted(() =>{
         :src="s.image"
         alt="Banner"
         class="w-full h-full object-cover"
-        @error="(e) => { e.target.src = defaultHero }"
+        @error="(e) => { e.target.src = funDefault }"
         loading="lazy"
       />
 

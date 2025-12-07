@@ -23,7 +23,7 @@ onMounted(async () => {
     // Dùng Promise.all để tải song song
     await Promise.all([storeStore.fetchStores(), appStore.fetchAppConfig()])
   } catch (error) {
-    console.error("Lỗi tải trang About Us:", error)
+    console.error('Lỗi tải trang About Us:', error)
   } finally {
     pageLoading.value = false
   }
@@ -34,10 +34,10 @@ const yearlyHistory = computed(() => {
   if (!stores.value || !stores.value.length) return []
 
   const groups = stores.value.reduce((acc, store) => {
-    // Kiểm tra openDate hợp lệ trước khi dùng
-    if (!store.openDate) return acc;
+    // Kiểm tra createdAt hợp lệ trước khi dùng
+    if (!store.createdAt) return acc
 
-    const year = new Date(store.openDate).getFullYear()
+    const year = new Date(store.createdAt).getFullYear()
     if (!acc[year]) acc[year] = []
     acc[year].push(store)
     return acc
@@ -59,14 +59,14 @@ const yearlyHistory = computed(() => {
 // 2. Cột mốc quan trọng (Sắp xếp theo thời gian tăng dần để thấy quá trình phát triển)
 const sortedStores = computed(() => {
   if (!stores.value) return []
-  return [...stores.value].sort((a, b) => new Date(a.openDate) - new Date(b.openDate))
+  return [...stores.value].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
 })
 
 const milestones = computed(() => {
   if (!sortedStores.value.length) return []
   // Lấy 3 cửa hàng ĐẦU TIÊN (cũ nhất) làm cột mốc khởi nghiệp
   return sortedStores.value.slice(0, 3).map((store) => ({
-    date: new Date(store.openDate).toLocaleDateString('vi-VN'),
+    date: new Date(store.createdAt).toLocaleDateString('vi-VN'),
     title: `Khai trương chi nhánh: ${store.name}`,
     address: store.address,
   }))
@@ -78,8 +78,8 @@ const itemsToShow = ref(INITIAL_COUNT)
 
 // Danh sách hiển thị (Sắp xếp MỚI NHẤT lên đầu cho khách dễ tìm)
 const storesForDisplay = computed(() => {
-    if (!stores.value) return []
-    return [...stores.value].sort((a, b) => new Date(b.openDate) - new Date(a.openDate))
+  if (!stores.value) return []
+  return [...stores.value].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 })
 
 const visibleStore = computed(() => storesForDisplay.value.slice(0, itemsToShow.value))
@@ -94,17 +94,20 @@ const showLess = () => {
   itemsToShow.value = INITIAL_COUNT
   // Cuộn nhẹ về tiêu đề danh sách
   const el = document.getElementById('system-title')
-  if(el) el.scrollIntoView({ behavior: 'smooth' })
+  if (el) el.scrollIntoView({ behavior: 'smooth' })
 }
 </script>
 
 <template>
-  <main class="py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
-
+  <main class="py-8 bg-gray-100 dark:bg-gray-900 min-h-screen">
     <section class="max-w-4xl mx-auto mb-12 px-4">
-      <h1 class="text-3xl md:text-4xl font-bold text-center mb-6 text-gray-800 dark:text-white">Câu chuyện thương hiệu</h1>
+      <h1 class="text-3xl md:text-4xl font-bold text-center mb-6 text-gray-800 dark:text-white">
+        Câu chuyện thương hiệu
+      </h1>
 
-      <div class="h-64 md:h-80 bg-gray-200 dark:bg-gray-700 rounded-2xl overflow-hidden mb-6 shadow-lg">
+      <div
+        class="h-64 md:h-80 bg-gray-200 dark:bg-gray-700 rounded-2xl overflow-hidden mb-6 shadow-lg"
+      >
         <img
           :src="appConfig?.logoUrl || 'https://picsum.photos/1200/500?random=1'"
           alt="Câu chuyện thương hiệu"
@@ -113,9 +116,12 @@ const showLess = () => {
       </div>
 
       <div class="prose dark:prose-invert max-w-none text-center">
-          <p class="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
-            {{ appConfig?.slogan || 'Hành trình mang hương vị trà chanh phố cổ đến với mọi miền tổ quốc.' }}
-          </p>
+        <p class="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
+          {{
+            appConfig?.slogan ||
+            'Hành trình mang hương vị trà chanh phố cổ đến với mọi miền tổ quốc.'
+          }}
+        </p>
       </div>
     </section>
 
@@ -128,10 +134,14 @@ const showLess = () => {
           Lịch sử hình thành
         </h2>
         <div class="space-y-8 relative pl-2">
-           <div class="absolute left-[11px] top-2 bottom-2 w-0.5 bg-green-200 dark:bg-green-700"></div>
+          <div
+            class="absolute left-[11px] top-2 bottom-2 w-0.5 bg-green-200 dark:bg-green-700"
+          ></div>
 
-           <div v-for="item in yearlyHistory" :key="item.year" class="relative pl-8 group">
-             <div class="absolute left-0 top-1.5 w-6 h-6 bg-white dark:bg-gray-800 border-4 border-green-500 rounded-full z-10 group-hover:scale-110 transition-transform"></div>
+          <div v-for="item in yearlyHistory" :key="item.year" class="relative pl-8 group">
+            <div
+              class="absolute left-0 top-1.5 w-6 h-6 bg-white dark:bg-gray-800 border-4 border-green-500 rounded-full z-10 group-hover:scale-110 transition-transform"
+            ></div>
 
             <p class="text-xl font-bold text-gray-800 dark:text-white">{{ item.year }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -153,11 +163,34 @@ const showLess = () => {
             class="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-800 hover:shadow-md transition-all"
           >
             <div class="flex items-center gap-2 mb-2">
-                <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">{{ item.date }}</span>
+              <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">{{
+                item.date
+              }}</span>
             </div>
             <p class="font-bold text-gray-800 dark:text-white mb-1">{{ item.title }}</p>
             <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                📍 {{ item.address }}
+              <span
+                ><svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="w-5 h-5 flex-shrink-0 mt-0.5 text-green-600"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
+                  />
+                </svg>
+              </span>
+              {{ item.address }}
             </p>
           </div>
         </div>
@@ -165,22 +198,24 @@ const showLess = () => {
     </section>
 
     <section class="max-w-6xl mx-auto text-center my-16 px-4">
-       <div class="inline-block p-8 bg-gradient-to-br from-green-600 to-teal-700 rounded-3xl shadow-lg text-white transform hover:-translate-y-1 transition-transform duration-300">
-          <h2 class="text-5xl font-extrabold mb-2 drop-shadow-md">
-            {{ totalAvailable || '0' }}+
-          </h2>
-          <p class="text-xl font-medium opacity-90">Chi nhánh trên toàn quốc</p>
-          <p class="text-sm mt-2 opacity-75">Và đang tiếp tục mở rộng...</p>
-       </div>
+      <div
+        class="inline-block p-8 bg-gradient-to-br from-green-600 to-teal-700 rounded-3xl shadow-lg text-white transform hover:-translate-y-1 transition-transform duration-300"
+      >
+        <h2 class="text-5xl font-extrabold mb-2 drop-shadow-md">{{ totalAvailable || '0' }}+</h2>
+        <p class="text-xl font-medium opacity-90">Chi nhánh trên toàn quốc</p>
+        <p class="text-sm mt-2 opacity-75">Và đang tiếp tục mở rộng...</p>
+      </div>
     </section>
 
     <section id="system-title" class="max-w-6xl mx-auto px-4 pb-12">
-      <h2 class="text-2xl font-bold mb-8 border-l-4 border-green-600 pl-4 text-gray-800 dark:text-white">
+      <h2
+        class="text-2xl font-bold mb-8 border-l-4 border-green-600 pl-4 text-gray-800 dark:text-white"
+      >
         Hệ thống cửa hàng
       </h2>
 
       <div v-if="pageLoading || storeLoading" class="flex justify-center py-12">
-         <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
       </div>
 
       <div v-else-if="visibleStore.length > 0">

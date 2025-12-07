@@ -1,0 +1,14 @@
+[33m2214ac5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m update version 1.1
+[33m92744f1[m fix logic load cart in userStore
+[33m9ff6ede[m connect api but have some issues
+[33ma2c3cd2[m Doi ten file tam thoi de fix loi Git
+[33m8bce111[m Doi ten file tam thoi de fix loi Git
+[33m9efd734[m Đẩy code để test deploy Vercel
+[33mb5f5422[m Chuyển sử dụng Json-server sang sửa dụng DB thật. Hoàn thành thiết lập, chuyển đổi các file của folder api, stores để truy vấn phía BE thông qua kết nối API endpoint. Bổ sung thêm các view phía admin (tuy nhiên mới hoàn thành Category, Product cần sửa lại). Ngoài ra có thêm 1 view xử lý ngoại lệ khi không tìm thấy đường dẫn hợp lý (NotFoundView).
+[33m433616b[m Bỏ phần OrdersView.vue đẩy vào trong Profile.vue, bổ sung thêm AdminSlidebar.vue, thêm actions crud cho user, news, store, product, order. Ngoài ra cũng còn 1 số cái khác nhưng không quan trọngtrọng
+[33m6ec3eb3[m Tinh chỉnh phần profile (chưa ổn lắm, cần sửa thêm), sửa lại CheckoutView, hiển thị danh sách hệ thống cửa hàng, bổ sung thêm OrderHistory, OrderDetail, NewsDetail, orderApi, orderStore; tách DeliveryInfor ra khỏi ProductDetail, tách CartView
+[33mc9bf8d9[m Chỉnh sửa lại toàn bộ cấu trúc của dự án (đặt tên lại và di chuyển các file logic hơn). Sửa lại LoginForm và LoginModal, StoreCard. Bổ sung thêm Register, ForgotPassword,  AboutUsView, StoreDetailView
+[33me8ad1dd[m thử commit & push
+[33ma7c1e66[m bổ sung thêm đăng nhập phân quyền, ProductDetail và CartView
+[33m69ac68b[m chinh sua lai phan header.vue va bo sung ProductsView.vue
+[33m33d29d6[m Initial commit of drinking-fe project
