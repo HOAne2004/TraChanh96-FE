@@ -1,14 +1,14 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
-import { useProductStore } from '@/stores/productStore'
+import { useProductStore } from '@/stores/product'
 
 const props = defineProps({
   isOpen: Boolean,
   type: String, // 'size', 'sugar', 'ice'
   itemData: {
     type: Object,
-    default: null
-  }
+    default: null,
+  },
 })
 
 const emit = defineEmits(['close', 'created', 'updated'])
@@ -37,20 +37,24 @@ const valueLabel = computed(() => {
 })
 
 // Đồng bộ dữ liệu khi mở modal
-watch(() => props.isOpen, (newVal) => {
-  if (newVal) {
-    // Reset hoặc Fill data
-    if (props.itemData) {
+watch(
+  () => props.isOpen,
+  (newVal) => {
+    if (newVal) {
+      // Reset hoặc Fill data
+      if (props.itemData) {
         label.value = props.itemData.label
-        valueData.value = props.type === 'size' ? props.itemData.priceModifier : props.itemData.value
-    } else {
+        valueData.value =
+          props.type === 'size' ? props.itemData.priceModifier : props.itemData.value
+      } else {
         label.value = ''
         valueData.value = 0
+      }
+      // Focus vào ô đầu tiên khi mở modal
+      nextTick(() => labelInput.value?.focus())
     }
-    // Focus vào ô đầu tiên khi mở modal
-    nextTick(() => labelInput.value?.focus())
-  }
-})
+  },
+)
 
 // ⭐️ XỬ LÝ ENTER: Chuyển focus xuống ô dưới
 const focusNextInput = () => {
@@ -63,9 +67,9 @@ const handleSubmit = async () => {
     const numberValue = Number(valueData.value)
     // Validate cơ bản
     if (props.type !== 'size' && (numberValue < 0 || numberValue > 100)) {
-        alert("Giá trị % phải từ 0 đến 100")
-        isLoading.value = false
-        return
+      alert('Giá trị % phải từ 0 đến 100')
+      isLoading.value = false
+      return
     }
 
     let result = null
@@ -106,7 +110,9 @@ const handleSubmit = async () => {
 
 <template>
   <div v-if="isOpen" class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-sm shadow-xl border dark:border-gray-700 animate-fade-in-up">
+    <div
+      class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-sm shadow-xl border dark:border-gray-700 animate-fade-in-up"
+    >
       <h3 class="text-lg font-bold mb-4 dark:text-white">{{ title }}</h3>
 
       <form @submit.prevent="handleSubmit" class="space-y-4">
@@ -134,21 +140,21 @@ const handleSubmit = async () => {
         </div>
 
         <div class="flex justify-end gap-2 pt-2">
-           <button
-             type="button"
-             @click="$emit('close')"
-             class="px-4 py-2 bg-gray-200 dark:bg-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 transition"
-           >
-             Hủy
-           </button>
-           <button
-             type="submit"
-             :disabled="isLoading"
-             class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center"
-           >
-             <span v-if="isLoading" class="mr-2">...</span>
-             {{ isEditMode ? 'Lưu' : 'Tạo mới' }}
-           </button>
+          <button
+            type="button"
+            @click="$emit('close')"
+            class="px-4 py-2 bg-gray-200 dark:bg-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 transition"
+          >
+            Hủy
+          </button>
+          <button
+            type="submit"
+            :disabled="isLoading"
+            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center"
+          >
+            <span v-if="isLoading" class="mr-2">...</span>
+            {{ isEditMode ? 'Lưu' : 'Tạo mới' }}
+          </button>
         </div>
       </form>
     </div>

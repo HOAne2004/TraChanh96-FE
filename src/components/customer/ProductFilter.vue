@@ -69,7 +69,7 @@ const emitUpdate = () => {
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
-            d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75"
+            d="M6.5 8 C9 6.5,15 6.5,17.5 8 M6.5 8 C8 3,16 3,17.5 8 V10 C16 9.3,8 9.3,6.5 10 Z M7 10 L8 20 C9.5 21.5,14.5 21.5,16 20 L17 10 Z M8 14 C9.5 13,14.5 13.5,16 12.5 M8 20 C9.5 21,14.5 21,16 20"
           />
         </svg>
 
@@ -91,21 +91,23 @@ const emitUpdate = () => {
         Hiện tại chưa có danh mục sản phẩm
       </div>
 
-      <div v-else class="flex flex-wrap gap-2">
+      <div v-else class="flex flex-col gap-2">
         <button
           v-for="cat in categories"
           :key="cat.id"
           @click="toggleCategory(cat.id)"
-          class="group relative px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 border"
+          class="relative px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 border"
           :class="[
             selectedCategories.includes(String(cat.id))
-              ? 'bg-green-600 border-green-600 text-white shadow-md shadow-green-200 dark:shadow-none transform scale-105'
+              ? 'bg-green-600 flex items-center justify-between border-green-600 text-white shadow-md shadow-green-200 dark:shadow-none transform scale-105'
               : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-green-400 hover:text-green-600 dark:hover:text-green-400',
           ]"
         >
           <span class="relative z-10 flex items-center gap-1.5">
             {{ cat.name }}
-            <span
+
+          </span>
+          <span
               v-if="selectedCategories.includes(String(cat.id))"
               class="bg-white/20 rounded-full p-0.5"
             >
@@ -122,7 +124,6 @@ const emitUpdate = () => {
                 />
               </svg>
             </span>
-          </span>
         </button>
       </div>
 

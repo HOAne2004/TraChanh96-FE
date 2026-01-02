@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { formatDate, formatPrice } from '@/utils/formatters'
 import Button from '@/components/common/Button.vue'
 
 const props = defineProps({
@@ -40,25 +41,6 @@ const paginatedOrders = computed(() => {
 })
 
 // --- LOGIC ĐỊNH DẠNG VÀ TRẠNG THÁI ---
-const formatCurrency = (val) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
-
-const formatDate = (dateString) => {
-  if (!dateString) return 'Chưa có thông tin'
-  try {
-    const options = {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    }
-    return new Date(dateString).toLocaleDateString('vi-VN', options)
-  } catch (error) {
-    console.error('Lỗi định dạng ngày:', error)
-    return 'Ngày không hợp lệ'
-  }
-}
 
 const getStatusClasses = (status) => {
   const lowerStatus = status?.toLowerCase()
@@ -86,9 +68,9 @@ const getStatusClasses = (status) => {
 const hasOrders = computed(() => props.orders && props.orders.length > 0)
 
 // Hàm điều hướng
-const goToOrderDetail = (orderId) => {
-  if (orderId) {
-    router.push(`/orders/${orderId}`)
+const goToOrderDetail = (orderCode) => {
+  if (orderCode) {
+    router.push(`/orders/${orderCode}`)
   }
 }
 
@@ -143,7 +125,7 @@ const goToPage = (page) => {
       <div
         v-for="order in paginatedOrders"
         :key="order.id"
-        @click="goToOrderDetail(order.id)"
+        @click="goToOrderDetail(order.orderCode)"
         class="border dark:border-gray-700 p-4 rounded-lg shadow-sm transition duration-150 hover:shadow-md cursor-pointer"
       >
         <div class="flex justify-between items-start mb-3 border-b dark:border-gray-700 pb-2">
@@ -152,7 +134,7 @@ const goToPage = (page) => {
               >Mã Đơn hàng:</span
             >
             <span class="text-xl font-bold text-green-700 dark:text-green-400"
-              >#{{ order.id }}</span
+              >#{{ order.orderCode }}</span
             >
           </div>
 
@@ -164,7 +146,7 @@ const goToPage = (page) => {
           >
             {{ getStatusClasses(order.status).text }}
           </span>
-          
+
         </div>
 
         <div class="text-sm space-y-2">
@@ -187,7 +169,7 @@ const goToPage = (page) => {
           >
             <span>TỔNG CỘNG:</span>
             <span class="text-red-600 dark:text-red-400">{{
-              formatCurrency(order.totalAmount)
+              formatPrice(order.totalAmount)
             }}</span>
           </div>
         </div>

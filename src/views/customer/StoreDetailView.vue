@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { useStoreStore } from '@/stores/storeStore'
+import { useStoreStore } from '@/stores/store'
 import { storeToRefs } from 'pinia'
 import NavLink from '@/components/common/NavLink.vue'
 import defaultStoreImg from '@/assets/images/others/default-store.png' // Import ảnh mặc định
@@ -12,11 +12,11 @@ const { stores, loading } = storeToRefs(storeStore) // Lấy loading state
 
 const isLoadingLocal = ref(true)
 
-const storeId = computed(() => Number(route.params.id))
+const storeSlug = computed(() => route.params.slug)
 
 // Tìm store trong danh sách (So sánh ID an toàn)
 const currentStore = computed(() =>
-    stores.value.find((s) => s.id === storeId.value)
+    stores.value.find((s) => s.slug === storeSlug.value)
 )
 
 // Xử lý ảnh
@@ -91,7 +91,7 @@ const isPageLoading = computed(() => loading.value || isLoadingLocal.value)
                       <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
                     </svg>
-                    {{ currentStore.address }}
+                    {{ currentStore.address.fullAddress }}
                 </p>
             </div>
           </div>

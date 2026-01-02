@@ -1,6 +1,6 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue' // 🚨 Thêm ref
-import { useNewsStore } from '@/stores/newsStore'
+import { computed, onMounted, ref } from 'vue'
+import { useNewsStore } from '@/stores/news'
 import { storeToRefs } from 'pinia'
 import { RouterLink } from 'vue-router'
 
@@ -9,20 +9,21 @@ import NewsCard from '@/components/customer/card/NewsCard.vue'
 import Button from '@/components/common/Button.vue'
 
 const newsStore = useNewsStore()
-const { news } = storeToRefs(newsStore)
+const { publishedNews } = storeToRefs(newsStore)
 
 // 🚨 BƯỚC MỚI: State quản lý số lượng bài viết hiển thị
 const INITIAL_COUNT = 6 // Số bài hiển thị ban đầu
 const itemsToShow = ref(INITIAL_COUNT) // State hiện tại
 
 onMounted(async () => {
-  await newsStore.fetchNews()
+  await newsStore.fetchPublishedNews()
 })
 
 // ----- LOGIC PHÂN LOẠI TIN TỨC -----
 const sortedNews = computed(() => {
+  if (!publishedNews.value) return []
   // Sắp xếp tất cả tin tức theo ngày (từ mới nhất)
-  return [...news.value].sort((a, b) => new Date(b.date) - new Date(a.date))
+  return [...publishedNews.value].sort((a, b) => new Date(b.publishedDate) - new Date(a.publishedDate))
 })
 
 // 1. Bài viết nổi bật (Bài mới nhất)
@@ -62,6 +63,23 @@ const showLess = () => {
   // Cuộn lên đầu trang (UX tốt)
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
+// 4. Xử lý nội dung mô tả cho bài nổi bật (Loại bỏ HTML tag)
+const plainDescription = computed(() => {
+  const article = featuredArticle.value
+  if (!article) return ""
+
+  // Nếu có SEO Description thì dùng luôn
+  if (article.seoDescription) return article.seoDescription
+
+  // Nếu không, lấy Content và strip HTML tags
+  if (article.content) {
+    const tmp = document.createElement("DIV")
+    tmp.innerHTML = article.content
+    const text = tmp.textContent || tmp.innerText || ""
+    return text
+  }
+  return "Đang cập nhật..."
+})
 </script>
 
 <template>
@@ -71,12 +89,12 @@ const showLess = () => {
     </h1>
 
     <section v-if="featuredArticle" class="mb-12">
-      <router-link :to="`/news/${featuredArticle.id}`" class="block">
+      <RouterLink :to="`/news/${featuredArticle.slug}`" class="block">
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden md:flex">
           <div class="md:w-1/2 h-80">
             <img
-              :src="featuredArticle.image"
-              :alt="featuredArticle.name"
+              :src="featuredArticle.thumbnailUrl"
+              :alt="featuredArticle.title"
               class="w-full h-full object-cover"
             />
           </div>
@@ -86,17 +104,17 @@ const showLess = () => {
             <h2
               class="text-3xl font-bold mb-3 hover:text-green-600 transition duration-200 line-clamp-2"
             >
-              {{ featuredArticle.name }}
+              {{ featuredArticle.title }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
-              {{ featuredArticle.description }}
+              {{ plainDescription }}
             </p>
             <span class="text-xs text-gray-400">
-              Ngày đăng: {{ new Date(featuredArticle.date).toLocaleDateString('vi-VN') }}
+              Ngày đăng: {{ new Date(featuredArticle.publishedDate).toLocaleDateString('vi-VN') }}
             </span>
           </div>
         </div>
-      </router-link>
+      </RouterLink>
     </section>
 
     <section class="mt-12">
@@ -129,6 +147,7 @@ const showLess = () => {
 
       <Button v-if="hasMore" @click="loadMore" label="Xem thêm" variant="primary" />
     </div>
+
   </main>
 </template>
 

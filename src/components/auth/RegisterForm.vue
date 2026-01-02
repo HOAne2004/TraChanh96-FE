@@ -1,28 +1,53 @@
 <script setup>
 import { ref, reactive } from 'vue'
-import { useUserStore } from '@/stores/userStore'
+import { useUserStore } from '@/stores/user'
+import { useRouter, useRoute } from 'vue-router'
+import { useToastStore } from '@/stores/toast'
+
+const router = useRouter()
+const route = useRoute()
+const auth = useUserStore()
+const toast = useToastStore()
 
 const formData = reactive({
   username: '',
   email: '',
+  phone: '',
   password: '',
   confirmPassword: '',
 })
 
 const showPassword = ref(false)
-const auth = useUserStore()
+const isLoading = ref(false)
 
 const handleRegister = async () => {
   if (formData.password !== formData.confirmPassword) {
     auth.error = 'Mật khẩu và Xác nhận Mật khẩu không khớp.'
     return
   }
-
+  isLoading.value = true
   try {
-    const { confirmPassword, ...dto } = formData
-    await auth.register(dto)
+    const payload = {
+        username: formData.username,
+        email: formData.email,
+        phone: formData.phone, // ⭐️ Gửi phone lên
+        password: formData.password
+    }
+    await auth.register(payload)
+    toast.show({
+        type: 'success',
+        message: 'Đăng ký thành công!',
+      })
+    const redirectPath = route.query.redirect || '/'
+    router.push(redirectPath)
   } catch (err) {
-    console.error('Lỗi đăng ký:', err.message)
+    toast.show({
+        type: 'error',
+        message: 'Lỗi đăng ký: ' + err.message
+      })
+  }
+  finally {
+    isLoading.value = false
   }
 }
 
@@ -41,11 +66,7 @@ const clearError = () => {
       role="alert"
     >
       <span>{{ auth.error }}</span>
-      <button
-        @click="clearError"
-        class="absolute top-0 bottom-0 right-0 px-4"
-        aria-label="Close"
-      >
+      <button @click="clearError" class="absolute top-0 bottom-0 right-0 px-4" aria-label="Close">
         <span class="font-bold text-xl">&times;</span>
       </button>
     </div>
@@ -74,12 +95,23 @@ const clearError = () => {
           placeholder="Nhập email của bạn"
         />
       </div>
+      <div>
+        <label for="phone" class="block text-sm font-medium mb-1">Số điện thoại</label>
+        <input
+          id="phone"
+          type="tel"
+          v-model.trim="formData.phone"
+          required
+          class="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-green-300 outline-none dark:bg-gray-700 dark:border-gray-600"
+          placeholder="Nhập số điện thoại của bạn"
+        />
+      </div>
 
       <div class="relative">
-        <label for="password" class="block text-sm font-medium mb-1">Mật khẩu</label>
+        <label for="register_password" class="block text-sm font-medium mb-1">Mật khẩu</label>
         <input
           :type="showPassword ? 'text' : 'password'"
-          id="password"
+          id="register_password"
           v-model.trim="formData.password"
           required
           minlength="6"
@@ -149,17 +181,17 @@ const clearError = () => {
 
       <button
         type="submit"
-        :disabled="auth.loading"
+        :disabled="isLoading"
         class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition"
       >
-        <span v-if="auth.loading" class="pointer-events-none">Đang đăng ký...</span>
+        <span v-if="isLoading" class="pointer-events-none">Đang đăng ký...</span>
         <span v-else>Đăng ký</span>
       </button>
     </form>
 
     <div class="mt-4 text-center text-sm">
       Đã có tài khoản?
-      <RouterLink to="/" class="text-green-600 hover:underline font-medium">
+      <RouterLink to="/login" class="text-green-600 hover:underline font-medium">
         Quay lại trang chủ (Đăng nhập)
       </RouterLink>
     </div>

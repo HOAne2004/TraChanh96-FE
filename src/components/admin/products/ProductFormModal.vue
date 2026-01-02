@@ -1,12 +1,12 @@
 <script setup>
 import { ref, reactive, watch, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useCategoryStore } from '@/stores/categoryStore'
-import { useProductStore } from '@/stores/productStore'
+import { useCategoryStore } from '@/stores/category'
+import { useProductStore } from '@/stores/product'
 
 import OptionsFormModal from '../options/OptionsFormModal.vue'
 import CategorySelectInput from '@/components/admin/categories/CategorySelectInput.vue'
-import uploadApi from '@/apis/uploadApi'
+import uploadApi from '@/services/upload.service'
 import { formatPrice, parsePrice } from '@/utils/formatters'
 
 /* --------------------------------------

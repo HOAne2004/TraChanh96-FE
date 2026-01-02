@@ -21,4 +21,14 @@ export default defineConfig({
       '@auth': fileURLToPath(new URL('./src/components/auth', import.meta.url)),
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://trachanh96-be-production.up.railway.app', // Link BE gốc
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '/api'), // Giữ nguyên prefix /api
+      },
+    },
+  },
 })

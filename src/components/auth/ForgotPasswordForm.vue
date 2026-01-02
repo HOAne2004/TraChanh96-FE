@@ -1,83 +1,70 @@
 <script setup>
 import { ref } from 'vue'
-import { useUserStore } from '@/stores/userStore'
+import authService from '@/services/auth.service' // Gọi trực tiếp service cho gọn
 
-const phone = ref('')
+const email = ref('')
 const message = ref('')
-const auth = useUserStore()
+const error = ref('')
+const isLoading = ref(false)
 
-// 🚨 Giả định action này tồn tại trong authStore (hoặc chỉ mô phỏng tại component này)
 const handleForgotPassword = async () => {
-  // 1. Reset trạng thái lỗi/loading
-  auth.loading = true
-  auth.error = null
+  isLoading.value = true
   message.value = ''
+  error.value = ''
 
   try {
-    // 🚨 Trong thực tế, bạn sẽ gọi API ở đây: await authApi.forgotPassword(phone.value)
-    
-    // Giả lập thành công: Kiểm tra nếu SĐT hợp lệ (ví dụ: có 10 chữ số)
-    if (phone.value.length < 10) {
-        throw new Error('Số điện thoại không hợp lệ.')
-    }
+    // API: POST /Auth/forgot-password { email: ... }
+    await authService.forgotPassword({ email: email.value })
 
-    // Giả lập độ trễ API
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    message.value = '✅ Yêu cầu khôi phục đã được gửi. Vui lòng kiểm tra tin nhắn/email.'
-
+    message.value = '✅ Yêu cầu đã được gửi! Vui lòng kiểm tra Email của bạn để lấy lại mật khẩu.'
+    email.value = '' // Reset form
   } catch (err) {
-    auth.error = err.message || 'Lỗi gửi yêu cầu. Vui lòng thử lại.'
+    error.value = err.response?.data?.message || 'Không tìm thấy tài khoản với email này.'
   } finally {
-    auth.loading = false
+    isLoading.value = false
   }
 }
 </script>
 
 <template>
-  <div class="relative bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
-    <h2 class="text-2xl font-bold mb-4 text-center">Khôi phục Mật khẩu</h2>
-    <p class="mb-4 text-sm text-center text-gray-500 dark:text-gray-300">
-        Vui lòng nhập số điện thoại của bạn để nhận liên kết khôi phục.
+  <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl max-w-md w-full mx-auto">
+    <h2 class="text-2xl font-bold mb-4 text-center">Khôi phục mật khẩu</h2>
+    <p class="text-gray-500 text-sm text-center mb-6">
+        Nhập email đã đăng ký, chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu cho bạn.
     </p>
-    
-    <div v-if="auth.error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 text-sm" role="alert">
-        {{ auth.error }}
-    </div>
-    <div v-if="message" class="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-4 text-sm" role="alert">
+
+    <div v-if="message" class="bg-green-100 text-green-700 p-3 rounded mb-4 text-sm border border-green-200">
         {{ message }}
     </div>
-
+    <div v-if="error" class="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm border border-red-200">
+        {{ error }}
+    </div>
 
     <form @submit.prevent="handleForgotPassword" class="space-y-4">
-      
       <div>
-        <label for="phone" class="block text-sm font-medium mb-1">Số điện thoại</label>
+        <label class="block text-sm font-medium mb-1">Email</label>
         <input
-          id="phone"
-          type="text"
-          inputmode="tel"
-          v-model.trim="phone"
-          required
-          class="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-green-300 outline-none dark:bg-gray-700 dark:border-gray-600"
-          placeholder="Nhập số điện thoại đã đăng ký"
-        />
+            v-model="email"
+            type="email"
+            required
+            class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-200 outline-none"
+            placeholder="email@example.com"
+        >
       </div>
 
       <button
         type="submit"
-        :disabled="auth.loading || !!message"
-        class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition"
+        :disabled="isLoading"
+        class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-green-200 disabled:opacity-50"
       >
-        <span v-if="auth.loading">Đang gửi...</span>
-        <span v-else>Gửi yêu cầu khôi phục</span>
+        {{ isLoading ? 'Đang gửi...' : 'Gửi yêu cầu' }}
       </button>
     </form>
-    
-    <div class="mt-4 text-center text-sm">
-        <RouterLink to="/" class="text-green-600 hover:underline font-medium">
-            Quay lại Đăng nhập
-        </RouterLink>
+
+    <div class="mt-6 text-center">
+        <router-link to="/" class="text-sm text-gray-500 hover:text-green-600 flex items-center justify-center gap-1">
+            ← Quay lại trang chủ
+        </router-link>
     </div>
   </div>
 </template>

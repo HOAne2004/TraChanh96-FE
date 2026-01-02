@@ -14,13 +14,12 @@ const hasContent = computed(() => props.policy && (props.policy.content || props
 </script>
 
 <template>
-  <TitledContainer title="Chính sách giao hàng" controls="hidden" v-if="hasContent">
+  <TitledContainer :title="policy.title" controls="hidden" v-if="hasContent">
     <div class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
 
       <div v-if="policy.content" v-html="policy.content"></div>
 
       <div v-else class="space-y-2">
-         <h4 class="font-bold">{{ policy.title }}</h4>
          <ul class="list-disc pl-5 space-y-1">
             <li><strong>Thời gian giao hàng:</strong> 30 - 60 phút</li>
             <li><strong>Phí ship:</strong> 15.000đ (Freeship đơn > 200k)</li>

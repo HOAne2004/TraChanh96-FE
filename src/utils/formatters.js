@@ -45,3 +45,12 @@ export const parsePrice = (value) => {
 
   return isNaN(number) ? 0 : number
 }
+
+export const formatSold = (num) => {
+  if (!num) return '0'
+  return new Intl.NumberFormat('en-US', {
+    notation: "compact",
+    compactDisplay: "short",
+    maximumFractionDigits: 1
+  }).format(num)
+}

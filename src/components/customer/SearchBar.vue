@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { useProductStore } from '@/stores/productStore'
-import Button from '../common/Button.vue'
+import { useProductStore } from '@/stores/product'
+//import Button from '../common/Button.vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -12,7 +12,7 @@ const searchBarRef = ref(null)
 
 // Gọi dữ liệu sản phẩm 1 lần khi load
 onMounted(async () => {
-  await productStore.fetchProduct()
+  await productStore.fetchProducts()
 })
 
 // Lọc gợi ý dựa theo query

@@ -1,16 +1,17 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useCartStore } from '@/stores/cartStore'
-import { useUserStore } from '@/stores/userStore'
-import { useAppStore } from '@/stores/appStore'
-import { useOrderStore } from '@/stores/orderStore'
-import { useModalStore } from '@/stores/modalStore'
-
+import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
+
+// Stores
+import { useCartStore } from '@/stores/cart'
+import { useUserStore } from '@/stores/user'
+import { useOrderStore } from '@/stores/order'
+import { useUserVoucherStore } from '@/stores/userVoucher'
+import { useToastStore } from '@/stores/toast'
+import { usePaymentMethodStore } from '@/stores/paymentMethod'
 
 // Components
-import NavLink from '@/components/common/NavLink.vue'
 import CheckoutAddressForm from '@/components/customer/checkout/CheckoutAddressForm.vue'
 import CheckoutPaymentMethods from '@/components/customer/checkout/CheckoutPaymentMethods.vue'
 import CheckoutItemList from '@/components/customer/checkout/CheckoutItemList.vue'
@@ -19,125 +20,234 @@ import CheckoutSummary from '@/components/customer/checkout/CheckoutSummary.vue'
 const router = useRouter()
 const cartStore = useCartStore()
 const userStore = useUserStore()
-const appStore = useAppStore()
 const orderStore = useOrderStore()
-const modalStore = useModalStore()
+const toastStore = useToastStore()
+const voucherStore = useUserVoucherStore()
+const paymentMethodStore = usePaymentMethodStore()
+const route = useRoute()
 
-const { cartItems, totalPrice } = storeToRefs(cartStore)
-const { user, isLoggedIn } = storeToRefs(userStore)
-const { storePolicies } = storeToRefs(appStore)
+const { cartItems: allCartItems } = storeToRefs(cartStore)
+const { isLoggedIn } = storeToRefs(userStore)
+const { currentDiscountAmount, appliedVoucher } = storeToRefs(voucherStore)
+const { shippingFee, isCalculatingShip } = storeToRefs(orderStore)
 
-const shippingAddress = ref('')
-const paymentMethod = ref('cash')
+// --- STATE ---
+const selectedAddressId = ref(null) // ID địa chỉ (Quan trọng)
+const selectedPaymentMethod = ref(null) // Object Payment Method
+const userNotes = ref('')
 const orderLoading = ref(false)
-const orderSuccess = ref(false)
 
+const targetStoreId = computed(() => {
+  if (route.query.storeId) return parseInt(route.query.storeId)
+  // Fallback: Nếu không truyền storeId, mặc định lấy store của món đầu tiên (cho trường hợp đơn giản)
+  return allCartItems.value.length > 0 ? allCartItems.value[0].storeId : null
+})
+
+// --- LỌC SẢN PHẨM THEO STORE ---
+const checkoutItems = computed(() => {
+  if (!targetStoreId.value) return []
+  // Giả sử mỗi item trong cart đều có thuộc tính storeId
+  return allCartItems.value.filter((item) => item.storeId === targetStoreId.value)
+})
+
+const currentStoreName = computed(() => {
+  if (checkoutItems.value.length > 0) {
+    return checkoutItems.value[0].storeName || 'Cửa hàng'
+  }
+  return ''
+})
+watch([selectedAddressId, targetStoreId], async ([newAddrId, newStoreId]) => {
+  if (newAddrId && newStoreId) {
+    // Gọi store tính toán
+    await orderStore.calculateShippingFeeAction(newStoreId, newAddrId)
+  } else {
+    orderStore.resetShippingFee()
+  }
+})
+
+// Redirect nếu giỏ hàng trống
 onMounted(async () => {
-  await Promise.all([
-    appStore.fetchStorePolicies(),
-    appStore.fetchFooterInfo(),
-    appStore.fetchCarousel(),
-    appStore.fetchAppConfig(),
-  ])
-  if (user.value && user.value.address) {
-    shippingAddress.value = user.value.address
+  // 1. Nếu Store chưa có dữ liệu (do F5 reload), hãy gọi API lấy lại giỏ hàng
+  if (allCartItems.value.length === 0 && isLoggedIn.value) {
+    await cartStore.fetchCart()
   }
-  if (cartItems.value.length === 0) {
-    router.replace('/cart')
+
+  // 2. Sau khi load xong, kiểm tra lại xem có món nào của Store này không
+  if (checkoutItems.value.length === 0) {
+    toastStore.show({
+      message: 'Giỏ hàng trống hoặc không tìm thấy sản phẩm của cửa hàng này',
+      type: 'warning',
+    })
+    router.replace('/products')
+  }
+  await paymentMethodStore.fetchActiveMethods()
+
+  if (targetStoreId.value && selectedAddressId.value) {
+    await orderStore.calculateShippingFeeAction(targetStoreId.value, selectedAddressId.value)
   }
 })
 
-const subtotal = computed(() => Number(totalPrice.value) || 0)
+// --- TÍNH TOÁN ---
+const subtotal = computed(() => {
+  return checkoutItems.value.reduce((sum, item) => sum + item.basePrice * item.quantity, 0)
+})
+const discount = computed(() => currentDiscountAmount.value || 0)
 
-const shippingFee = computed(() => {
-  return Number(storePolicies.value?.[0]?.deliveryFee) || 0
+const total = computed(() => {
+  const t = subtotal.value + shippingFee.value - discount.value
+  return t > 0 ? t : 0
 })
 
-const total = computed(() => subtotal.value + shippingFee.value)
-
+// --- XỬ LÝ VOUCHER ---
+const onApplyVoucher = async (code) => {
+  try {
+    await voucherStore.applyVoucherAction(code, subtotal.value)
+    toastStore.show({ message: 'Áp dụng voucher thành công!', type: 'success' })
+  } catch (err) {
+    toastStore.show({ message: err.message || 'Voucher không hợp lệ', type: 'error' })
+  }
+}
+// --- XỬ LÝ ĐẶT HÀNG (QUAN TRỌNG) ---
 const placeOrder = async () => {
-  if (!addressFormRef.value.validateAddress()) return
-  if (shippingAddress.value.trim().length < 10) {
-    modalStore.showToast('Vui lòng nhập địa chỉ giao hàng chi tiết hơn.', 'error')
+  // 1. VALIDATION (Yêu cầu của bạn)
+  if (!selectedAddressId.value) {
+    toastStore.show({ message: 'Vui lòng chọn hoặc thêm địa chỉ nhận hàng.', type: 'error' })
+    return
+  }
+
+  if (!selectedPaymentMethod.value) {
+    toastStore.show({ message: 'Vui lòng chọn phương thức thanh toán.', type: 'error' })
     return
   }
 
   orderLoading.value = true
 
   try {
-    const orderData = {
-      userId: user.value?.id || 'guest',
-      items: cartItems.value,
-      address: shippingAddress.value,
-      totalAmount: total.value,
-      paymentMethod: paymentMethod.value,
+    const payload = {
+      storeId: targetStoreId.value,
+      deliveryAddressId: selectedAddressId.value,
+      paymentMethodId:
+        typeof selectedPaymentMethod.value.id === 'string' ? null : selectedPaymentMethod.value.id,
+      userNotes: userNotes.value || '',
+      voucherCode: appliedVoucher.value?.voucherCode || null,
+
+      items: checkoutItems.value.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        sizeId: item.sizeId,
+        sugarLevel: item.sugarLevel,
+        iceLevel: item.iceLevel,
+        note: item.note,
+        toppings: item.toppings
+          ? item.toppings.map((t) => ({
+              productId: t.id,
+              quantity: 1,
+            }))
+          : [],
+      })),
     }
 
-    await orderStore.placeOrderAction(orderData)
+    console.log('Sending Order Payload:', payload) // Debug xem dữ liệu đúng chưa
 
-    cartStore.clearCart()
-    orderSuccess.value = true
-    modalStore.showToast('Đặt hàng thành công! Cảm ơn bạn.', 'success')
+    // 3. GỌI API
+    const newOrder = await orderStore.createDeliveryOrderAction(payload)
+
+    // 4. THÀNH CÔNG
+    voucherStore.removeAppliedVoucher()
+    toastStore.show({ message: 'Đặt hàng thành công!', type: 'success' })
+    if (targetStoreId.value) {
+      await cartStore.clearCartByStore(targetStoreId.value)
+    }
+
+    // 5. CHUYỂN HƯỚNG
+    // Nếu là Online Payment (VNPAY/Momo...)
+    if (selectedPaymentMethod.value.paymentType !== 'Cash' && newOrder.paymentUrl) {
+      window.location.href = newOrder.paymentUrl
+    } else {
+      // Nếu COD -> Sang trang chi tiết
+      await router.replace({ name: 'order-detail', params: { code: newOrder.orderCode } })
+    }
   } catch (error) {
     console.error('Lỗi đặt hàng:', error)
-    modalStore.showToast('Lỗi đặt hàng. Vui lòng thử lại.', 'error')
+    const msg = error.response?.data?.message || 'Có lỗi xảy ra khi tạo đơn hàng.'
+    toastStore.show({ message: msg, type: 'error' })
   } finally {
-    orderLoading.value = false
+    if (!selectedAddressId.value) orderLoading.value = false
   }
 }
+watch(checkoutItems, (newItems) => {
+  if (newItems.length === 0 && !orderLoading.value) {
+    // !orderLoading để tránh redirect nhầm lúc đang gọi API đặt hàng
+    router.replace('/cart')
+  }
+})
 
-// Format tiền (Giữ lại trong View nếu nó chỉ được dùng ở đây)
 const formatCurrency = (val) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
 </script>
 
 <template>
-  <main class="py-8 max-w-5xl mx-auto px-4 lg:px-8">
-    <h1 class="text-3xl font-bold mb-8 text-center text-green-700 dark:text-green-400">
-      THANH TOÁN ĐƠN HÀNG
+  <main class="py-8 max-w-6xl mx-auto px-4 lg:px-8">
+    <h1
+      class="text-2xl md:text-3xl font-bold mb-8 text-center text-green-700 dark:text-green-400 uppercase"
+    >
+      Xác nhận đơn hàng
     </h1>
 
-    <div
-      v-if="orderSuccess"
-      class="text-center py-20 bg-green-50 dark:bg-gray-700 rounded-xl shadow-xl"
-    >
-      <h2 class="text-3xl font-bold text-green-600 mb-4">🎉 ĐẶT HÀNG THÀNH CÔNG!</h2>
-      <p class="text-lg text-gray-700 dark:text-gray-300">
-        Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn đang được xử lý.
-      </p>
-      <NavLink to="/" label="Tiếp tục mua sắm" variant="primary" class="mt-6 inline-block" />
-      <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-        Bạn có thể theo dõi đơn hàng trong mục Lịch sử đơn hàng.
-      </p>
-    </div>
-
-    <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div class="lg:col-span-2 space-y-6">
-        <!-- 1. FORM ĐỊA CHỈ -->
-        <CheckoutAddressForm
-          ref="addressFormRef"
-          v-model="shippingAddress"
-          :is-logged-in="isLoggedIn"
+        <CheckoutAddressForm v-model="selectedAddressId" :is-logged-in="isLoggedIn" />
+
+        <CheckoutPaymentMethods v-model="selectedPaymentMethod" />
+        <CheckoutItemList
+          :items="checkoutItems"
+          :store-name="currentStoreName"
+          :format-currency="formatCurrency"
         />
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+          <div class="flex justify-between items-center mb-3">
+            <h2
+              class="text-lg font-semibold border-l-4 border-green-500 pl-2 text-gray-800 dark:text-white"
+            >
+              Ghi chú đơn hàng
+            </h2>
+            <span
+              class="text-xs"
+              :class="userNotes.length >= 500 ? 'text-red-500 font-bold' : 'text-gray-400'"
+            >
+              {{ userNotes.length }}/500
+            </span>
+          </div>
 
-        <!-- 2. PHƯƠNG THỨC THANH TOÁN -->
-        <CheckoutPaymentMethods v-model="paymentMethod" />
+          <textarea
+            v-model="userNotes"
+            rows="2"
+            maxlength="500"
+            placeholder="Ví dụ: Ít ngọt, giao giờ hành chính, gọi trước khi giao..."
+            class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-green-500 outline-none dark:bg-gray-700 dark:text-white dark:border-gray-600 resize-none"
+          ></textarea>
 
-        <!-- 3. DANH SÁCH SẢN PHẨM -->
-        <CheckoutItemList :items="cartItems" :format-currency="formatCurrency" />
+          <p v-if="userNotes.length >= 500" class="text-xs text-red-500 mt-1">
+            Bạn đã nhập tối đa số ký tự cho phép.
+          </p>
+        </div>
       </div>
 
-      <!-- 4. TÓM TẮT ĐƠN HÀNG -->
-      <CheckoutSummary
-        class="lg:col-span-1 h-fit sticky top-24"
-        :subtotal="subtotal"
-        :shipping-fee="shippingFee"
-        :total="total"
-        :cart-is-empty="cartItems.length === 0"
-        :order-loading="orderLoading"
-        :format-currency="formatCurrency"
-        @place-order="placeOrder"
-      />
+      <div class="lg:col-span-1">
+        <CheckoutSummary
+          class="sticky top-24"
+          :subtotal="subtotal"
+          :shipping-fee="shippingFee"
+          :is-calculating-ship="isCalculatingShip"
+          :discount-amount="discount"
+          :total="total"
+          :cart-is-empty="checkoutItems.length === 0"
+          :order-loading="orderLoading"
+          :format-currency="formatCurrency"
+          @apply-voucher="onApplyVoucher"
+          @place-order="placeOrder"
+        />
+      </div>
     </div>
   </main>
 </template>

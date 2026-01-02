@@ -1,106 +1,143 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useCartStore } from '@/stores/cartStore'
-import { useProductStore } from '@/stores/productStore'
-import Notification from '@/components/common/Notification.vue'
-import { formatPrice } from '@/utils/formatters' // Sử dụng hàm format chung
-
+import { useCartStore } from '@/stores/cart' // Check lại tên file store cart của bạn
+import { useUserStore } from '@/stores/user'
+import { resolveImage } from '@/utils/image'
+import { useStoreStore } from '@/stores/store'
+import { useToastStore } from '@/stores/toast'
+import { formatPrice, formatSold } from '@/utils/formatters'
+import { SugarLevel, IceLevel } from '@/constants/enums'
 import defaultDrink from '@/assets/images/others/default-drink.png'
+import { useProductStore } from '@/stores/product'
 
 const props = defineProps({
   product: { type: Object, required: true },
 })
 
 const cartStore = useCartStore()
+const userStore = useUserStore()
+const storeStore = useStoreStore()
+const toastStore = useToastStore()
 const productStore = useProductStore()
-const { sizes, sugarLevels, iceLevels } = storeToRefs(productStore)
 
-const showNotification = ref(false)
 const quantity = ref(1)
+const isAdding = ref(false)
 
-// 1. XỬ LÝ ẢNH (Ghép domain nếu cần)
-const fullImageUrl = computed(() => {
-  const url = props.product.imageUrl
-  if (!url) return defaultDrink
-  if (url.startsWith('http')) return url
-  return `https://trachanh96-be-production.up.railway.app${url}`
-})
-
-// 2. TÍNH TOÁN DEFAULT OPTIONS (Dựa trên mảng phẳng từ Store)
+const fullImageUrl = computed(() => resolveImage(props.product.imageUrl, defaultDrink))
+const handleImageError = (e) => {
+  e.target.src = defaultDrink
+  e.target.onerror = null
+}
 const defaultSize = computed(() => {
-  if (!sizes.value || sizes.value.length === 0)
-    return { id: null, label: 'Mặc định', priceModifier: 0 }
-  // Ưu tiên size có giá thêm = 0 (Size nhỏ nhất/chuẩn)
-  return sizes.value.find((s) => s.priceModifier === 0) || sizes.value[0]
+  const sizes = props.product.availableSizes || []
+  if (sizes.length === 0) return null
+
+  return sizes.reduce(
+    (prev, curr) => (prev.priceModifier < curr.priceModifier ? prev : curr),
+    sizes[0],
+  )
 })
 
-const defaultSugar = computed(() => {
-  if (!sugarLevels.value || sugarLevels.value.length === 0)
-    return { id: null, label: '100%', value: 100 }
-  // Ưu tiên mức 100% (Bình thường)
-  return sugarLevels.value.find((s) => s.value === 100) || sugarLevels.value[0]
+const defaultSugarId = SugarLevel.PERCENT_100
+const defaultIceId = IceLevel.PERCENT_100
+
+const isNew = computed(() => {
+  return productStore.checkIsNew(props.product.id)
 })
 
-const defaultIce = computed(() => {
-  if (!iceLevels.value || iceLevels.value.length === 0)
-    return { id: null, label: '100%', value: 100 }
-  // Ưu tiên mức 100% (Bình thường)
-  return iceLevels.value.find((i) => i.value === 100) || iceLevels.value[0]
+const isBestSeller = computed(() => {
+  return productStore.checkIsBestSeller(props.product.id)
 })
 
-// 3. THÊM VÀO GIỎ
-const addToCart = () => {
-  // Ngăn chặn nổi bọt sự kiện click (để không nhảy vào trang chi tiết)
+// --- LOGIC MỚI: KIỂM TRA TRẠNG THÁI STORE ---
+const storeStatus = computed(() => {
+  // Nếu chưa chọn store thì cho phép xem (nhưng lúc add to cart sẽ bắt chọn)
+  if (!storeStore.selectedStoreId) return { isOpen: true, message: '' }
+
+  const store = storeStore.stores.find((s) => s.id === storeStore.selectedStoreId)
+  return storeStore.getStoreStatus(store)
+})
+
+const isDisabled = computed(() => {
+  // Disable nếu đang adding HOẶC (đã chọn store VÀ store đóng)
+  return isAdding.value || (storeStore.selectedStoreId && !storeStatus.value.isOpen)
+})
+
+const addToCart = async (event) => {
   event.preventDefault()
-
-  const itemToAdd = {
-    id: `${props.product.id}_${Date.now()}`, // ID duy nhất cho item trong giỏ
-    productId: props.product.id,
-    name: props.product.name,
-    // ⭐️ Backend dùng 'basePrice'
-    price: Number(props.product.basePrice),
-    image: fullImageUrl.value,
-    quantity: quantity.value,
-
-    // Gán Options mặc định
-    sizeId: defaultSize.value.id,
-    size: defaultSize.value.label,
-    sizePrice: defaultSize.value.priceModifier,
-
-    sugarId: defaultSugar.value.id,
-    sugar: defaultSugar.value.label,
-
-    iceId: defaultIce.value.id,
-    ice: defaultIce.value.label,
-
-    toppings: [],
-    toppingPrice: 0,
+  if (isDisabled.value) {
+    if (!storeStatus.value.isOpen) {
+      toastStore.show({ type: 'warning', message: `Cửa hàng ${storeStatus.value.message}` })
+    }
+    return
   }
 
-  // console.log('🟢 Thêm nhanh:', itemToAdd)
-  cartStore.addToCart(itemToAdd)
+  if (!userStore.isLoggedIn) {
+    toastStore.show({ type: 'warning', message: 'Vui lòng đăng nhập để mua hàng' })
+    return
+  }
 
-  // Hiển thị thông báo
-  showNotification.value = false
-  setTimeout(() => (showNotification.value = true), 50)
+  if (props.product.availableSizes?.length > 0 && !defaultSize.value) {
+    return
+  }
 
-  // Reset số lượng
-  quantity.value = 1
+  const itemToAdd = {
+    storeId: storeStore.selectedStoreId,
+    productId: props.product.id,
+    quantity: quantity.value,
+    sizeId: defaultSize.value ? defaultSize.value.id : null,
+    sugarLevelId: defaultSugarId,
+    iceLevelId: defaultIceId,
+    note: '',
+    toppings: [],
+  }
+
+  isAdding.value = true
+  try {
+    await cartStore.addToCart(itemToAdd)
+
+    toastStore.show({
+      type: 'success',
+      message: `Đã thêm ${props.product.name} vào giỏ hàng!`,
+    })
+
+    quantity.value = 1 // Reset số lượng
+  } catch (err) {
+    console.error('Lỗi thêm giỏ hàng:', err)
+    toastStore.show({
+      type: 'error',
+      message: err.response?.data?.message || 'Lỗi thêm vào giỏ',
+    })
+  } finally {
+    isAdding.value = false
+  }
 }
+const link = computed(() => {
+  return `/products/${props.product.slug}`
+})
 </script>
 
 <template>
   <div
-    class="group flex-shrink-0 max-w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-full"
-  >
-    <router-link :to="`/products/${product.id}`" class="block flex-1 flex-col">
+class="group flex-shrink-0 max-w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-full relative"
+    :class="{ 'opacity-75 grayscale': isClosed }"  >
+    <div
+      v-if="storeStore.selectedStoreId && !storeStatus.isOpen"
+      class="absolute inset-0 z-20 bg-gray-900/50 flex flex-col items-center justify-center text-white backdrop-blur-[1px]"
+    >
+    
+      <span class="text-sm font-medium bg-red-600 px-3 py-1 rounded-full">
+        {{ storeStatus.message }}
+      </span>
+    </div>
+    <router-link :to="link" class="block flex-1 flex-col">
       <div class="relative w-full aspect-square overflow-hidden bg-gray-50 dark:bg-gray-900">
         <img
           :src="fullImageUrl"
           :alt="product.name"
           class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           loading="lazy"
+          @error="handleImageError"
         />
 
         <div
@@ -109,9 +146,9 @@ const addToCart = () => {
           <span>{{ product.totalRating || 5.0 }}</span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
             fill="currentColor"
             class="w-3 h-3"
+            viewBox="0 0 24 24"
           >
             <path
               fill-rule="evenodd"
@@ -119,6 +156,20 @@ const addToCart = () => {
               clip-rule="evenodd"
             />
           </svg>
+        </div>
+        <div class="absolute top-2 left-2 flex flex-col gap-1 items-start">
+          <span
+            v-if="isBestSeller"
+            class="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm flex items-center gap-1 animate-pulse"
+          >
+            🔥 HOT
+          </span>
+          <span
+            v-if="isNew"
+            class="bg-green-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm"
+          >
+            NEW
+          </span>
         </div>
       </div>
 
@@ -128,7 +179,13 @@ const addToCart = () => {
         >
           {{ product.name }}
         </h3>
-
+        <div class="mb-3">
+          <span
+            class="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded"
+          >
+            Đã bán {{ formatSold(product.totalSold) }}
+          </span>
+        </div>
         <div class="mt-auto flex items-end justify-between">
           <div class="flex flex-col">
             <span class="font-extrabold text-primary text-xl">{{
@@ -137,11 +194,20 @@ const addToCart = () => {
           </div>
 
           <button
-            @click.stop="addToCart"
-            class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:bg-green-600 hover:text-white transition-all shadow-sm active:scale-95"
-            title="Thêm vào giỏ"
+            v-if="storeStore.selectedStoreId"
+            @click.stop.prevent="addToCart"
+            :disabled="isDisabled"
+            class="w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            :class="!isDisabled ? 'bg-green-100 text-green-600 hover:bg-green-600 hover:text-white' : 'bg-gray-200 text-gray-400'"
+            :title="!storeStatus.isOpen ? storeStatus.message : 'Thêm nhanh vào giỏ'"
           >
+            <span
+              v-if="isAdding"
+              class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"
+            ></span>
+
             <svg
+              v-else
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -156,12 +222,30 @@ const addToCart = () => {
               />
             </svg>
           </button>
+          <span
+            v-else
+            class="text-xs font-medium text-gray-400 group-hover:text-green-600 flex items-center gap-1 transition-colors"
+          >
+            Chi tiết
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="w-4 h-4"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
+              />
+            </svg>
+          </span>
         </div>
       </div>
     </router-link>
   </div>
-
-  <Notification :show="showNotification" :message="`Đã thêm ${product?.name} vào giỏ hàng`" />
 </template>
 
 <style scoped>

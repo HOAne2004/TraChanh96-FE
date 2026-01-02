@@ -1,98 +1,75 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { ORDER_STATUS_UI } from '@/constants/order.constants' // Đảm bảo file này tồn tại hoặc map tay
+import { formatPrice, formatDate } from '@/utils/formatters' // Các hàm format
 
 const props = defineProps({
-    orders: { type: Array, default: () => [] },
-    isLoading: { type: Boolean, default: false },
+  orders: { type: Array, default: () => [] },
+  isLoading: Boolean
 })
 
 const router = useRouter()
 
-// Số lượng đơn hàng mới nhất cần hiển thị
-const LIMIT = 5
-
-// --- LOGIC XỬ LÝ DỮ LIỆU ---
-
-// 1. Lọc và Sắp xếp đơn hàng mới nhất (Pending)
-const latestPendingOrders = computed(() => {
-    if (props.isLoading) return []
-    
-    // Giả định đơn hàng đã được fetch và sắp xếp theo `createdAt` giảm dần (mới nhất lên đầu)
-    // Nếu chưa được sắp xếp, cần sắp xếp tại đây:
-    // const sortedOrders = [...props.orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    
-    return props.orders
-        .filter(order => order.status === 'Pending') // Chỉ lấy đơn hàng đang chờ xử lý
-        .slice(0, LIMIT) // Giới hạn số lượng
+// Lấy 5 đơn mới nhất
+const latestOrders = computed(() => {
+  return props.orders ? props.orders.slice(0, 5) : []
 })
 
-// 2. Format Helper
-const formatCurrency = (val) =>
-    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
-
-const formatDate = (dateStr) => {
-    if (!dateStr) return 'N/A'
-    // Hiển thị thời gian ngắn gọn: HH:MM Ngày/Tháng
-    return new Date(dateStr).toLocaleTimeString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        day: '2-digit',
-        month: 'numeric'
-    })
-}
-
-// 3. Điều hướng
-const goToOrderDetail = (orderId) => {
-    // Chuyển hướng đến trang chi tiết đơn hàng admin
-    router.push(`/admin/orders/${orderId}`)
+const getStatusBadge = (status) => {
+  return ORDER_STATUS_UI[status] || { label: 'Unknown', color: 'bg-gray-100 text-gray-600' }
 }
 </script>
 
 <template>
-    <div class="space-y-4">
-        <div v-if="isLoading" class="space-y-4">
-            <div v-for="i in LIMIT" :key="i" class="h-12 bg-gray-100 dark:bg-gray-600 rounded"></div>
-        </div>
-
-        <div v-else-if="latestPendingOrders.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
-            <p>🎉 Không có đơn hàng mới nào cần xử lý!</p>
-        </div>
-
-        <div v-else>
-            <div
-                v-for="order in latestPendingOrders"
-                :key="order.id"
-                @click="goToOrderDetail(order.id)"
-                class="flex justify-between items-center p-3 border-b dark:border-gray-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition duration-150 rounded"
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="text-xs text-gray-500 border-b border-gray-100 dark:border-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50">
+          <th class="px-4 py-3 font-medium">Mã đơn</th>
+          <th class="px-4 py-3 font-medium">Khách hàng</th>
+          <th class="px-4 py-3 font-medium">Tổng tiền</th>
+          <th class="px-4 py-3 font-medium">Trạng thái</th>
+          <th class="px-4 py-3 font-medium">Thời gian</th>
+          <th class="px-4 py-3 text-right">Hành động</th>
+        </tr>
+      </thead>
+      <tbody class="text-sm divide-y divide-gray-100 dark:divide-gray-700">
+        <tr v-if="isLoading">
+           <td colspan="6" class="px-4 py-8 text-center text-gray-500">Đang tải dữ liệu...</td>
+        </tr>
+        <tr v-else-if="latestOrders.length === 0">
+           <td colspan="6" class="px-4 py-8 text-center text-gray-500">Chưa có đơn hàng nào.</td>
+        </tr>
+        <tr v-else v-for="order in latestOrders" :key="order.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+          <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+            #{{ order.orderCode }}
+          </td>
+          <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+            <div>{{ order.recipientName }}</div>
+            <div class="text-xs text-gray-400">{{ order.recipientPhone }}</div>
+          </td>
+          <td class="px-4 py-3 font-bold text-gray-800 dark:text-white">
+            {{ formatPrice(order.grandTotal) }}
+          </td>
+          <td class="px-4 py-3">
+            <span :class="['px-2.5 py-0.5 rounded-full text-xs font-bold border', getStatusBadge(order.status).color]">
+              {{ getStatusBadge(order.status).label }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-gray-500 text-xs">
+            {{ formatDate(order.createdAt) }}
+          </td>
+          <td class="px-4 py-3 text-right">
+            <button
+              @click="router.push(`/admin/orders/${order.orderCode}`)"
+              class="text-blue-600 hover:text-blue-800 text-xs font-bold bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
             >
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-semibold text-gray-800 dark:text-white truncate">
-                        #{{ order.id }} - {{ order.items.length }} sản phẩm
-                    </p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        {{ formatDate(order.createdAt) }}
-                    </p>
-                </div>
-
-                <div class="text-right ml-4">
-                    <span class="text-sm font-bold text-red-600 dark:text-red-400">
-                        {{ formatCurrency(order.totalAmount) }}
-                    </span>
-                    <svg class="w-4 h-4 text-gray-400 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </div>
-            </div>
-        </div>
-        
-        <div v-if="latestPendingOrders.length > 0" class="text-center pt-4">
-            <button 
-                @click="router.push('/admin/orders')"
-                class="text-sm font-medium text-green-600 dark:text-green-400 hover:underline"
-            >
-                Xem tất cả đơn hàng &rarr;
+              Chi tiết
             </button>
-        </div>
-    </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </template>

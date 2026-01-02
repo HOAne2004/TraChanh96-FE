@@ -1,121 +1,147 @@
 <script setup>
-import { computed } from 'vue'
-import { useCartStore } from '@/stores/cartStore'
-import { RouterLink } from 'vue-router'
-import emptyCartImage from '@/assets/images/empty-states/empty-cart.png'
+import { resolveImage } from '@/utils/image'
+import defaultDrink from '@/assets/images/others/default-drink.png' // Import ảnh default
 
-const cartStore = useCartStore()
 
 const props = defineProps({
   cartItems: {
     type: Array,
     required: true,
   },
+  storeId: {
+    type: Number,
+    required: true,
+  },
+  loading: Boolean
 })
 
-// Format tiền (giữ nguyên logic từ View cũ)
+// Format tiền
 const formatCurrency = (val) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
 
-// Tính giá an toàn cho mỗi item (giữ nguyên logic từ View cũ)
-const getItemPrice = (item) => {
-  try {
-    const basePrice = Number(item.price) || 0
-    const sizePrice = Number(item.sizePrice) || 0
-    const toppingPrice = Array.isArray(item.toppings)
-      ? item.toppings.reduce((sum, t) => sum + (Number(t.price) || 0), 0)
-      : 0
-    return Number((basePrice + sizePrice + toppingPrice) * item.quantity)
-  } catch (error) {
-    console.error('Lỗi tính giá:', error, item)
-    return 0
-  }
+// Hàm xử lý ảnh an toàn
+const getItemImage = (url) => resolveImage(url, defaultDrink)
+
+const handleImageError = (e) => {
+  e.target.src = defaultDrink
+  e.target.onerror = null
 }
 
-// Hiển thị toppings an toàn (giữ nguyên logic từ View cũ)
+// Hiển thị toppings (Sửa lại key truy cập cho đúng DTO)
 const getToppingsDisplay = (toppings) => {
   if (!toppings || !Array.isArray(toppings) || toppings.length === 0) {
     return ''
   }
-  return toppings.map((t) => t.name || '').join(', ')
+  // Backend trả về CartToppingReadDto có trường productName
+  return toppings.map((t) => t.productName || '').join(', ')
 }
 
-// Kiểm tra item có options không (giữ nguyên logic từ View cũ)
+// Kiểm tra item có options không
 const hasOptions = (item) => {
-  return item.size || item.sugar || item.ice || (item.toppings && item.toppings.length > 0)
+  return (
+    item.sizeLabel ||
+    item.sugarLabel ||
+    item.iceLabel ||
+    (item.toppings && item.toppings.length > 0)
+  )
 }
+
+const emit = defineEmits([
+  'update-quantity',
+  'remove-item',
+  'clear-cart',
+])
+
 </script>
 
 <template>
   <div class="space-y-4">
-    <!-- Header và nút Clear All -->
-    <div class="flex justify-between">
-      <h2 class="text-2xl font-semibold mb-4 dark:text-green-500">Giỏ hàng của bạn</h2>
-      <button
-        v-if="cartItems.length"
-        @click="cartStore.clearCart()"
-        class="text-md font-medium text-red-500 hover:underline"
-      >
+    <div class="flex justify-between items-center">
+      <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Các sản phẩm tại cửa hàng</h2>
+      <button v-if="cartItems.length" @click="emit('clear-cart', storeId)">
         Xóa tất cả
       </button>
     </div>
 
-    <!-- Danh sách sản phẩm -->
     <div
       v-for="item in cartItems"
       :key="item.id"
-      class="flex items-center gap-4 p-4 bg-white rounded-2xl shadow dark:bg-gray-600"
+      class="flex gap-4 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md"
     >
-      <router-link :to="`/products/${item.productId}`">
+      <router-link :to="`/products/${item.productId}`" class="flex-shrink-0">
         <img
-          :src="item.image"
-          title="Xem chi tiết"
-          :alt="item.name"
-          class="w-24 h-24 object-cover rounded-xl"
+          :src="getItemImage(item.imageUrl)"
+          :alt="item.productName"
+          class="w-24 h-24 object-cover rounded-lg border border-gray-100 dark:border-gray-600"
+          @error="handleImageError"
         />
       </router-link>
-      <div class="flex-1">
-        <h3 class="font-semibold text-lg">{{ item.name }}</h3>
 
-        <!-- Tùy chọn -->
-        <div v-if="hasOptions(item)" class="text-sm text-gray-500 space-y-1 dark:text-green-200">
-          <p v-if="item.size">Size: {{ item.size }}</p>
-          <p v-if="item.sugar">Đường: {{ item.sugar }}</p>
-          <p v-if="item.ice">Đá: {{ item.ice }}</p>
-          <p v-if="item.toppings && item.toppings.length > 0">
-            Topping: {{ getToppingsDisplay(item.toppings) }}
-          </p>
+      <div class="flex-1 flex flex-col justify-between">
+        <div>
+          <div class="flex justify-between items-start">
+            <h3 class="font-bold text-lg text-gray-800 dark:text-white line-clamp-1 mr-2">
+              {{ item.productName }}
+            </h3>
+            <span class="text-sm text-gray-500">
+  {{ formatCurrency(item.finalPrice / item.quantity) }} / ly
+</span>
+<span class="font-bold text-green-600">
+  {{ formatCurrency(item.finalPrice) }}
+</span>
+
+          </div>
+
+          <div
+            v-if="hasOptions(item)"
+            class="mt-1 text-sm text-gray-500 dark:text-gray-400 space-y-0.5"
+          >
+            <p v-if="item.sizeLabel">
+              Size:
+              <span class="font-medium text-gray-700 dark:text-gray-300">{{ item.sizeLabel }}</span>
+            </p>
+            <div class="flex gap-3">
+              <p v-if="item.sugarLabel">Đường: {{ item.sugarLabel }}</p>
+              <p v-if="item.iceLabel">Đá: {{ item.iceLabel }}</p>
+            </div>
+            <p
+              v-if="item.toppings && item.toppings.length > 0"
+              class="text-xs text-gray-500 italic"
+            >
+              + Topping: {{ getToppingsDisplay(item.toppings) }}
+            </p>
+          </div>
         </div>
 
-        <!-- Điều chỉnh số lượng -->
-        <div class="flex items-center gap-3 mt-2">
+        <div class="flex items-center justify-between mt-3">
+          <div class="flex items-center border border-gray-200 dark:border-gray-600 rounded-lg h-8">
+            <button
+              @click="emit('update-quantity', item.id, item.quantity - 1)"
+              class="px-2.5 h-full hover:bg-gray-100 dark:hover:bg-gray-700 rounded-l-lg text-gray-500 transition disabled:opacity-50"
+              :disabled="loading || item.quantity <= 1"
+            >
+              -
+            </button>
+            <span
+              class="px-3 text-sm font-bold text-gray-800 dark:text-white min-w-[1.5rem] text-center"
+            >
+              {{ item.quantity }}
+            </span>
+            <button
+              @click="emit('update-quantity', item.id, item.quantity + 1)"
+              class="px-2.5 h-full hover:bg-gray-100 dark:hover:bg-gray-700 rounded-r-lg text-gray-500 transition"
+            >
+              +
+            </button>
+          </div>
+
           <button
-            @click="cartStore.updateQuantity(item.id, item.quantity - 1)"
-            class="px-2 py-1 border rounded hover:bg-gray-100 dark:bg-gray-500 dark:hover:bg-gray-700"
+            @click="emit('remove-item', item.id)"
+            class="text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors"
           >
-            -
-          </button>
-          <span class="font-medium">{{ item.quantity }}</span>
-          <button
-            @click="cartStore.updateQuantity(item.id, item.quantity + 1)"
-            class="px-2 py-1 border rounded hover:bg-gray-100 dark:bg-gray-500 dark:hover:bg-gray-700"
-          >
-            +
+            Xóa
           </button>
         </div>
-      </div>
-
-      <!-- Giá và nút xóa -->
-      <div class="text-right">
-        <p class="text-lg font-semibold">
-          {{ formatCurrency(getItemPrice(item)) }}
-        </p>
-        <button
-          @click="cartStore.removeFromCart(item.id)"
-          class="text-sm text-red-500 hover:underline"
-        >
-          Xóa
-        </button>
       </div>
     </div>
   </div>

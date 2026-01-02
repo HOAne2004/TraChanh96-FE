@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useStoreStore } from '@/stores/storeStore'
-import { useAppStore } from '@/stores/appStore'
+import { useStoreStore } from '@/stores/store'
+import { useBrandStore } from '@/stores/brand'
 import { storeToRefs } from 'pinia'
 
 // Components
@@ -10,18 +10,18 @@ import Button from '@/components/common/Button.vue'
 import CustomerEmptyState from '@/components/common/CustomerEmptyState.vue' // Import Empty State
 
 const storeStore = useStoreStore()
-const appStore = useAppStore()
+const brandStore = useBrandStore()
 
 // Lấy dữ liệu và loading state
 const { stores, loading: storeLoading } = storeToRefs(storeStore)
-const { appConfig } = storeToRefs(appStore)
+const { appConfig } = storeToRefs(brandStore)
 
 const pageLoading = ref(true)
 
 onMounted(async () => {
   try {
     // Dùng Promise.all để tải song song
-    await Promise.all([storeStore.fetchStores(), appStore.fetchAppConfig()])
+    await Promise.all([storeStore.fetchActiveStores(), brandStore.fetchPublicBrandInfo()])
   } catch (error) {
     console.error('Lỗi tải trang About Us:', error)
   } finally {
