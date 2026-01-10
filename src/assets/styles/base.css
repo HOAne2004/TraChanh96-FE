@@ -19,6 +19,10 @@
   --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
   --vt-c-text-dark-1: var(--vt-c-white);
   --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+
+  /* Transition variables - ĐẶT Ở ĐÂY CHO DỄ QUẢN LÝ */
+  --transition-duration: 0.5s;
+  --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* semantic color variables for this project */
@@ -62,9 +66,6 @@ body {
   min-height: 100vh;
   color: var(--color-text);
   background: var(--color-background);
-  transition:
-    color 0.5s,
-    background-color 0.5s;
   line-height: 1.6;
   font-family:
     Inter,
@@ -83,4 +84,157 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* TRANSITION CHỈ ĐỂ Ở ĐÂY, KHÔNG LẶP LẠI */
+  transition:
+    background-color var(--transition-duration) var(--transition-timing),
+    color var(--transition-duration) var(--transition-timing);
+
+  /* Thêm cho dark mode overlay */
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* CHỈ ĐỊNH transition cho các element có chọn lọc - KHÔNG DÙNG * */
+/* Điều này tránh ảnh hưởng đến performance */
+a,
+button,
+input,
+textarea,
+select {
+  transition:
+    background-color var(--transition-duration) var(--transition-timing),
+    border-color var(--transition-duration) var(--transition-timing),
+    color var(--transition-duration) var(--transition-timing);
+}
+
+/* Hoặc nếu muốn cụ thể hơn cho các component */
+.card,
+.navbar,
+.footer,
+header,
+footer,
+nav {
+  transition:
+    background-color var(--transition-duration) var(--transition-timing),
+    border-color var(--transition-duration) var(--transition-timing),
+    color var(--transition-duration) var(--transition-timing),
+    transform var(--transition-duration) var(--transition-timing),
+    box-shadow var(--transition-duration) var(--transition-timing);
+}
+
+/* Optional: Hiệu ứng cho khi toggle dark mode */
+.dark-mode-transition {
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* TẠM THỜI ẨN TRANSITION KHI ĐANG ANIMATE OVERLAY */
+.dark-mode-transitioning * {
+  transition: none !important;
+}
+
+/* Dark mode overlay styles - ĐẶT Ở ĐÂY THAY VÌ TRONG COMPONENT */
+.darkmode-overlay {
+  position: fixed;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  z-index: 9999;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  display: none;
+  overflow: hidden;
+}
+
+/* Animation cho chế độ sáng -> tối */
+.darkmode-overlay.to-dark {
+  animation: expandDark 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Animation cho chế độ tối -> sáng */
+.darkmode-overlay.to-light {
+  animation: expandLight 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Keyframes đặt ở đây */
+@keyframes expandDark {
+  0% {
+    width: 0;
+    height: 0;
+    background: rgba(255, 215, 0, 0.1);
+    box-shadow:
+      0 0 0 0 rgba(255, 215, 0, 0.2),
+      0 0 0 0 rgba(255, 215, 0, 0.1);
+  }
+  30% {
+    background: rgba(255, 215, 0, 0.3);
+    box-shadow:
+      0 0 100px 50px rgba(255, 215, 0, 0.3),
+      0 0 200px 100px rgba(255, 215, 0, 0.1);
+  }
+  70% {
+    background: rgba(30, 30, 60, 0.8);
+    box-shadow:
+      0 0 200px 150px rgba(30, 30, 60, 0.6),
+      0 0 400px 250px rgba(30, 30, 60, 0.3);
+  }
+  100% {
+    width: 300vw;
+    height: 300vw;
+    background: rgba(18, 18, 18, 0.9);
+    box-shadow:
+      0 0 300px 200px rgba(18, 18, 18, 0.8),
+      0 0 600px 400px rgba(18, 18, 18, 0.4);
+    opacity: 0;
+  }
+}
+
+@keyframes expandLight {
+  0% {
+    width: 0;
+    height: 0;
+    background: rgba(230, 230, 250, 0.1);
+    box-shadow:
+      0 0 0 0 rgba(230, 230, 250, 0.2),
+      0 0 0 0 rgba(230, 230, 250, 0.1);
+  }
+  30% {
+    background: rgba(230, 230, 250, 0.3);
+    box-shadow:
+      0 0 100px 50px rgba(230, 230, 250, 0.3),
+      0 0 200px 100px rgba(230, 230, 250, 0.1);
+  }
+  70% {
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow:
+      0 0 200px 150px rgba(255, 255, 255, 0.6),
+      0 0 400px 250px rgba(255, 255, 255, 0.3);
+  }
+  100% {
+    width: 300vw;
+    height: 300vw;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow:
+      0 0 300px 200px rgba(255, 255, 255, 0.8),
+      0 0 600px 400px rgba(255, 255, 255, 0.4);
+    opacity: 0;
+  }
+}
+
+/* Accessibility: Giảm chuyển động nếu người dùng yêu cầu */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .darkmode-overlay,
+  .darkmode-overlay.to-dark,
+  .darkmode-overlay.to-light {
+    animation: none !important;
+    transition: none !important;
+  }
 }

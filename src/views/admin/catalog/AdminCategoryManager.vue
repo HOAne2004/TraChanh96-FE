@@ -1,159 +1,370 @@
 <script setup>
-import { watch, ref, onMounted, computed } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
 import { storeToRefs } from 'pinia'
-
 import { useCategoryStore } from '@/stores/category'
-import { useModalStore } from '@/stores/modal'
-import { checkCategoryUsage } from '@/services/category.service'
-
-import { formatDate } from '@/utils/formatters'
-
-import AdminDataTable from '@/components/admin/ui/AdminDataTable.vue'
-import CategoryFormModal from '@/components/admin/categories/CategoryFormModal.vue'
-import AdminActionHeader from '@/components/admin/ui/AdminActionHeader.vue'
-import AdminDataContainer from '@/components/admin/ui/AdminDataContainer.vue'
-
+import { useToastStore } from '@/stores/toast'
+import AdminDataTable from '@/components/admin/common/AdminDataTable.vue'
+import {
+  PUBLIC_STATUS_UI,
+  getPublicStatusOptions,
+  mapLabelToValue,
+} from '@/constants/status.constants'
+// --- SETUP STORES ---
 const categoryStore = useCategoryStore()
-const modalStore = useModalStore()
+const toastStore = useToastStore()
+const { categories, flatCategories, loading } = storeToRefs(categoryStore)
 
-const { categories, isLoading } = storeToRefs(categoryStore)
-
-const searchQuery = ref('')
+// --- STATE QUẢN LÝ ---
 const isModalOpen = ref(false)
-const editingCategory = ref(null)
+const isEditMode = ref(false)
+const submitting = ref(false)
 
-// 🟢 1. XỬ LÝ HIỂN THỊ TÊN DANH MỤC CHA
-// Chúng ta tạo một computed để map parentId -> parentName
-const processedCategories = computed(() => {
-  if (!categories.value) return []
-
-  // Tạo Map để tra cứu nhanh ID -> Name
-  const categoryMap = new Map(categories.value.map((c) => [c.id, c.name]))
-
-  return categories.value.map((cat) => ({
-    ...cat,
-    // Nếu có parentId, tìm tên trong Map. Nếu không thấy hoặc null thì hiển thị 'Gốc'
-    parentName: cat.parentId ? categoryMap.get(cat.parentId) : '(Danh mục gốc)',
-  }))
+// Form Model
+const formData = reactive({
+  id: null,
+  name: '',
+  parentId: null,
+  sortOrder: 0,
+  status: 'Active', // Mặc định Active
 })
 
-// Cấu hình cột
+// Cấu hình bảng
 const categoryColumns = [
-  { key: 'id', label: 'ID', sortable: true },
-  { key: 'name', label: 'Tên danh mục', sortable: true },
-  { key: 'slug', label: 'Slug' },
-  { key: 'parentName', label: 'Danh mục cha' },
-  { key: 'createdAt', label: 'Ngày tạo' },
+  { key: 'name', label: 'Tên danh mục', cellClass: 'font-medium text-gray-900', sortable: true },
+  { key: 'slug', label: 'Slug (Đường dẫn)', cellClass: 'text-gray-500 text-sm' },
+  { key: 'sortOrder', label: 'Thứ tự', cellClass: 'text-center', headerClass: 'text-center' },
+  { key: 'status', label: 'Trạng thái', cellClass: 'text-center', headerClass: 'text-center' },
 ]
 
-// Debounce tìm kiếm
-let debounceTimer = null
-watch(searchQuery, (newQuery) => {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(async () => {
-    try {
-      await categoryStore.fetchCategories({ q: newQuery })
-    } catch (err) {
-      console.error('Lỗi tìm kiếm danh mục:', err)
-    }
-  }, 300)
-})
+// --- ACTIONS ---
 
-onMounted(async () => {
+// 1. Load dữ liệu
+const fetchData = async () => {
+  await categoryStore.fetchCategories()
+}
+
+// 2. Mở Modal Thêm mới
+const openCreateModal = () => {
+  isEditMode.value = false
+  // Reset form
+  formData.id = null
+  formData.name = ''
+  formData.parentId = null
+  formData.sortOrder = 0
+  formData.status = 'Active'
+
+  isModalOpen.value = true
+}
+
+// 3. Mở Modal Sửa
+const openEditModal = (item) => {
+  isEditMode.value = true
+  // Fill data
+  formData.id = item.id
+  formData.name = item.name
+  formData.parentId = item.parentId || null
+  formData.sortOrder = item.sortOrder || 0
+  formData.status = item.status
+
+  isModalOpen.value = true
+}
+
+// 4. Submit Form (Create/Update)
+const handleSubmit = async () => {
+  if (!formData.name)
+    return toastStore.showToast({
+      title: 'Lỗi',
+      message: 'Tên danh mục không được để trống',
+      type: 'error',
+    })
+
+  submitting.value = true
   try {
-    await categoryStore.fetchCategories({})
+    const payload = {
+      name: formData.name,
+      parentId: formData.parentId,
+      sortOrder: formData.sortOrder,
+      status: formData.status === 'Active' ? 1 : 0, // Giả sử Backend dùng Enum 1=Active
+    }
+
+    if (isEditMode.value) {
+      await categoryStore.updateCategoryAction(formData.id, payload)
+      toastStore.showToast({
+        title: 'Thành công',
+        message: 'Cập nhật danh mục thành công',
+        type: 'success',
+      })
+    } else {
+      await categoryStore.createCategoryAction(payload)
+      toastStore.showToast({
+        title: 'Thành công',
+        message: 'Tạo danh mục mới thành công',
+        type: 'success',
+      })
+    }
+
+    isModalOpen.value = false
+    // Không cần fetch lại vì action trong store đã fetch rồi
   } catch (err) {
-    console.error('Lỗi tải danh mục:', err)
+    // Error đã được handle trong store hoặc hiển thị ở đây
+  } finally {
+    submitting.value = false
   }
+}
+
+// 5. Xóa danh mục
+const handleDelete = async (item) => {
+  try {
+    await categoryStore.deleteCategoryAction(item.id)
+    toastStore.showToast({ title: 'Thành công', message: 'Đã xóa danh mục', type: 'success' })
+  } catch (err) {
+    // Error handle
+  }
+}
+
+// Lọc danh sách cha để tránh chọn chính mình làm cha (Circular dependency)
+const parentOptions = computed(() => {
+  if (!isEditMode.value) return flatCategories.value
+  // Nếu đang sửa, loại bỏ chính nó khỏi danh sách cha
+  return flatCategories.value.filter((c) => c.id !== formData.id)
 })
 
-// Mở modal tạo mới
-const handleCreateNew = () => {
-  editingCategory.value = null
-  isModalOpen.value = true
-}
-
-const handleEdit = (category) => {
-  editingCategory.value = category
-  isModalOpen.value = true
-}
-
-const handleDelete = async (category) => {
-  const count = await checkCategoryUsage(category.id)
-  let message = `Bạn có muốn xóa danh mục "${category.name}"?`
-  if (count > 0) {
-    message += `\n\n🔥 CẢNH BÁO QUAN TRỌNG 🔥\nDanh mục này đang chứa ${count} sản phẩm.\nNếu bạn xóa danh mục, TOÀN BỘ ${count} SẢN PHẨM NÀY SẼ BỊ XÓA VĨNH VIỄN!`
-    message += `\n\nBạn có thực sự chắc chắn không?`
+const onTableAction = ({ type, item }) => {
+  if (type === 'edit') {
+    openEditModal(item)
+  } else if (type === 'delete') {
+    handleDelete(item)
   }
-  if (confirm(message)) {
-    try {
-      await categoryStore.deleteCategoryAction(category.id)
-      modalStore.showToast(`Đã xóa thành công ${category.name}!`, 'success')
-    } catch (error) {
-      modalStore.showToast(error.message, 'error')
+}
+
+//6.
+// Lấy danh sách option (Trừ Deleted)
+const statusOptions = getPublicStatusOptions()
+
+// Xử lý thay đổi nhanh trạng thái
+const handleQuickStatusUpdate = async (item, event) => {
+  const newValue = Number(event.target.value) // Lấy value int từ option
+  const oldLabel = item.status
+
+  // Gọi API cập nhật
+  try {
+    // Chỉ gửi status, các trường khác giữ nguyên hoặc null (tùy BE cấu hình Patch)
+    // Trong file CategoryService.cs bạn dùng AutoMapper, nên nếu chỉ gửi Status thì Name sẽ null?
+    // 👉 Nếu BE dùng Patch chuẩn (chỉ update field có value), thì gửi object chỉ có Status là được.
+    // 👉 Nếu BE map đè (Replace), bạn cần gửi full data cũ kèm status mới.
+
+    // AN TOÀN NHẤT: Gửi full data của row đó nhưng đổi status
+    const payload = {
+      name: item.name,
+      parentId: item.parentId,
+      sortOrder: item.sortOrder,
+      status: newValue, // Gửi số (Enum)
     }
+
+    await categoryStore.updateCategoryAction(item.id, payload)
+
+    toastStore.showToast({
+      title: 'Thành công',
+      message: 'Cập nhật trạng thái thành công',
+      type: 'success',
+    })
+  } catch (err) {
+    // Nếu lỗi, rollback UI về giá trị cũ (trick: reload table)
+    event.target.value = mapLabelToValue(oldLabel)
+    console.error(err)
   }
 }
+
+// Helper để xác định màu sắc dựa trên Label hiện tại
+const getStatusColor = (label) => {
+  const val = mapLabelToValue(label)
+  return PUBLIC_STATUS_UI[val]?.color || 'text-gray-600 bg-gray-50 border-gray-200'
+}
+
+onMounted(() => {
+  fetchData()
+})
 </script>
 
 <template>
-  <main class="p-6">
-    <h1 class="text-3xl font-bold mb-6">Quản lý Danh mục Sản phẩm</h1>
+  <div class="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Danh mục sản phẩm</h1>
+        <p class="text-sm text-gray-500 mt-1">Quản lý phân loại menu</p>
+      </div>
+      <button
+        @click="openCreateModal"
+        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2 text-sm font-medium transition-colors"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          class="w-5 h-5"
+        >
+          <path
+            d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"
+          />
+        </svg>
+        Thêm mới
+      </button>
+    </div>
 
-    <AdminActionHeader
-      v-model="searchQuery"
-      addButtonLabel="Thêm Danh mục mới"
-      @add-new="handleCreateNew"
-    />
-
-    <AdminDataContainer
-      :items="categories"
-      :loading="isLoading"
-      :search-query="searchQuery"
-      data-type="danh mục"
+    <AdminDataTable
+      :items="flatCategories"
+      :columns="categoryColumns"
+      :loading="loading"
+      :pagination="null"
+      :actions="['edit', 'delete']"
+      @action="onTableAction"
     >
-      <template #empty-state>
-        <div class="flex flex-col items-center justify-center p-6">
-          <p class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">
-            Chưa có danh mục nào được tạo.
-          </p>
-          <button
-            @click="handleCreateNew"
-            class="text-green-600 hover:text-green-800 font-medium underline cursor-pointer transition-colors"
+      <template #cell-name="{ item }">
+        <span :class="item.parentId ? 'text-gray-600 ml-4' : 'font-bold'">
+          {{ item.displayName || item.name }}
+        </span>
+      </template>
+
+      <template #cell-status="{ item }">
+        <div class="relative">
+          <select
+            :value="mapLabelToValue(item.status)"
+            @change="handleQuickStatusUpdate(item, $event)"
+            @click.stop
+            :class="[
+              'appearance-none pl-3 pr-8 py-1 rounded-full text-xs font-medium border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 transition-all',
+              getStatusColor(item.status),
+            ]"
           >
-            Bấm vào đây để tạo danh mục đầu tiên
-          </button>
+            <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+
+          <div
+            class="pointer-events-none absolute inset-y-0 right-12 flex items-center px-2 text-current opacity-60"
+          >
+            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              ></path>
+            </svg>
+          </div>
         </div>
       </template>
-      <AdminDataTable
-        :items="processedCategories"
-        :columns="categoryColumns"
-        :loading="isLoading"
-        :actions="['edit', 'delete']"
-        @edit-row="handleEdit"
-        @delete-row="handleDelete"
-      >
-        <template #cell-createdAt="{ value }">
-          {{ formatDate(value) }}
-        </template>
 
-        <template #cell-parentName="{ value }">
-          <span
-            :class="
-              value === '(Danh mục gốc)' ? 'text-gray-400 italic' : 'text-green-600 font-medium'
-            "
-          >
-            {{ value }}
-          </span>
-        </template>
-      </AdminDataTable>
-    </AdminDataContainer>
-  </main>
+    </AdminDataTable>
 
-  <CategoryFormModal
-    v-if="isModalOpen"
-    :category="editingCategory"
-    :is-open="isModalOpen"
-    @close="isModalOpen = false"
-  />
+    <div
+      v-if="isModalOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+    >
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+        <div
+          class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center"
+        >
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+            {{ isEditMode ? 'Cập nhật danh mục' : 'Thêm danh mục mới' }}
+          </h3>
+          <button @click="isModalOpen = false" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+
+        <form @submit.prevent="handleSubmit" class="p-6 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >Tên danh mục <span class="text-red-500">*</span></label
+            >
+            <input
+              v-model="formData.name"
+              type="text"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:border-gray-600"
+              placeholder="Ví dụ: Trà sữa"
+              required
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >Danh mục cha</label
+            >
+            <select
+              v-model="formData.parentId"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:border-gray-600"
+            >
+              <option :value="null">-- Không có (Danh mục gốc) --</option>
+              <option v-for="cat in parentOptions" :key="cat.id" :value="cat.id">
+                {{ cat.displayName }}
+              </option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >Thứ tự</label
+              >
+              <input
+                v-model="formData.sortOrder"
+                type="number"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:border-gray-600"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >Trạng thái</label
+              >
+              <select
+                v-model="formData.status"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:border-gray-600"
+              >
+                <option value="Active">Hoạt động</option>
+                <option value="Inactive">Ẩn</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="pt-4 flex justify-end gap-3">
+            <button
+              type="button"
+              @click="isModalOpen = false"
+              class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              :disabled="submitting"
+              class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center gap-2"
+            >
+              <svg
+                v-if="submitting"
+                class="animate-spin h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </template>

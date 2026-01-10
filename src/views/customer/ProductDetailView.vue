@@ -516,11 +516,6 @@ const handleAddToCart = async (isBuyNow = false) => {
       <Button label="Xem thực đơn" @click="router.push('/products')" />
     </div>
 
-    <Notification
-      :show="showNotification"
-      :message="`Đã thêm ${currentProduct?.name} vào giỏ hàng`"
-    />
-
     <div
       v-if="canReview"
       class="mt-4 p-4 bg-green-50 rounded-xl border border-green-200 flex items-center justify-between"

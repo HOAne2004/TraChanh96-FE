@@ -1,14 +1,38 @@
 // src/stores/admin.js
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue' // 👈 Thêm computed
 import adminService from '@/services/admin.service'
 import { useToastStore } from '@/stores/toast'
+import { USER_ROLE } from '@/constants/user.constants'
 
 export const useAdminStore = defineStore('admin', () => {
   // --- STATE ---
   const users = ref([])
   const loading = ref(false)
   const error = ref(null)
+
+  // --- GETTERS (COMPUTED) ---
+
+  // 1. Lấy danh sách những người có thể đi giao hàng (Shipper Candidates)
+  // Bao gồm: Shipper, Staff, và cả Admin/Manager (để test hoặc quản lý đi giao hộ)
+  const shippers = computed(() => {
+    return users.value.filter(u => {
+      // Logic tương tự: Ai không phải khách hàng thì đều có thể đi ship
+      return u.role !== USER_ROLE.CUSTOMER
+    })
+  })
+  // 2. Lấy danh sách nhân viên nội bộ (Staff + Manager + Admin) - Không bao gồm Customer
+  const internalUsers = computed(() => {
+    return users.value.filter(u => {
+      const role = (u.role || '').toLowerCase()
+      return role !== 'customer'
+    })
+  })
+
+  // 3. Lấy danh sách khách hàng
+  const customers = computed(() => {
+    return users.value.filter(u => (u.role || '').toLowerCase() === 'customer')
+  })
 
   // --- ACTIONS ---
 
@@ -96,6 +120,9 @@ export const useAdminStore = defineStore('admin', () => {
 
   return {
     users,
+    shippers,      // 👈 Export getter này
+    internalUsers, // 👈 Export getter này
+    customers,     // 👈 Export getter này
     loading,
     error,
     fetchAllUsers,

@@ -109,5 +109,12 @@ export default {
    */
   restore(id) {
     return api.patch(`${ENDPOINT}/${id}/restore`)
+  },
+
+  /**
+   * Xác nhận thanh toán (Cho đơn hàng)
+   */
+  confirmPayment(id) {
+    return api.put(`${ENDPOINT}/${id}/confirm-payment`)
   }
 }

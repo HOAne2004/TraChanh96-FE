@@ -1,212 +1,268 @@
 <script setup>
-import { defineProps, defineEmits } from 'vue'
-import StatusBadge from './StatusBadge.vue' // Giả định component này đã được tạo
+import { defineProps, defineEmits, ref, computed } from 'vue'
 
-// Khai báo các sự kiện (events) mà component này sẽ phát ra
-const emit = defineEmits(['edit-row', 'delete-row', 'toggle-status', 'change-page', 'sort-column'])
+const emit = defineEmits(['change-page', 'action']) // Bỏ sort-column vì ta xử lý nội bộ
 
-// Khai báo Props
 const props = defineProps({
-  // Dữ liệu chính để hiển thị (ví dụ: products, users, categories)
-  items: {
-    type: Array,
-    required: true,
-  },
-  // Cấu hình các cột hiển thị: [{ key: 'name', label: 'Tên', isBadge: false }]
-  columns: {
-    type: Array,
-    required: true,
-  },
-  // Trạng thái tải dữ liệu
-  loading: {
-    type: Boolean,
-    default: false,
-  },
-  // Cấu hình các nút hành động (ví dụ: ['edit', 'delete'])
-  actions: {
-    type: Array,
-    default: () => ['edit', 'delete'],
-  },
-  // Tùy chọn, tổng số bản ghi (cho phân trang nếu cần)
-  totalCount: {
-    type: Number,
-    default: 0,
-  },
-  // Tùy chọn, thông tin trang hiện tại và giới hạn
-  pagination: {
-    type: Object,
-    default: () => ({ page: 1, limit: 10 }),
-  },
+  items: { type: Array, required: true },
+  columns: { type: Array, required: true },
+  loading: { type: Boolean, default: false },
+  totalCount: { type: Number, default: 0 },
+  pagination: { type: Object, default: () => ({ pageIndex: 1, pageSize: 10 }) },
+  actions: { type: Array, default: () => [] },
 })
 
-// 👉 Tính toán giá trị của một trường dữ liệu (hỗ trợ nested object)
+// --- STATE SẮP XẾP ---
+const sortKey = ref('') // Cột đang được sort
+const sortOrder = ref('asc') // 'asc' (tăng) hoặc 'desc' (giảm)
+
+// --- HÀM HELPER LẤY DỮ LIỆU ---
 const getCellValue = (item, key) => {
-  // Ví dụ: item.category.name => ['category', 'name']
   return key.split('.').reduce((o, i) => (o ? o[i] : null), item)
 }
 
-// 👉 Xử lý khi nhấn nút hành động
-const handleAction = (action, item) => {
-  if (action === 'edit') {
-    emit('edit-row', item)
-  } else if (action === 'delete') {
-    emit('delete-row', item)
-  } else if (action === 'toggle-status') {
-    emit('toggle-status', item)
-  }
-}
+// --- LOGIC SẮP XẾP TỰ ĐỘNG ---
+const sortedItems = computed(() => {
+  // 1. Copy mảng gốc để tránh mutate prop (Vue warning)
+  let data = [...props.items]
 
-// 👉 Tạo một chuỗi ID duy nhất cho khóa
-const getUniqueKey = (item, index) => {
-  return item.id ? item.id : item.slug ? item.slug : index
+  // 2. Nếu không có key sort, trả về mặc định
+  if (!sortKey.value) return data
+
+  // 3. Thực hiện sort
+  data.sort((a, b) => {
+    let valueA = getCellValue(a, sortKey.value)
+    let valueB = getCellValue(b, sortKey.value)
+
+    // Xử lý null/undefined (đẩy xuống cuối)
+    if (valueA == null) return 1
+    if (valueB == null) return -1
+
+    // So sánh số
+    if (typeof valueA === 'number' && typeof valueB === 'number') {
+      return (valueA - valueB) * (sortOrder.value === 'asc' ? 1 : -1)
+    }
+
+    // So sánh chuỗi (Tiếng Việt) và Ngày tháng
+    valueA = valueA.toString().toLowerCase()
+    valueB = valueB.toString().toLowerCase()
+
+    if (sortOrder.value === 'asc') {
+      return valueA.localeCompare(valueB)
+    } else {
+      return valueB.localeCompare(valueA)
+    }
+  })
+
+  return data
+})
+
+// --- HÀM CLICK HEADER ---
+const handleSort = (key) => {
+  if (sortKey.value === key) {
+    // Nếu click lại cột cũ -> Đảo chiều
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    // Nếu click cột mới -> Set cột mới, mặc định asc
+    sortKey.value = key
+    sortOrder.value = 'asc'
+  }
 }
 </script>
 
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-x-auto">
-    <table v-if="loading" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-      <thead>
-        <tr>
-          <th
-            v-for="col in columns"
-            :key="col.key"
-            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-          >
-            {{ col.label }}
-          </th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-        <tr v-for="i in 5" :key="i">
-          <td v-for="j in columns.length" :key="j" class="px-6 py-4 whitespace-nowrap">
-            <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-full"></div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div
+    class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden border border-gray-200 dark:border-gray-700"
+  >
+    <div v-if="loading" class="p-12 flex justify-center">
+      <svg
+        class="animate-spin h-8 w-8 text-green-500"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          class="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          stroke-width="4"
+        ></circle>
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+        ></path>
+      </svg>
+    </div>
 
     <table v-else class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-      <thead>
+      <thead class="bg-gray-50 dark:bg-gray-700/50">
         <tr>
           <th
             v-for="col in columns"
             :key="col.key"
-            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-green-500"
-            @click="col.sortable ? emit('sort-column', col.key) : null"
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider transition-colors select-none"
+            :class="[
+              col.headerClass,
+              col.sortable !== false
+                ? 'cursor-pointer hover:text-green-600 hover:bg-gray-100 dark:hover:bg-gray-600'
+                : '',
+            ]"
+            @click="col.sortable !== false ? handleSort(col.key) : null"
           >
-            {{ col.label }}
+            <div class="flex items-center gap-1">
+              {{ col.label }}
+
+              <span v-if="col.sortable !== false" class="text-gray-400">
+                <svg
+                  v-if="sortKey !== col.key"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-3 w-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                  />
+                </svg>
+                <svg
+                  v-else-if="sortOrder === 'asc'"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-3 w-3 text-green-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
+                  />
+                </svg>
+                <svg
+                  v-else
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-3 w-3 text-green-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"
+                  />
+                </svg>
+              </span>
+            </div>
           </th>
+
           <th
-            v-if="actions.length"
-            class="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right"
+            v-if="actions.length > 0 || $slots.action"
+            class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
           >
-            Hành động
+            Thao tác
           </th>
         </tr>
       </thead>
+
       <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-        <tr v-for="(item, index) in items" :key="getUniqueKey(item, index)">
+        <tr
+          v-for="(item, index) in sortedItems"
+          :key="item.id || index"
+          class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        >
           <td
             v-for="col in columns"
             :key="col.key"
             class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
+            :class="col.cellClass"
           >
             <slot :name="`cell-${col.key}`" :item="item" :value="getCellValue(item, col.key)">
-              <StatusBadge v-if="col.isBadge" :status="getCellValue(item, col.key)" />
-
-              <img
-                v-else-if="
-                  col.key.toLowerCase().includes('imageurl') ||
-                  col.key.toLowerCase().includes('logourl')
-                "
-                :src="getCellValue(item, col.key)"
-                alt="Ảnh"
-                class="w-10 h-10 object-cover rounded-md"
-              />
-
-              <span v-else>{{ getCellValue(item, col.key) }}</span>
+              {{ getCellValue(item, col.key) }}
             </slot>
           </td>
 
           <td
-            v-if="actions.length"
-            class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
+            v-if="actions.length > 0 || $slots.action"
+            class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium"
           >
-            <button
-              v-for="action in actions"
-              :key="action"
-              type="button"
-              @click="handleAction(action, item)"
-              :class="[
-                'ml-3 inline-flex items-center text-xs font-medium rounded-full p-2',
-                action === 'edit'
-                  ? 'text-blue-600 hover:text-blue-900 bg-blue-100'
-                  : action === 'delete'
-                    ? 'text-red-600 hover:text-red-900 bg-red-100'
-                    : 'text-gray-600 hover:text-gray-900 bg-gray-100',
-              ]"
-            >
-              <svg
-                v-if="action === 'edit'"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                class="size-6"
+            <div class="flex items-center justify-center gap-2">
+              <button
+                v-if="actions.includes('view')"
+                @click="$emit('action', { type: 'view', item })"
+                class="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
               >
-                <path
-                  d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z"
-                />
-                <path
-                  d="M5.25 5.25a3 3 0 0 0-3 3v10.5a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3V13.5a.75.75 0 0 0-1.5 0v5.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5V8.25a1.5 1.5 0 0 1 1.5-1.5h5.25a.75.75 0 0 0 0-1.5H5.25Z"
-                />
-              </svg>
-              <svg
-                v-else-if="action === 'delete'"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                class="size-6"
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              </button>
+              <button
+                v-if="actions.includes('edit')"
+                @click="$emit('action', { type: 'edit', item })"
+                class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded"
               >
-                <path
-                  fill-rule="evenodd"
-                  d="M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-
-              <span v-else class="text-sm">{{ action }}</span>
-            </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+              </button>
+              <button
+                v-if="actions.includes('delete')"
+                @click="$emit('action', { type: 'delete', item })"
+                class="p-1.5 text-red-600 hover:bg-red-50 rounded"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </button>
+              <slot name="action" :item="item"></slot>
+            </div>
           </td>
         </tr>
       </tbody>
     </table>
-    <div
-      v-if="totalCount > 0"
-      class="flex justify-between items-center px-6 py-4 border-t dark:border-gray-700"
-    >
-      <div class="text-sm text-gray-700 dark:text-gray-400">
-        Hiển thị {{ items.length }} trên {{ totalCount }} kết quả
-      </div>
-
-      <div class="flex space-x-2">
-        <button
-          @click="emit('change-page', pagination.page - 1)"
-          :disabled="pagination.page <= 1"
-          class="px-3 py-1 text-sm rounded-lg border dark:border-gray-600 dark:text-white"
-        >
-          Trước
-        </button>
-        <span class="px-3 py-1 text-sm font-semibold dark:text-white">
-          Trang {{ pagination.page }}
-        </span>
-        <button
-          @click="emit('change-page', pagination.page + 1)"
-          :disabled="pagination.page * pagination.limit >= totalCount"
-          class="px-3 py-1 text-sm rounded-lg border dark:border-gray-600 dark:text-white"
-        >
-          Sau
-        </button>
-      </div>
-    </div>
   </div>
 </template>

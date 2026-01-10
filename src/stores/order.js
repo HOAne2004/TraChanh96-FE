@@ -3,17 +3,6 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import orderService from '@/services/order.service'
 
-// // Enum trạng thái để dùng trong code cho dễ đọc
-// export const OrderStatus = {
-//   New: 0,
-//   Confirmed: 1,     // Đã duyệt
-//   Preparing: 2,     // Đang pha chế
-//   Delivering: 3,    // Đang giao
-//   Completed: 4,     // Hoàn thành
-//   Cancelled: 5,     // Đã hủy
-//   Received: 6,      // Đã nhận (Tại quầy)
-//   PendingPayment: 7 // Chờ thanh toán Online
-// }
 
 export const useOrderStore = defineStore('order', () => {
   // --- STATE ---
@@ -191,14 +180,26 @@ export const useOrderStore = defineStore('order', () => {
    * Gán Shipper
    */
   async function assignShipperAction(id, shipperId) {
+    loading.value = true
     try {
+      // 1. Gọi API Gán Shipper
+      // ⚠️ LƯU Ý: Hãy đảm bảo trong file 'services/order.service.js', hàm assignShipper
+      // phải gọi đúng URL: api.put(`/orders/${id}/assign-shipper`, { shipperId })
       await orderService.assignShipper(id, shipperId)
-      // Sau khi gán xong, trạng thái thường chuyển sang Delivering -> Reload detail
-      await fetchOrderDetail(id)
+
+      // 2. 🟢 FIX LỖI RELOAD: Dùng orderCode thay vì id
+      if (currentOrder.value && currentOrder.value.orderCode) {
+        await fetchOrderDetail(currentOrder.value.orderCode)
+      }
+
       return true
     } catch (err) {
-      error.value = err.response?.data || 'Gán shipper thất bại'
-      throw err
+      // Xử lý thông báo lỗi chi tiết hơn
+      const msg = err.response?.data?.message || err.response?.data || 'Gán shipper thất bại'
+      error.value = msg
+      throw new Error(msg) // Ném lỗi ra để View bắt được
+    } finally {
+      loading.value = false
     }
   }
 
@@ -278,6 +279,19 @@ export const useOrderStore = defineStore('order', () => {
     }
   }
 
+  async function confirmPaymentAction(id) {
+    loading.value = true
+    try {
+      await orderService.confirmPayment(id)
+      return true
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Xác nhận thanh toán thất bại'
+      alert(error.value)
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
   return {
     orders,
     currentOrder,
@@ -300,5 +314,6 @@ export const useOrderStore = defineStore('order', () => {
     resetShippingFee,
     deleteOrderAction,
     restoreOrderAction,
+    confirmPaymentAction,
   }
 })

@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { formatDate, formatPrice } from '@/utils/formatters'
 import Button from '@/components/common/Button.vue'
+import { ORDER_STATUS_UI } from '@/constants/order.constants'
 
 const props = defineProps({
   orders: { type: Array, default: () => [] },
@@ -42,27 +43,20 @@ const paginatedOrders = computed(() => {
 
 // --- LOGIC ĐỊNH DẠNG VÀ TRẠNG THÁI ---
 
-const getStatusClasses = (status) => {
-  const lowerStatus = status?.toLowerCase()
-  switch (lowerStatus) {
-    case 'pending':
-      return {
-        text: 'Đang xử lý',
-        class: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-      }
-    case 'completed':
-      return {
-        text: 'Hoàn thành',
-        class: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-      }
-    case 'cancelled':
-      return { text: 'Đã hủy', class: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' }
-    default:
-      return {
-        text: status || 'Không rõ',
-        class: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-      }
+const getStatusConfig = (statusNumber) => {
+  // statusNumber bây giờ là số (0, 1, 6...)
+  // Lấy config từ object ORDER_STATUS_UI
+  const config = ORDER_STATUS_UI[statusNumber]
+
+  // Nếu không tìm thấy (lỗi dữ liệu), trả về mặc định
+  if (!config) {
+    return {
+      label: 'Không xác định',
+      color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+    }
   }
+
+  return config
 }
 
 const hasOrders = computed(() => props.orders && props.orders.length > 0)
@@ -92,26 +86,6 @@ const goToPage = (page) => {
     </h3>
 
     <div v-if="isLoading" class="text-center py-10 text-lg text-green-600 dark:text-green-400">
-      <svg
-        class="animate-spin mx-auto h-8 w-8 text-green-600 dark:text-green-400"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle
-          class="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          stroke-width="4"
-        ></circle>
-        <path
-          class="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        ></path>
-      </svg>
       <p class="mt-4">Đang tải lịch sử đơn hàng...</p>
     </div>
 
@@ -130,22 +104,20 @@ const goToPage = (page) => {
       >
         <div class="flex justify-between items-start mb-3 border-b dark:border-gray-700 pb-2">
           <div>
-            <span class="text-sm font-semibold text-gray-600 dark:text-gray-400 block"
-              >Mã Đơn hàng:</span
-            >
-            <span class="text-xl font-bold text-green-700 dark:text-green-400"
-              >#{{ order.orderCode }}</span
-            >
+            <span class="text-sm font-semibold text-gray-600 dark:text-gray-400 block">Mã Đơn hàng:</span>
+            <span class="text-xl font-bold text-green-700 dark:text-green-400">#{{ order.orderCode }}</span>
           </div>
 
           <span
             :class="[
-              'px-3 py-1 text-xs font-semibold rounded-full',
-              getStatusClasses(order.status).class,
+              'px-3 py-1 text-xs font-semibold rounded-full flex items-center gap-1',
+              getStatusConfig(order.status).color, // Lấy màu từ Config
             ]"
           >
-            {{ getStatusClasses(order.status).text }}
-          </span>
+             <svg v-if="getStatusConfig(order.status).iconPath" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3">
+                <path fill-rule="evenodd" clip-rule="evenodd" :d="getStatusConfig(order.status).iconPath" />
+             </svg>
+            {{ getStatusConfig(order.status).label }} </span>
 
         </div>
 
@@ -156,48 +128,23 @@ const goToPage = (page) => {
           </p>
           <p class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">Địa chỉ giao hàng:</span>
-            <span class="font-medium text-right max-w-[70%]">{{ order.address }}</span>
+            <span class="font-medium text-right max-w-[70%]">{{ order.shippingAddress || order.address }}</span>
           </p>
           <p class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">Phương thức thanh toán:</span>
-            <span class="font-medium">{{
-              order.paymentMethod === 'cash' ? 'COD' : 'Chuyển khoản'
-            }}</span>
+            <span class="font-medium">
+                {{ order.paymentMethod?.name  || (order.paymentMethod === 'cash' ? 'COD' : 'Chuyển khoản') }}
+            </span>
           </p>
-          <div
-            class="border-t pt-2 mt-2 dark:border-gray-700 flex justify-between font-bold text-lg"
-          >
+          <div class="border-t pt-2 mt-2 dark:border-gray-700 flex justify-between font-bold text-lg">
             <span>TỔNG CỘNG:</span>
-            <span class="text-red-600 dark:text-red-400">{{
-              formatPrice(order.totalAmount)
-            }}</span>
+            <span class="text-red-600 dark:text-red-400">{{ formatPrice(order.grandTotal || order.totalAmount) }}</span>
           </div>
         </div>
       </div>
     </div>
+
     <div v-if="totalPages > 1" class="flex justify-center items-center space-x-2 mt-8">
-      <Button
-        @click="goToPage(currentPage - 1)"
-        :disabled="currentPage === 1"
-        icon="←"
-        label="Trước"
-        variant="secondary"
-        size="sm"
-      />
-
-      <span class="text-sm font-medium text-gray-700 dark:text-gray-300 px-2">
-        Trang {{ currentPage }} / {{ totalPages }}
-      </span>
-
-      <Button
-        @click="goToPage(currentPage + 1)"
-        :disabled="currentPage === totalPages"
-        icon="→"
-        label="Sau"
-        variant="secondary"
-        size="sm"
-        class="flex-row-reverse"
-      />
-    </div>
+        </div>
   </div>
 </template>

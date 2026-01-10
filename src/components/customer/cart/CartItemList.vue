@@ -2,7 +2,6 @@
 import { resolveImage } from '@/utils/image'
 import defaultDrink from '@/assets/images/others/default-drink.png' // Import ảnh default
 
-
 const props = defineProps({
   cartItems: {
     type: Array,
@@ -12,7 +11,7 @@ const props = defineProps({
     type: Number,
     required: true,
   },
-  loading: Boolean
+  loading: Boolean,
 })
 
 // Format tiền
@@ -25,6 +24,18 @@ const getItemImage = (url) => resolveImage(url, defaultDrink)
 const handleImageError = (e) => {
   e.target.src = defaultDrink
   e.target.onerror = null
+}
+
+const getItemPrice = (item) => {
+  let price = item.finalPrice || 0
+  if (item.toppings && item.toppings.length > 0) {
+    price += item.toppings.reduce((sum, topping) => sum + (topping.finalPrice || 0), 0)
+  }
+  return price
+}
+
+const getItemTotalPrice = (item) => {
+  return getItemPrice(item) * item.quantity
 }
 
 // Hiển thị toppings (Sửa lại key truy cập cho đúng DTO)
@@ -46,21 +57,14 @@ const hasOptions = (item) => {
   )
 }
 
-const emit = defineEmits([
-  'update-quantity',
-  'remove-item',
-  'clear-cart',
-])
-
+const emit = defineEmits(['update-quantity', 'remove-item', 'clear-cart'])
 </script>
 
 <template>
   <div class="space-y-4">
     <div class="flex justify-between items-center">
       <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Các sản phẩm tại cửa hàng</h2>
-      <button v-if="cartItems.length" @click="emit('clear-cart', storeId)">
-        Xóa tất cả
-      </button>
+      <button v-if="cartItems.length" @click="emit('clear-cart', storeId)">Xóa tất cả</button>
     </div>
 
     <div
@@ -84,12 +88,11 @@ const emit = defineEmits([
               {{ item.productName }}
             </h3>
             <span class="text-sm text-gray-500">
-  {{ formatCurrency(item.finalPrice / item.quantity) }} / ly
-</span>
-<span class="font-bold text-green-600">
-  {{ formatCurrency(item.finalPrice) }}
-</span>
-
+              {{ formatCurrency(getItemPrice(item)) }} / ly
+            </span>
+            <span class="font-bold text-green-600">
+              {{ formatCurrency(getItemTotalPrice(item)) }}
+            </span>
           </div>
 
           <div

@@ -1,5 +1,6 @@
 // src/services/admin.service.js
 import api from './axiosClient'
+
 const ENDPOINT = '/admin'
 export default {
   /**

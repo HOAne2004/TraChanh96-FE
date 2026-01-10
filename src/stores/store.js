@@ -68,7 +68,19 @@ export const useStoreStore = defineStore('store', () => {
     }
     // Trường hợp 2: Mở qua đêm (VD: 18:00 - 02:00 sáng hôm sau) - Ít gặp nhưng nên cover
     else {
-        // Logic phức tạp hơn xíu, tạm thời bỏ qua nếu quán cafe của bạn không bán xuyên đêm
+        // Logic qua đêm (Optional): Nếu hiện tại < close (VD: 01:00) HOẶC hiện tại > open (VD: 23:00)
+        const isNextDay = currentMinutes < closeTotalMinutes;
+        const isLateNight = currentMinutes >= openTotalMinutes;
+
+        if (!isNextDay && !isLateNight) {
+             return { isOpen: false, message: `Mở cửa lúc ${store.openTime}` }
+        }
+
+        // Check last order cho ca đêm
+        // Nếu đang là rạng sáng (01:45) và close là 02:00 -> chặn
+        if (isNextDay && currentMinutes >= lastOrderMinutes) {
+            return { isOpen: false, message: 'Đã ngừng nhận đơn (Sắp đóng cửa)' }
+        }
     }
 
     return { isOpen: true, message: 'Đang mở cửa' }
@@ -185,6 +197,7 @@ export const useStoreStore = defineStore('store', () => {
       stores.value = stores.value.filter((s) => s.id !== id)
     } catch (err) {
       alert('Không thể xóa cửa hàng này')
+      throw err
     } finally {
       loading.value = false
     }
@@ -194,6 +207,7 @@ export const useStoreStore = defineStore('store', () => {
   function setSelectedStore(id) {
     selectedStoreId.value = id
   }
+
 
   return {
     stores,

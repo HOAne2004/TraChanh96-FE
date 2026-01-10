@@ -4,45 +4,65 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 
-// Components
 import DarkMode from '@/components/common/DarkMode.vue'
-import NotificationDropdown from '@/components/customer/NotificationDropdown.vue' // Reuse component
+import NotificationDropdown from '@/components/customer/NotificationDropdown.vue'
+
+defineEmits(['toggle-sidebar'])
 
 const router = useRouter()
 const userStore = useUserStore()
 const { user } = storeToRefs(userStore)
 
-// Helper hiển thị Avatar
 const userAvatar = computed(() => {
-  return user.value?.avatar || `https://ui-avatars.com/api/?name=${user.value?.fullName || 'Admin'}&background=10b981&color=fff`
+  return (
+    user.value?.avatar ||
+    `https://ui-avatars.com/api/?name=${user.value?.fullName || 'Admin'}&background=10b981&color=fff`
+  )
 })
 
 const handleLogout = async () => {
   await userStore.logoutAction()
-  router.push('/login')
+  router.push('/')
 }
 </script>
 
 <template>
-  <header class="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-800 h-16 flex items-center justify-end px-6 transition-colors duration-300">
+  <header
+    class="h-16 flex items-center justify-between px-4 md:px-6 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-300"
+  >
+    <!-- Mobile menu button -->
+    <button
+      @click="$emit('toggle-sidebar')"
+      class="lg:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-6 h-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 6h16M4 12h16M4 18h16"
+        />
+      </svg>
+    </button>
 
-    <div class="flex items-center gap-4 md:gap-6">
+    <!-- Right -->
+    <div class="flex items-center gap-4 md:gap-6 ml-auto">
       <DarkMode />
+      <NotificationDropdown :is-admin="true" />
 
-      <div class="relative">
-        <NotificationDropdown :is-admin="true" />
-      </div>
-
+      <!-- User -->
       <div class="flex items-center gap-3 pl-4 border-l border-gray-200 dark:border-gray-700">
         <div class="text-right hidden md:block">
           <p class="text-sm font-bold text-gray-800 dark:text-white leading-tight">
-            {{ user?.fullName || 'Administrator' }}
-          </p>
-          <p class="text-[10px] text-gray-500 uppercase font-semibold">
-            {{ user?.role || 'Quản trị viên' }}
+            {{ user?.username || 'Administrator' }}
           </p>
         </div>
-
         <div class="group relative">
           <button class="flex items-center focus:outline-none">
             <img
@@ -51,12 +71,16 @@ const handleLogout = async () => {
               class="w-9 h-9 rounded-full object-cover border-2 border-gray-100 dark:border-gray-700 group-hover:border-green-500 transition-colors"
             />
           </button>
-
-          <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg py-1 border border-gray-100 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 transform origin-top-right">
+          <div
+            class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg py-1 border border-gray-100 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 transform origin-top-right"
+          >
             <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 md:hidden">
-               <p class="text-sm font-bold text-gray-800 dark:text-white">{{ user?.fullName }}</p>
+              <p class="text-sm font-bold text-gray-800 dark:text-white">{{ user?.username }}</p>
             </div>
-            <router-link to="/admin/settings/profile" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <router-link
+              to="/admin/settings/profile"
+              class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
               Thông tin cá nhân
             </router-link>
             <button
