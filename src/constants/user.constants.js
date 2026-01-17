@@ -1,9 +1,9 @@
 // --- USER ROLE (Khớp 100% với UserRoleEnum.cs) ---
 export const USER_ROLE = {
-  CUSTOMER: 1,
-  ADMIN: 2,
-  MANAGER: 3,
-  STAFF: 4
+  CUSTOMER: 'customer',
+  ADMIN: 'admin',
+  MANAGER: 'manager',
+  STAFF: 'staff'
 }
 
 export const USER_ROLE_UI = {
@@ -16,9 +16,9 @@ export const USER_ROLE_UI = {
 
 // --- USER STATUS (Mapping với UserStatusEnum.cs) ---
 export const USER_STATUS = {
-  ACTIVE: 1,
-  INACTIVE: 0,
-  LOCKED: -1,
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  LOCKED: 'locked',
 }
 
 export const USER_STATUS_UI = {

@@ -2,16 +2,16 @@
 
 // Map OrderStatusEnum từ Backend (.NET)
 export const ORDER_STATUS = {
-  PENDING_PAYMENT: 0,
-  NEW: 1,
-  CONFIRMED: 2,
-  PREPARING: 3,
-  READY: 4,
-  DELIVERING: 5,
-  COMPLETED: 6,
-  CANCELLED: 7,
-  RECEIVED: 8,
-  DELETED: 99,
+  PENDING_PAYMENT: 'pendingPayment',
+  NEW: 'new',
+  CONFIRMED: 'confirmed',
+  PREPARING: 'preparing',
+  READY: 'ready',
+  DELIVERING: 'delivering',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
+  RECEIVED: 'received',
+  DELETED: 'deleted',
 }
 
 // Config hiển thị (Bổ sung đầy đủ theo BE)
@@ -93,10 +93,10 @@ export const ORDER_STATUS_UI = {
 
 // --- PAYMENT STATUS (Từ OrderPaymentStatusEnum.cs) ---
 export const PAYMENT_STATUS = {
-  PENDING: 1,
-  PAID: 2,
-  REFUNDED: 3,
-  FAILED: 4,
+  PENDING: 'pending',
+  PAID: 'paid',
+  REFUNDED: 'refunded',
+  FAILED: 'failed',
 }
 
 export const PAYMENT_STATUS_UI = {
@@ -120,9 +120,9 @@ export const PAYMENT_STATUS_UI = {
 
 // --- PAYMENT TYPE (Từ OrderPaymentTypeEnum.cs) ---
 export const PAYMENT_TYPE = {
-  CHARGE: 1, // charge
-  REFUND: 2, // refund
-  ADJUSTMENT: 3, // adjustment
+  CHARGE: 'charge', // charge
+  REFUND: 'refund', // refund
+  ADJUSTMENT: 'adjustment', // adjustment
 }
 
 export const PAYMENT_TYPE_UI = {
@@ -142,9 +142,9 @@ export const PAYMENT_TYPE_UI = {
 
 // --- ORDER TYPE (Từ OrderTypeEnum.cs) ---
 export const ORDER_TYPE = {
-  AT_COUNTER: 1, // AtCounter
-  DELIVERY: 2, // Delivery
-  PICKUP: 3, // Pickup
+  AT_COUNTER: 'atCounter', // AtCounter
+  DELIVERY: 'delivery', // Delivery
+  PICKUP: 'pickup', // Pickup
 }
 
 export const ORDER_TYPE_UI = {
@@ -165,21 +165,21 @@ export const ORDER_TYPE_UI = {
 // --- CANCEL REASONS (Từ OrderCancelReasonEnum.cs) ---
 export const CANCEL_REASON = {
   // Khách hàng hủy
-  CUSTOMER_CHANGED_MIND: 1,
-  CUSTOMER_ORDER_WRONG: 2,
+  CUSTOMER_CHANGED_MIND: 'customerChangedMind',
+  CUSTOMER_ORDER_WRONG: 'customerOrderWrong',
 
   // Cửa hàng hủy
-  STORE_OUT_OF_STOCK: 10,
-  STORE_OVERLOADED: 11,
-  STORE_CLOSED: 12,
+  STORE_OUT_OF_STOCK: 'storeOutOfStock',
+  STORE_OVERLOADED: 'storeOverloaded',
+  STORE_CLOSED: 'storeClosed',
 
   // Giao hàng/System
-  UNREACHABLE_CUSTOMER: 20,
-  CUSTOMER_REFUSED: 21,
-  AUTO_CANCEL: 50,
+  UNREACHABLE_CUSTOMER: 'unreachableCustomer',
+  CUSTOMER_REFUSED: 'customerRefused',
+  AUTO_CANCEL: 'autoCancel',
 
   // Other
-  OTHER: 99,
+  OTHER: 'other',
 }
 
 export const CANCEL_REASON_UI = {

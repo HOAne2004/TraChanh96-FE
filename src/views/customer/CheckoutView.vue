@@ -3,322 +3,424 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
 
-// Stores
+// --- CONSTANTS & UTILS ---
+import { ORDER_TYPE } from '@/constants/order.constants' // Giả định file này tồn tại: { DELIVERY: 1, PICKUP: 2 }
+import { calculateDistance } from '@/utils/distance'
+import { formatPrice } from '@/utils/formatters'
+
+// --- STORES ---
 import { useCartStore } from '@/stores/cart'
 import { useUserStore } from '@/stores/user'
 import { useOrderStore } from '@/stores/order'
+import { useStoreStore } from '@/stores/store'
+import { usePaymentMethodStore } from '@/stores/paymentMethod'
 import { useUserVoucherStore } from '@/stores/userVoucher'
 import { useToastStore } from '@/stores/toast'
-import { usePaymentMethodStore } from '@/stores/paymentMethod'
-import { useStoreStore } from '@/stores/store'
+import { useAddressStore } from '@/stores/address'
 
-import { formatPrice } from '@/utils/formatters'
-import { calculateDistance } from '@/utils/distance'
-
-// Components
-import CheckoutAddressForm from '@/components/customer/checkout/CheckoutAddressForm.vue'
+// --- COMPONENTS ---
+import OrderTypeSelector from '@/components/customer/checkout/OrderTypeSelector.vue'
+import CheckoutAddressSection from '@/components/customer/checkout/CheckoutAddressSection.vue'
+import StoreDistanceCard from '@/components/customer/checkout/StoreDistanceCard.vue'
+import PickupTimeSelector from '@/components/customer/checkout/PickupTimeSelector.vue'
 import CheckoutPaymentMethods from '@/components/customer/checkout/CheckoutPaymentMethods.vue'
 import CheckoutItemList from '@/components/customer/checkout/CheckoutItemList.vue'
-import CheckoutSummary from '@/components/customer/checkout/CheckoutSummary.vue'
+import OrderSummary from '@/components/customer/checkout/OrderSummary.vue'
+import CheckoutSubmitBar from '@/components/customer/checkout/CheckoutSubmitBar.vue'
 
+// --- INIT ---
 const router = useRouter()
+const route = useRoute()
+const toastStore = useToastStore()
+
 const cartStore = useCartStore()
 const userStore = useUserStore()
 const orderStore = useOrderStore()
 const storeStore = useStoreStore()
-const toastStore = useToastStore()
-const voucherStore = useUserVoucherStore()
 const paymentMethodStore = usePaymentMethodStore()
-const route = useRoute()
+const voucherStore = useUserVoucherStore()
+const addressStore = useAddressStore()
 
 const { cartItems: allCartItems } = storeToRefs(cartStore)
 const { isLoggedIn } = storeToRefs(userStore)
+const { addresses } = storeToRefs(addressStore)
 const { currentDiscountAmount, appliedVoucher } = storeToRefs(voucherStore)
-const { shippingFee, isCalculatingShip } = storeToRefs(orderStore)
 
 // --- STATE ---
+const orderType = ref(ORDER_TYPE.DELIVERY) // Mặc định là Giao hàng
 const selectedAddressId = ref(null)
 const selectedPaymentMethod = ref(null)
+const pickupTime = ref(null) // Date Object hoặc String ISO
 const userNotes = ref('')
-const orderLoading = ref(false)
-const currentStoreDetails = ref(null)
-const distanceError = ref(null)
+const isSubmitting = ref(false)
 
+const currentStore = ref(null) // Chi tiết store (lat, lng, shipping config)
+const distanceKm = ref(0) // Khoảng cách tính toán
+
+// --- COMPUTED: STORE & ITEMS ---
 const targetStoreId = computed(() => {
   if (route.query.storeId) return parseInt(route.query.storeId)
   return allCartItems.value.length > 0 ? allCartItems.value[0].storeId : null
 })
 
-// --- LỌC SẢN PHẨM THEO STORE ---
 const checkoutItems = computed(() => {
   if (!targetStoreId.value) return []
   return allCartItems.value.filter((item) => item.storeId === targetStoreId.value)
 })
 
-const currentStoreName = computed(() => {
-  if (checkoutItems.value.length > 0) {
-    return checkoutItems.value[0].storeName || 'Cửa hàng'
-  }
-  return ''
+// --- COMPUTED: VALIDATION DELIVERY ---
+const isOutOfDeliveryRadius = computed(() => {
+  if (orderType.value !== ORDER_TYPE.DELIVERY) return false
+  // Nếu chưa tính được khoảng cách -> coi như hợp lệ (để không chặn nhầm)
+  if (!distanceKm.value) return false
+  // Lấy giới hạn từ Store, nếu không có thì mặc định 20km
+  const maxRadius = currentStore.value?.deliveryRadius || 20
+  return distanceKm.value > maxRadius
 })
 
-// Tự động tính phí ship khi thay đổi địa chỉ hoặc store
-watch([selectedAddressId, targetStoreId], async ([newAddrId, newStoreId]) => {
-  if (newAddrId && newStoreId) {
-    await orderStore.calculateShippingFeeAction(newStoreId, newAddrId)
-  } else {
-    orderStore.resetShippingFee()
-  }
-})
-
-// Redirect nếu giỏ hàng trống
-onMounted(async () => {
-  if (allCartItems.value.length === 0 && isLoggedIn.value) {
-    await cartStore.fetchCart()
-  }
-
-  if (checkoutItems.value.length === 0) {
-    toastStore.show({
-      message: 'Giỏ hàng trống hoặc không tìm thấy sản phẩm của cửa hàng này',
-      type: 'warning',
-    })
-    router.replace('/products')
-    return // Stop execution
-  }
-
-  await paymentMethodStore.fetchActiveMethods()
-
-  if (targetStoreId.value && selectedAddressId.value) {
-    await orderStore.calculateShippingFeeAction(targetStoreId.value, selectedAddressId.value)
-  }
-})
-
-// --- TÍNH TOÁN ---
+// --- COMPUTED: FEES & TOTAL ---
 const subtotal = computed(() => {
   return checkoutItems.value.reduce((sum, item) => sum + item.basePrice * item.quantity, 0)
 })
-const discount = computed(() => currentDiscountAmount.value || 0)
+
+// Preview phí ship (Frontend Only)
+const shippingFeePreview = computed(() => {
+  // Pickup -> Free ship
+  if (orderType.value === ORDER_TYPE.PICKUP) return 0
+
+  // Chưa có địa chỉ hoặc chưa có store -> 0
+  if (!distanceKm.value || !currentStore.value) return 0
+
+  // Logic ưu tiên: Fixed -> PerKm
+  if (currentStore.value.shippingFeeFixed != null) {
+    return currentStore.value.shippingFeeFixed
+  }
+
+  const feePerKm = currentStore.value.shippingFeePerKm || 5000 // Fallback 5k
+  const rawFee = distanceKm.value * feePerKm
+
+  // Làm tròn lên hàng nghìn (VD: 12.300 -> 13.000)
+  return Math.ceil(rawFee / 1000) * 1000
+})
 
 const total = computed(() => {
-  const t = subtotal.value + shippingFee.value - discount.value
+  const t = subtotal.value + shippingFeePreview.value - (currentDiscountAmount.value || 0)
   return t > 0 ? t : 0
 })
 
-// --- XỬ LÝ VOUCHER ---
-const onApplyVoucher = async (code) => {
-  try {
-    await voucherStore.applyVoucherAction(code, subtotal.value)
-    toastStore.show({ message: 'Áp dụng voucher thành công!', type: 'success' })
-  } catch (err) {
-    toastStore.show({ message: err.message || 'Voucher không hợp lệ', type: 'error' })
-  }
-}
+// --- COMPUTED: CAN SUBMIT ---
+const canSubmit = computed(() => {
+  if (!selectedPaymentMethod.value) return false
+  if (checkoutItems.value.length === 0) return false
 
-// Hook khi component mounted hoặc khi targetStoreId thay đổi
+  if (orderType.value === ORDER_TYPE.DELIVERY) {
+    // Phải chọn địa chỉ và nằm trong bán kính
+    return selectedAddressId.value && !isOutOfDeliveryRadius.value
+  }
+
+  if (orderType.value === ORDER_TYPE.PICKUP) {
+    return !!pickupTime.value
+  }
+
+  return false
+})
+
+// --- WATCHERS ---
+
+// 1. Load Store Details khi targetStoreId đổi
 watch(
   targetStoreId,
   async (newId) => {
     if (newId) {
-      // 🟢 Gọi action lấy chi tiết Store (cần đảm bảo API trả về lat, lng, deliveryRadius)
-      // Nếu bạn chưa có action này, hãy thêm vào store.js
-      const store = await storeStore.fetchStoreById(newId)
-      currentStoreDetails.value = store
+      console.log('Fetching store details for ID:', newId) // Debug log
+      try {
+        const store = await storeStore.fetchStoreById(newId)
+        if (store) {
+          currentStore.value = store
+          console.log('Store fetched successfully:', store) // Debug log
+        } else {
+          console.error('Store fetched is null')
+        }
+      } catch (e) {
+        console.error('Error fetching store:', e)
+      }
     }
   },
   { immediate: true },
 )
 
-// Tự động tính phí và Validate khoảng cách
-watch([selectedAddressId, currentStoreDetails], async ([newAddrId, store]) => {
-  distanceError.value = null // Reset lỗi
-  orderStore.resetShippingFee()
+// 2. Tính khoảng cách khi đổi Địa chỉ hoặc Store
+watch([selectedAddressId, currentStore], ([addrId, store]) => {
+  console.log('🔄 Watcher triggered:', { addrId, storeName: store?.name }) // Log đầu vào
 
-  if (newAddrId && store) {
-    // 🟢 1. CHECK CLIENT-SIDE (Nhanh, không cần đợi API)
-    // Lấy tọa độ khách từ danh sách địa chỉ trong userStore
-    const address = userStore.addresses.find((a) => a.id === newAddrId)
+  distanceKm.value = 0 // Reset
 
-    if (address?.latitude && store.latitude) {
-      // Hàm này bạn import từ @/utils/distance
-      const dist = calculateDistance(
-        store.latitude,
-        store.longitude,
-        address.latitude,
-        address.longitude,
-      )
+  // Kiểm tra điều kiện cơ bản
+  if (orderType.value !== ORDER_TYPE.DELIVERY) return
+  if (!addrId) return
+  if (!store?.latitude || !store?.longitude) {
+    console.warn('⚠️ Store thiếu tọa độ:', store)
+    return
+  }
 
-      const limit = store.deliveryRadius || 20 // Mặc định 20 nếu null
+  // 🟢 Lấy danh sách địa chỉ an toàn
+  const listAddr = addresses.value || []
+  const addr = listAddr.find((a) => a.id === addrId)
 
-      if (dist > limit) {
-        distanceError.value = `Khoảng cách ${dist.toFixed(1)}km quá xa (Giới hạn ${limit}km). Vui lòng chọn địa chỉ khác.`
-        return // ⛔ DỪNG LẠI, KHÔNG GỌI API TÍNH PHÍ
-      }
-    }
+  if (!addr) {
+    console.error('❌ Không tìm thấy địa chỉ có ID:', addrId, 'trong danh sách:', listAddr)
+    return
+  }
 
-    // 🟢 2. GỌI API TÍNH PHÍ (Server-side check)
-    // Nếu Client check qua, thì gọi Server để tính tiền chính xác và check lại bảo mật
-    try {
-      await orderStore.calculateShippingFeeAction(store.id, newAddrId)
-    } catch (e) {
-      // Nếu Server trả về lỗi khoảng cách (AppException từ bước 1)
-      distanceError.value = e.message
+  // Log chi tiết để debug
+  console.group('📏 TÍNH KHOẢNG CÁCH')
+  console.log('🏪 Store:', { lat: store.latitude, lng: store.longitude })
+  console.log('🏠 Address:', {
+    id: addr.id,
+    lat: addr.latitude,
+    lng: addr.longitude,
+    full: addr.fullAddress || addr.addressDetail,
+  })
+
+  if (addr.latitude && addr.longitude) {
+    distanceKm.value = calculateDistance(
+      Number(store.latitude),
+      Number(store.longitude),
+      Number(addr.latitude),
+      Number(addr.longitude),
+    )
+    console.log('✅ Kết quả:', distanceKm.value, 'km')
+  } else {
+    console.warn('⚠️ Địa chỉ thiếu tọa độ!')
+  }
+  console.groupEnd()
+})
+
+// 3. Reset state khi đổi Order Type
+watch(orderType, (newType) => {
+  if (newType === ORDER_TYPE.PICKUP) {
+    // Debug để thấy rõ giá trị Backend trả về
+    console.log('Payment Method hiện tại:', selectedPaymentMethod.value)
+
+    if (selectedPaymentMethod.value) {
+       // Lấy type từ object
+       const type = selectedPaymentMethod.value.paymentType;
+       const code = selectedPaymentMethod.value.code;
+
+       // 🟢 SỬA LOGIC: So sánh với 'cod' (chữ thường) do CamelCase
+       // Hoặc an toàn nhất là convert sang string rồi lower case
+       const isCod = String(type).toLowerCase() === 'cod' ||
+                     String(code).toLowerCase() === 'cod';
+
+       if (isCod) {
+          console.log('>>> Phát hiện COD, đang reset về null...')
+          selectedPaymentMethod.value = null
+          toastStore.show({ message: 'Đơn hàng "Đến lấy" vui lòng thanh toán Online (VNPAY/Momo).', type: 'info' })
+       }
     }
   }
 })
 
-// --- XỬ LÝ ĐẶT HÀNG (QUAN TRỌNG) ---
-const placeOrder = async () => {
-  // 1. VALIDATION
-  if (distanceError.value) {
-    toastStore.show({ message: distanceError.value, type: 'error' })
+// --- LIFECYCLE ---
+onMounted(async () => {
+  if (!isLoggedIn.value) {
+    router.replace('/login')
     return
   }
-  if (!selectedAddressId.value) {
-    toastStore.show({ message: 'Vui lòng chọn hoặc thêm địa chỉ nhận hàng.', type: 'error' })
+
+  // Đảm bảo có cart
+  if (allCartItems.value.length === 0) {
+    await cartStore.fetchCart()
+  }
+  if (checkoutItems.value.length === 0) {
+    toastStore.show({ message: 'Giỏ hàng trống!', type: 'warning' })
+    router.replace('/products')
+    return
+  }
+  await paymentMethodStore.fetchActiveMethods()
+
+  await addressStore.fetchAddresses()
+
+  if (addresses.value && addresses.value.length > 0) {
+    // Ưu tiên địa chỉ mặc định, nếu không có lấy cái đầu tiên
+    const defaultAddr = addresses.value.find((a) => a.isDefault) || addresses.value[0]
+    selectedAddressId.value = defaultAddr.id
+    console.log('✅ Auto-selected Address:', defaultAddr)
+  }
+})
+
+// --- SUBMIT HANDLER ---
+const handleAttemptSubmit = () => {
+  if (orderType.value === ORDER_TYPE.DELIVERY) {
+    if (!selectedAddressId.value) {
+      toastStore.show({ message: 'Vui lòng chọn địa chỉ nhận hàng.', type: 'warning' })
+      return
+    }
+    if (isOutOfDeliveryRadius.value) {
+      const limit = currentStore.value?.deliveryRadius || 20
+      toastStore.show({
+        message: `Địa chỉ quá xa (>${limit}km). Vui lòng chọn địa chỉ khác.`,
+        type: 'error',
+      })
+      return
+    }
+  } else if (orderType.value === ORDER_TYPE.PICKUP) {
+    if (!pickupTime.value) {
+      toastStore.show({ message: 'Vui lòng chọn thời gian đến lấy.', type: 'warning' })
+      return
+    }
+  }
+
+  if (checkoutItems.value.length === 0) {
+    toastStore.show({ message: 'Giỏ hàng đang trống!', type: 'warning' })
     return
   }
 
   if (!selectedPaymentMethod.value) {
-    toastStore.show({ message: 'Vui lòng chọn phương thức thanh toán.', type: 'error' })
+    toastStore.show({ message: 'Vui lòng chọn phương thức thanh toán.', type: 'warning' })
     return
   }
+  // Nếu qua hết validate -> Gọi hàm submit thật
+  handleSubmitOrder()
+}
 
-  orderLoading.value = true
+const handleSubmitOrder = async () => {
+  if (!canSubmit.value) return
 
+  isSubmitting.value = true
   try {
-    const payload = {
-      storeId: targetStoreId.value,
-      deliveryAddressId: selectedAddressId.value,
-      paymentMethodId:
-        typeof selectedPaymentMethod.value.id === 'string' ? null : selectedPaymentMethod.value.id,
-      userNotes: userNotes.value || '',
-      voucherCode: appliedVoucher.value?.voucherCode || null,
+    let resultOrder = null
 
-      items: checkoutItems.value.map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        sizeId: item.sizeId,
-        sugarLevel: item.sugarLevel,
-        iceLevel: item.iceLevel,
-        note: item.note,
-        toppings: item.toppings
-          ? item.toppings.map((t) => ({
-              productId: t.id,
-              quantity: 1,
-            }))
-          : [],
+    // Payload chung
+    const basePayload = {
+      storeId: targetStoreId.value,
+      paymentMethodId: selectedPaymentMethod.value.id,
+      userNotes: userNotes.value,
+      voucherCode: appliedVoucher.value?.voucherCode,
+      items: checkoutItems.value.map((i) => ({
+        productId: i.productId,
+        quantity: i.quantity,
+        sizeId: i.sizeId,
+        sugarLevel: i.sugarLevel,
+        iceLevel: i.iceLevel,
+        toppings: i.toppings?.map((t) => ({ productId: t.id, quantity: 1 })) || [],
       })),
     }
 
-    // 2. GỌI API
-    const newOrder = await orderStore.createDeliveryOrderAction(payload)
-
-    // 3. THÀNH CÔNG -> Dọn dẹp
-    voucherStore.removeAppliedVoucher()
-    toastStore.show({ message: 'Đặt hàng thành công!', type: 'success' })
-
-    if (targetStoreId.value) {
-      await cartStore.clearCartByStore(targetStoreId.value)
-    }
-
-    // 4. ĐIỀU HƯỚNG
-    // 🟢 SỬA LOGIC: Chỉ cần check có URL thanh toán hay không
-    if (newOrder.paymentUrl) {
-      // Nếu là thanh toán Online (VNPAY/Momo) -> Redirect sang trang thanh toán
-      window.location.href = newOrder.paymentUrl
+    if (orderType.value === ORDER_TYPE.DELIVERY) {
+      // Gọi API Delivery
+      resultOrder = await orderStore.createDeliveryOrderAction({
+        ...basePayload,
+        deliveryAddressId: selectedAddressId.value,
+      })
     } else {
-      // Nếu là COD hoặc Chuyển khoản (VietQR tự hiện ở trang chi tiết)
-      // Dùng replace để khách không back lại trang checkout được
-      await router.replace({ name: 'order-detail', params: { code: newOrder.orderCode } })
+      // Gọi API Pickup
+      resultOrder = await orderStore.createPickupOrderAction({
+        ...basePayload,
+        pickupTime: pickupTime.value, // Format ISO string nếu cần
+      })
     }
-  } catch (error) {
-    console.error('Lỗi đặt hàng:', error)
-    const msg = error.response?.data?.message || 'Có lỗi xảy ra khi tạo đơn hàng.'
+
+    // Success Handling
+    toastStore.show({ message: 'Đặt hàng thành công!', type: 'success' })
+    voucherStore.removeAppliedVoucher()
+    await cartStore.clearCartByStore(targetStoreId.value)
+
+    // Redirect
+    if (resultOrder.paymentUrl) {
+      window.location.href = resultOrder.paymentUrl
+    } else {
+      router.replace({ name: 'order-detail', params: { code: resultOrder.orderCode } })
+    }
+  } catch (err) {
+    console.error(err)
+    const msg = err.response?.data?.message || 'Lỗi tạo đơn hàng'
     toastStore.show({ message: msg, type: 'error' })
   } finally {
-    // 🟢 FIX BUG TREO LOADING: Luôn tắt loading bất kể thành công hay thất bại
-    orderLoading.value = false
+    isSubmitting.value = false
   }
 }
-
-watch(checkoutItems, (newItems) => {
-  if (newItems.length === 0 && !orderLoading.value) {
-    router.replace('/cart')
-  }
-})
 </script>
 
 <template>
-  <main class="py-8 max-w-6xl mx-auto px-4 lg:px-8">
-    <h1
-      class="text-2xl md:text-3xl font-bold mb-8 text-center text-green-700 dark:text-green-400 uppercase"
-    >
-      Xác nhận đơn hàng
-    </h1>
+  <div class="py-8 max-w-6xl mx-auto px-4 lg:px-8 min-h-screen bg-gray-50 dark:bg-gray-900">
+    <h1 class="text-3xl font-bold mb-6 text-green-600 uppercase text-center">Thanh toán</h1>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div class="lg:col-span-2 space-y-6">
-        <CheckoutAddressForm v-model="selectedAddressId" :is-logged-in="isLoggedIn" />
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div class="lg:col-span-8 space-y-6">
+        <OrderTypeSelector v-model="orderType" :types="[ORDER_TYPE.DELIVERY, ORDER_TYPE.PICKUP]" />
+        <StoreDistanceCard
+          v-if="currentStore"
+          :store="currentStore"
+          :distance-km="orderType === ORDER_TYPE.DELIVERY ? distanceKm : 0"
+          :is-out-of-radius="orderType === ORDER_TYPE.DELIVERY && isOutOfDeliveryRadius"
+          :mode="orderType === ORDER_TYPE.PICKUP ? 'simple' : 'full'"
+        />
 
-        <CheckoutPaymentMethods v-model="selectedPaymentMethod" />
+        <div v-if="orderType === ORDER_TYPE.DELIVERY" class="space-y-6">
+          <CheckoutAddressSection
+            v-model="selectedAddressId"
+            :store="currentStore"
+            :is-logged-in="isLoggedIn"
+          />
+        </div>
+
+        <div v-else class="space-y-6">
+          <PickupTimeSelector v-model="pickupTime" :store="currentStore" />
+        </div>
+
+        <CheckoutPaymentMethods
+          v-model="selectedPaymentMethod"
+          :allow-cod="orderType === ORDER_TYPE.DELIVERY"
+        />
 
         <CheckoutItemList
           :items="checkoutItems"
-          :store-name="currentStoreName"
+          :store-name="currentStore?.name || 'Đang tải...'"
           :format-currency="formatPrice"
         />
 
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
-          <div class="flex justify-between items-center mb-3">
-            <h2
-              class="text-lg font-semibold border-l-4 border-green-500 pl-2 text-gray-800 dark:text-white"
-            >
-              Ghi chú đơn hàng
-            </h2>
-            <span
-              class="text-xs"
-              :class="userNotes.length >= 500 ? 'text-red-500 font-bold' : 'text-gray-400'"
-            >
-              {{ userNotes.length }}/500
-            </span>
-          </div>
-
+        <div
+          class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700"
+        >
+          <label class="block font-semibold mb-2">Ghi chú cho quán</label>
           <textarea
             v-model="userNotes"
             rows="2"
-            maxlength="500"
-            placeholder="Ví dụ: Ít ngọt, giao giờ hành chính, gọi trước khi giao..."
-            class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-green-500 outline-none dark:bg-gray-700 dark:text-white dark:border-gray-600 resize-none"
+            maxlength="200"
+            class="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-green-500 outline-none dark:bg-gray-700 dark:border-gray-600"
+            placeholder="Ví dụ: Ít ngọt, xin thêm tương ớt..."
           ></textarea>
-
-          <p v-if="userNotes.length >= 500" class="text-xs text-red-500 mt-1">
-            Bạn đã nhập tối đa số ký tự cho phép.
-          </p>
         </div>
       </div>
 
-      <div class="lg:col-span-1">
-        <div
-          v-if="distanceError"
-          class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800"
-          role="alert"
-        >
-          <span class="font-medium">Không thể giao hàng!</span> {{ distanceError }}
+      <div class="lg:col-span-4">
+        <div class="sticky top-24 space-y-4">
+          <OrderSummary
+            :subtotal="subtotal"
+            :shipping-fee="shippingFeePreview"
+            :discount="currentDiscountAmount"
+            :total="total"
+            :order-type="orderType"
+          />
+
+          <CheckoutSubmitBar
+            :loading="isSubmitting"
+            :total="total"
+            :is-valid="canSubmit"
+            :label="orderType === ORDER_TYPE.DELIVERY ? 'ĐẶT GIAO HÀNG' : 'ĐẶT ĐẾN LẤY'"
+            @submit="handleAttemptSubmit"
+          />
+
+          <div
+            v-if="orderType === ORDER_TYPE.DELIVERY && isOutOfDeliveryRadius"
+            class="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-200"
+          >
+            ⚠️ Địa chỉ quá xa giới hạn giao hàng của quán. Vui lòng chọn địa chỉ khác hoặc đổi sang
+            Đến lấy.
+          </div>
         </div>
-        <CheckoutSummary
-          class="sticky top-24"
-          :subtotal="subtotal"
-          :shipping-fee="shippingFee"
-          :is-calculating-ship="isCalculatingShip"
-          :discount-amount="discount"
-          :total="total"
-          :cart-is-empty="checkoutItems.length === 0"
-          :order-loading="orderLoading"
-          :format-currency="formatPrice"
-          @apply-voucher="onApplyVoucher"
-          @place-order="placeOrder"
-        />
       </div>
     </div>
-  </main>
+  </div>
 </template>

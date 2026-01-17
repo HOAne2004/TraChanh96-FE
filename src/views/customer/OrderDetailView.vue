@@ -93,23 +93,43 @@ const submitCancelOrder = async ({ reason, note }) => {
 }
 
 const handlePayment = async () => {
+  // 1. Kiểm tra đơn hàng tồn tại
   if (!currentOrder.value) return
+
+  // 🟢 SỬA LỖI: Lấy PaymentMethodId an toàn
+  // Ưu tiên lấy từ object lồng nhau (currentOrder.paymentMethod.id)
+  // Nếu null, thử lấy từ root (currentOrder.paymentMethodId) nếu DTO có trả về
+  const pmId = currentOrder.value.paymentMethod?.id || currentOrder.value.paymentMethodId
+  // Nếu không tìm thấy ID phương thức thanh toán -> Báo lỗi và dừng
+  if (!pmId) {
+    toastStore.show({
+      type: 'error',
+      message: 'Lỗi dữ liệu: Không tìm thấy phương thức thanh toán.'
+    })
+    return
+  }
+
+  // 2. Logic kiểm tra Banking (Dùng Optional Chaining ?. cho an toàn)
   const type = currentOrder.value.paymentMethod?.paymentType
-  if (type === 'Banking' || type === 'BankTransfer' || type === 2 || isBankingUnpaid.value) {
+
+  // Logic hiển thị Modal QR chuyển khoản thủ công
+  if (type === 'bankingTransfer' || isBankingUnpaid.value) {
     showPaymentModal.value = true
     return
   }
 
+  // 3. Logic gọi API thanh toán Online (VNPay/Momo...)
   isProcessingPayment.value = true
   try {
     const response = await api.post('/order-payments/charge', {
       orderId: currentOrder.value.id,
-      paymentMethodId: currentOrder.value.paymentMethod.id,
+      paymentMethodId: pmId, // 🟢 Sử dụng ID đã lấy an toàn ở trên
     })
 
     const result = response.data
 
     if (result.paymentUrl) {
+      // Chuyển hướng sang trang thanh toán
       window.location.href = result.paymentUrl
     } else {
       toastStore.show({ type: 'success', message: 'Đã gửi yêu cầu thanh toán.' })
@@ -125,7 +145,6 @@ const handlePayment = async () => {
     isProcessingPayment.value = false
   }
 }
-
 const onPaymentConfirm = () => {
   showPaymentModal.value = false
   isPaymentPendingLocal.value = true

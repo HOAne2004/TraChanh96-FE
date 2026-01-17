@@ -2,13 +2,13 @@
 
 // --- ICE LEVEL (Đá) - Map với IceLevelEnum.cs ---
 export const ICE_LEVEL = {
-  NONE: 1,    // Không đá
-  WARM: 2,    // Ấm
-  HOT: 3,     // Nóng
-  I30: 30,    // 30%
-  I50: 50,    // 50%
-  I70: 70,    // 70%
-  I100: 100   // 100%
+  NONE: 'none',    // Không đá
+  WARM: 'warm',    // Ấm
+  HOT: 'hot',     // Nóng
+  I30: 'i30',    // 30%
+  I50: 'i50',    // 50%
+  I70: 'i70',    // 70%
+  I100: 'i100'   // 100%
 }
 
 // Config hiển thị cho UI (Label ngắn gọn cho nút bấm)
@@ -24,11 +24,11 @@ export const ICE_LEVEL_UI = {
 
 // --- SUGAR LEVEL (Đường) - Map với SugarLevelEnum.cs ---
 export const SUGAR_LEVEL = {
-  S0: 1,      // Không đường
-  S30: 30,    // 30%
-  S50: 50,    // 50%
-  S70: 70,    // 70%
-  S100: 100   // 100%
+  S0: 's0',      // Không đường
+  S30: 's30',    // 30%
+  S50: 's50',    // 50%
+  S70: 's70',    // 70%
+  S100: 's100'   // 100%
 }
 
 export const SUGAR_LEVEL_UI = {

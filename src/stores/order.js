@@ -3,7 +3,6 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import orderService from '@/services/order.service'
 
-
 export const useOrderStore = defineStore('order', () => {
   // --- STATE ---
   const orders = ref([]) // Danh sách đơn hàng
@@ -137,6 +136,20 @@ export const useOrderStore = defineStore('order', () => {
     try {
       const response = await orderService.createAtCounter(data)
       return response.data
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Tạo đơn thất bại'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function createPickupOrderAction(payload) {
+    loading.value = true
+    try {
+      // Gọi endpoint API (Giả sử BE là POST /orders/pickup)
+      const res = await orderService.createPickup(payload)
+      return res.data
     } catch (err) {
       error.value = err.response?.data?.message || 'Tạo đơn thất bại'
       throw err
@@ -292,6 +305,22 @@ export const useOrderStore = defineStore('order', () => {
       loading.value = false
     }
   }
+
+  async function verifyPickupAction(id, pickupCode) {
+    loading.value = true
+    try {
+      const codeValue =
+        typeof pickupCode === 'object' && pickupCode.pickupCode ? pickupCode.pickupCode : pickupCode
+
+      await orderService.verifyPickup(id, codeValue)
+      return true
+    // eslint-disable-next-line no-useless-catch
+    } catch (err) {
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
   return {
     orders,
     currentOrder,
@@ -305,6 +334,7 @@ export const useOrderStore = defineStore('order', () => {
     fetchStats,
     createDeliveryOrderAction,
     createAtCounterOrderAction,
+    createPickupOrderAction,
     updateStatusAction,
     assignShipperAction,
     cancelOrderAction,
@@ -315,5 +345,6 @@ export const useOrderStore = defineStore('order', () => {
     deleteOrderAction,
     restoreOrderAction,
     confirmPaymentAction,
+    verifyPickupAction,
   }
 })

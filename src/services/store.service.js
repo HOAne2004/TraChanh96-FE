@@ -13,6 +13,14 @@ export default {
     },
 
     /**
+     * [PUBLIC] Lấy danh sách cửa hàng theo ID
+     * Mapping: [HttpGet("{id}")]
+     */
+    getById(id) {
+        return api.get(`${ENDPOINT}/${id}`)
+    },
+    
+    /**
      * [PUBLIC] Lấy chi tiết cửa hàng theo Slug
      * Mapping: [HttpGet("{slug}")]
      */

@@ -55,7 +55,6 @@ const isAdding = ref(false)
 const toastStore = useToastStore()
 const { stores, selectedStoreId } = storeToRefs(storeStore)
 
-// --- LOGIC MỚI ---
 const storeStatus = computed(() => {
   const store = stores.value.find((s) => s.id === selectedStoreId.value)
   return storeStore.getStoreStatus(store) // Sử dụng hàm từ Store
@@ -63,6 +62,10 @@ const storeStatus = computed(() => {
 
 const isActionDisabled = computed(() => {
   return isAdding.value || (selectedStoreId.value && !storeStatus.value.isOpen)
+})
+
+const isDrink = computed(() => {
+  return currentProduct.value.productType.toLowerCase() === 'drink'
 })
 
 // 1. Fetch dữ liệu
@@ -83,7 +86,7 @@ const loadData = async () => {
   // Setup mặc định sau khi có data
   if (currentProduct.value) {
     // Chọn size rẻ nhất làm mặc định
-    if (currentProduct.value.availableSizes?.length > 0) {
+    if (isDrink.value && currentProduct.value.availableSizes?.length > 0) {
       // Sort tăng dần theo giá
       const sortedSizes = [...currentProduct.value.availableSizes].sort(
         (a, b) => (a.priceModifier || 0) - (b.priceModifier || 0),
@@ -302,9 +305,10 @@ const handleAddToCart = async (isBuyNow = false) => {
             {{ formatPrice(finalPrice) }}đ
           </div>
 
-          <hr class="border-gray-200 dark:border-gray-700 mb-6" />
 
-          <div class="space-y-6 mb-8">
+
+          <div v-if="isDrink" class="space-y-6 mb-8">
+            <hr class="border-gray-200 dark:border-gray-700 mb-6" />
             <div v-if="sizes?.length > 0">
               <span class="block text-sm font-semibold mb-2">Kích cỡ</span>
               <div class="flex flex-wrap gap-3">
@@ -451,9 +455,8 @@ const handleAddToCart = async (isBuyNow = false) => {
                 class="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-green-500 outline-none resize-none transition-shadow"
               ></textarea>
             </div>
-            <div class="w-full flex gap-10 items-center">
+            <div v-if="selectedStoreId" class="w-full flex gap-10 items-center">
               <Button
-                v-if="selectedStoreId"
                 :label="
                   isAdding
                     ? 'Đang xử lý...'
@@ -485,12 +488,20 @@ const handleAddToCart = async (isBuyNow = false) => {
               </Button>
 
               <Button
-                v-if="selectedStoreId"
                 :label="isAdding ? '...' : storeStatus.isOpen ? 'Mua ngay' : 'Đóng cửa'"
                 class="flex-1 rounded-full text-lg shadow-lg shadow-green-200 dark:shadow-none h-12"
                 variant="primary"
                 :disabled="isActionDisabled"
                 @click="handleAddToCart(true)"
+              />
+
+            </div>
+            <div v-if="!selectedStoreId" class="w-full flex gap-10 items-center">
+              <Button
+                label="Hãy chọn một cửa hàng"
+                class="flex-1 rounded-full text-lg shadow-lg shadow-green-200 dark:shadow-none h-12"
+                variant="primary"
+                :disabled="true"
               />
             </div>
           </div>

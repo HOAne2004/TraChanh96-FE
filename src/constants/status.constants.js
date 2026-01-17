@@ -2,10 +2,10 @@
 
 // Map PublicStatusEnum từ Backend (.NET)
 export const PUBLIC_STATUS = {
-  PENDING: 1,
-  ACTIVE: 2,
-  INACTIVE: 3,
-  DELETED: 99
+  PENDING: 'pending',
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  DELETED: 'deleted'
 }
 
 // Config hiển thị (Label & Màu sắc)
@@ -13,17 +13,17 @@ export const PUBLIC_STATUS = {
 export const PUBLIC_STATUS_UI = {
   [PUBLIC_STATUS.PENDING]: {
     label: 'Chờ xử lý',
-    value: 1,
+    value: 'pending',
     color: 'text-yellow-600 bg-yellow-50 border-yellow-200'
   },
   [PUBLIC_STATUS.ACTIVE]: {
     label: 'Hoạt động',
-    value: 2,
+    value: 'active',
     color: 'text-green-600 bg-green-50 border-green-200'
   },
   [PUBLIC_STATUS.INACTIVE]: {
     label: 'Tạm dừng',
-    value: 3,
+    value: 'inactive',
     color: 'text-gray-600 bg-gray-50 border-gray-200'
   },
   // Không đưa DELETED vào UI Dropdown để tránh user chọn nhầm
@@ -38,7 +38,7 @@ export const mapLabelToValue = (label) => {
   if (found) return found.value
 
   // Fallback: Map cứng nếu API trả về tiếng Anh
-  const map = { 'Active': 2, 'Inactive': 3, 'Pending': 1 }
+  const map = { 'Active': 'active', 'Inactive': 'inactive', 'Pending': 'pending' }
   return map[label] || null
 }
 

@@ -11,14 +11,13 @@ export const useStoreStore = defineStore('store', () => {
   const error = ref(null)
   const selectedStoreId = ref(null)
 
-
   const BUFFER_MINUTES = 30
 
   // --- GETTERS ---
 
   // Lấy thông tin object của store đang được chọn
   const selectedStore = computed(() => {
-    return stores.value.find(s => s.id === selectedStoreId.value) || null
+    return stores.value.find((s) => s.id === selectedStoreId.value) || null
   })
 
   /**
@@ -31,12 +30,12 @@ export const useStoreStore = defineStore('store', () => {
     // 1. Kiểm tra trạng thái do Admin set (Active/Inactive/Closed/...)
     // Giả sử Backend trả về Status là string "Active"
     if (store.status !== 'Active') {
-        return { isOpen: false, message: 'Tạm đóng cửa' }
+      return { isOpen: false, message: 'Tạm đóng cửa' }
     }
 
     // 2. Kiểm tra giờ mở cửa
     if (!store.openTime || !store.closeTime) {
-        return { isOpen: false, message: 'Chưa cập nhật giờ' }
+      return { isOpen: false, message: 'Chưa cập nhật giờ' }
     }
 
     const now = new Date()
@@ -56,31 +55,31 @@ export const useStoreStore = defineStore('store', () => {
     // LOGIC SO SÁNH
     // Trường hợp 1: Mở và đóng trong cùng 1 ngày (VD: 08:00 - 22:00)
     if (closeTotalMinutes > openTotalMinutes) {
-        if (currentMinutes < openTotalMinutes) {
-            return { isOpen: false, message: `Mở cửa lúc ${openH}:${openM < 10 ? '0'+openM : openM}` }
-        }
-        if (currentMinutes >= lastOrderMinutes && currentMinutes < closeTotalMinutes) {
-             return { isOpen: false, message: 'Đã ngừng nhận đơn' } // Trong khoảng buffer
-        }
-        if (currentMinutes >= closeTotalMinutes) {
-            return { isOpen: false, message: 'Đã đóng cửa' }
-        }
+      if (currentMinutes < openTotalMinutes) {
+        return { isOpen: false, message: `Mở cửa lúc ${openH}:${openM < 10 ? '0' + openM : openM}` }
+      }
+      if (currentMinutes >= lastOrderMinutes && currentMinutes < closeTotalMinutes) {
+        return { isOpen: false, message: 'Đã ngừng nhận đơn' } // Trong khoảng buffer
+      }
+      if (currentMinutes >= closeTotalMinutes) {
+        return { isOpen: false, message: 'Đã đóng cửa' }
+      }
     }
     // Trường hợp 2: Mở qua đêm (VD: 18:00 - 02:00 sáng hôm sau) - Ít gặp nhưng nên cover
     else {
-        // Logic qua đêm (Optional): Nếu hiện tại < close (VD: 01:00) HOẶC hiện tại > open (VD: 23:00)
-        const isNextDay = currentMinutes < closeTotalMinutes;
-        const isLateNight = currentMinutes >= openTotalMinutes;
+      // Logic qua đêm (Optional): Nếu hiện tại < close (VD: 01:00) HOẶC hiện tại > open (VD: 23:00)
+      const isNextDay = currentMinutes < closeTotalMinutes
+      const isLateNight = currentMinutes >= openTotalMinutes
 
-        if (!isNextDay && !isLateNight) {
-             return { isOpen: false, message: `Mở cửa lúc ${store.openTime}` }
-        }
+      if (!isNextDay && !isLateNight) {
+        return { isOpen: false, message: `Mở cửa lúc ${store.openTime}` }
+      }
 
-        // Check last order cho ca đêm
-        // Nếu đang là rạng sáng (01:45) và close là 02:00 -> chặn
-        if (isNextDay && currentMinutes >= lastOrderMinutes) {
-            return { isOpen: false, message: 'Đã ngừng nhận đơn (Sắp đóng cửa)' }
-        }
+      // Check last order cho ca đêm
+      // Nếu đang là rạng sáng (01:45) và close là 02:00 -> chặn
+      if (isNextDay && currentMinutes >= lastOrderMinutes) {
+        return { isOpen: false, message: 'Đã ngừng nhận đơn (Sắp đóng cửa)' }
+      }
     }
 
     return { isOpen: true, message: 'Đang mở cửa' }
@@ -88,8 +87,8 @@ export const useStoreStore = defineStore('store', () => {
 
   // Shortcut để kiểm tra nhanh store đang chọn có mua được không
   const canOrderCurrentStore = computed(() => {
-      if (!selectedStore.value) return false
-      return getStoreStatus.value(selectedStore.value).isOpen
+    if (!selectedStore.value) return false
+    return getStoreStatus.value(selectedStore.value).isOpen
   })
   // --- ACTIONS ---
 
@@ -106,6 +105,41 @@ export const useStoreStore = defineStore('store', () => {
       console.error('Lỗi tải danh sách cửa hàng:', err)
     } finally {
       loading.value = false
+    }
+  }
+
+  /**
+   * [PUBLIC] Lấy chi tiết theo ID
+   */
+async function fetchStoreById(id) {
+    // 1. Tìm cache
+    const existing = stores.value.find(s => s.id === id)
+    if (existing && existing.latitude && existing.longitude) {
+       return existing
+    }
+
+    // 2. Gọi API
+    try {
+      const res = await storeService.getById(id)
+      const data = res.data
+
+      // 🟢 MAPPING DỮ LIỆU (QUAN TRỌNG)
+      // Chuyển đổi cấu trúc lồng nhau của BE thành cấu trúc phẳng cho FE dùng
+      const formattedStore = {
+          ...data,
+          // Lấy thông tin từ object Address lồng bên trong
+          address: data.address?.fullAddress || data.address?.addressDetail || 'Chưa cập nhật địa chỉ',
+          latitude: data.address?.latitude || 0,
+          longitude: data.address?.longitude || 0,
+
+          // Fallback nếu chưa config bán kính
+          deliveryRadius: data.deliveryRadius || 20
+      }
+
+      return formattedStore
+    } catch (error) {
+      console.error('Lỗi fetchStoreById:', error)
+      return null
     }
   }
 
@@ -208,7 +242,6 @@ export const useStoreStore = defineStore('store', () => {
     selectedStoreId.value = id
   }
 
-
   return {
     stores,
     currentStore,
@@ -219,6 +252,7 @@ export const useStoreStore = defineStore('store', () => {
     canOrderCurrentStore,
     selectedStoreId,
     fetchActiveStores,
+    fetchStoreById,
     fetchStoreBySlug,
     fetchAdminStores,
     createStore,

@@ -36,6 +36,7 @@ const currentStatusConfig = computed(() => {
   return ORDER_STATUS_UI[order.value.status] || {}
 })
 
+
 // --- ACTIONS ---
 
 const fetchData = async () => {
@@ -105,6 +106,24 @@ const handleManualConfirmPayment = async () => {
 onMounted(() => {
   fetchData()
 })
+
+const handleVerifyPickup = async (code) => {
+  if (!code) return
+
+  try {
+    // Gọi action
+    await orderStore.verifyPickupAction(order.value.id, code)
+
+    // Nếu thành công
+    toastStore.show({ message: 'Xác thực thành công!', type: 'success' })
+    fetchData()
+  } catch (e) {
+    // Nếu thất bại (Store ném lỗi ra)
+    console.error(e)
+    const msg = e.response?.data?.message || e.response?.data || 'Mã xác thực không đúng'
+    toastStore.show({ message: msg, type: 'error' })
+  }
+}
 </script>
 
 <template>
@@ -199,6 +218,7 @@ onMounted(() => {
             @assign-shipper="assignShipper"
             @cancel="openCancelModal"
             @confirm-payment="handleManualConfirmPayment"
+            @verify-pickup="handleVerifyPickup"
           />
           <div
             class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"

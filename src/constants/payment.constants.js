@@ -1,8 +1,8 @@
 export const PAYMENT_TYPE = {
-  COD: 'COD',
-  BANK_TRANSFER: 'BANK_TRANSFER',
-  EWALLET: 'EWALLET',
-  CARD: 'CARD',
+  COD: 'cod',
+  BANK_TRANSFER: 'bankingTransfer',
+  EWALLET: 'ewallet',
+  CARD: 'card',
 }
 
 export const PAYMENT_TYPE_UI = {

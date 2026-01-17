@@ -22,6 +22,14 @@ export default {
     return api.post(`${ENDPOINT}/at-counter`, data)
   },
 
+  /**
+   * Tạo đơn mang về (Pickup)
+   * Payload: PickupOrderCreateDto { storeId, items, pickupTime, ... }
+   */
+  createPickup(data) {
+    return api.post(`${ENDPOINT}/pickup`, data)
+  },
+
   // --- 2. TRA CỨU (GET) ---
 
   /**

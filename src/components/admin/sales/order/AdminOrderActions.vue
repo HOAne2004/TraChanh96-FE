@@ -9,17 +9,16 @@ const props = defineProps({
   isProcessing: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['update-status', 'assign-shipper', 'cancel', 'confirm-payment'])
-
+const emit = defineEmits(['update-status', 'assign-shipper', 'cancel', 'confirm-payment', 'verify-pickup'])
 const selectedShipperId = ref('')
+const pickupCodeInput = ref('')
 
 // Helper xác định đơn COD
 const isCOD = computed(() => {
   if (!props.order.paymentMethod) return false
-  const type = props.order.paymentMethod.paymentType
+  const type = props.order.paymentMethod.paymentType.toLowerCase()
   const name = props.order.paymentMethod.name?.toLowerCase() || ''
-  // 0 = Cash, 1 = COD (Tuỳ enum của bạn, check cả tên cho chắc)
-  return type === 0 || type === 1 || name.includes('tiền mặt') || name.includes('cod')
+  return type === 'cod' || name.includes('cod')
 })
 
 const onUpdateStatus = (status) => emit('update-status', status)
@@ -31,6 +30,10 @@ const onAssignShipper = () => {
 // Xử lý xác nhận tiền thủ công
 const onManualConfirmPayment = () => {
   emit('confirm-payment')
+}
+
+const onVerifyPickup = () => {
+  if (pickupCodeInput.value) emit('verify-pickup', pickupCodeInput.value)
 }
 </script>
 
@@ -45,7 +48,7 @@ const onManualConfirmPayment = () => {
         v-if="!order.isPaid && order.status !== ORDER_STATUS.CANCELLED && !isCOD"
         @click="onManualConfirmPayment"
         :disabled="isProcessing"
-        class="w-full py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-200 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+        class="w-full py-2.5 bg-green-100 hover:bg-green-200 text-green-700 border border-green-200 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -106,34 +109,64 @@ const onManualConfirmPayment = () => {
         Bắt đầu pha chế
       </button>
 
-      <div
-        v-if="order.status === ORDER_STATUS.PREPARING && order.orderType !== 'AtCounter'"
-        class="space-y-3"
-      >
+      <div v-if="order.status === ORDER_STATUS.PREPARING">
         <div
           class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600"
         >
-          <label class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block"
-            >Chọn Shipper</label
+          <div v-if="order.orderType === 'delivery'" class="space-y-3">
+            <div
+              class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600"
+            >
+            <h2 class="text-green-600 font-semibold">Giao hàng</h2>
+              <label class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block"
+                >Chọn Shipper</label
+              >
+              <div class="flex gap-2">
+                <select
+                  v-model="selectedShipperId"
+                  class="flex-1 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded focus:ring-green-500"
+                >
+                  <option value="" disabled>-- Chọn nhân viên --</option>
+                  <option v-for="s in shipperOptions" :key="s.id" :value="s.id">
+                    {{ s.username }} <span v-if="s.phone"> ({{ s.phone }})</span>
+                  </option>
+                </select>
+                <button
+                  @click="onAssignShipper"
+                  :disabled="!selectedShipperId || isProcessing"
+                  class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
+                >
+                  Gán
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-else-if="order.orderType === 'pickup'"
+            class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
           >
-          <div class="flex gap-2">
-            <select
-              v-model="selectedShipperId"
-              class="flex-1 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded focus:ring-green-500"
-            >
-              <option value="" disabled>-- Chọn nhân viên --</option>
-              <option v-for="s in shipperOptions" :key="s.id" :value="s.id">
-                {{ s.username }}
-                <span v-if="s.phone"> ({{ s.phone }})</span>
-              </option>
-            </select>
-            <button
-              @click="onAssignShipper"
-              :disabled="!selectedShipperId || isProcessing"
-              class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
-            >
-              Gán
-            </button>
+            <label class="text-xs font-bold text-green-700 dark:text-green-300 mb-2 block uppercase">
+              Xác thực khách nhận
+            </label>
+            <div class="flex gap-2">
+              <input
+                v-model="pickupCodeInput"
+                type="text"
+                placeholder="Nhập mã (VD: 839201)"
+                class="flex-1 text-sm border-gray-300 rounded px-2 py-1 focus:ring-green-500 dark:bg-gray-800 dark:text-white"
+              />
+              <button
+                @click="onVerifyPickup"
+                :disabled="!pickupCodeInput || isProcessing"
+                class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 transition-colors font-bold"
+              >
+                Xác thực
+              </button>
+            </div>
+            <p class="text-[10px] text-green-500 mt-1 italic">
+              *Hỏi khách mã lấy đồ trên ứng dụng của họ
+            </p>
           </div>
         </div>
       </div>
@@ -165,7 +198,7 @@ const onManualConfirmPayment = () => {
       </button>
 
       <div
-        v-if="order.status === ORDER_STATUS.COMPLETED"
+        v-if="order.status === ORDER_STATUS.COMPLETED || order.status === ORDER_STATUS.RECEIVED"
         class="w-full py-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 rounded-lg font-bold text-center flex justify-center items-center gap-2"
       >
         <svg
@@ -180,7 +213,8 @@ const onManualConfirmPayment = () => {
             clip-rule="evenodd"
           />
         </svg>
-        Đơn hàng đã hoàn tất
+        <span v-if="order.status === ORDER_STATUS.RECEIVED">Đã nhận hàng tại quầy</span>
+        <span v-else>Đơn hàng đã hoàn tất</span>
       </div>
     </div>
   </div>
