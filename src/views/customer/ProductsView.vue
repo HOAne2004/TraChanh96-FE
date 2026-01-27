@@ -50,13 +50,10 @@ const displayedSections = computed(() => {
   // A. Lọc theo Store (Nếu có chọn)
   // Lưu ý: Cần đảm bảo object Product có field storeId hoặc logic tương đương
   // Tạm thời giả định logic lọc đơn giản hoặc lọc client-side
+  // [TEMPORARY FIX] Hiển thị tất cả sản phẩm cho mọi cửa hàng
+  // vì Admin chưa có chức năng gán sản phẩm vào Store.
   if (selectedStoreId.value) {
-    // TODO: Logic này phụ thuộc vào cấu trúc dữ liệu Product của bạn.
-    // Nếu Product không chứa StoreId trực tiếp mà nằm trong ProductStore,
-    // bạn cần xử lý ở Getter hoặc Backend để trả về list phù hợp.
-    // Tạm thời nếu chưa có logic mapping, ta có thể bỏ qua hoặc lọc giả lập.
-
-    filteredProducts = filteredProducts.filter((p) => p.storeIds.includes(selectedStoreId.value))
+    // filteredProducts = filteredProducts.filter((p) => p.storeIds.includes(selectedStoreId.value))
   }
 
   let cats = categories.value || []

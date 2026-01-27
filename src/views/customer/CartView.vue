@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/toast'
 
 import CartItemList from '@/components/customer/cart/CartItemList.vue'
@@ -13,6 +13,7 @@ import CustomerEmptyState from '@/components/common/CustomerEmptyState.vue'
 const cartStore = useCartStore()
 const userStore = useUserStore()
 const toastStore = useToastStore()
+const route = useRoute()
 const router = useRouter()
 
 const { carts, loading } = storeToRefs(cartStore)
@@ -21,19 +22,23 @@ const activeStoreId = ref(null)
 
 // 1. Logic chọn Tab mặc định hoặc giữ Tab khi reload
 watch(
-  carts,
-  (newCarts) => {
-    // Nếu chưa chọn tab nào và có dữ liệu -> Chọn cái đầu tiên
-    if (newCarts.length > 0 && !activeStoreId.value) {
-      activeStoreId.value = newCarts[0].storeId
+  () => cartStore.carts,
+  (carts) => {
+    if (!carts.length) return
+
+    if (
+      cartStore.lastActiveStoreId &&
+      carts.some(c => c.storeId === cartStore.lastActiveStoreId)
+    ) {
+      activeStoreId.value = cartStore.lastActiveStoreId
+      return
     }
-    // Nếu tab đang chọn bị xóa mất (do user xóa hết item trong đó) -> Reset về cái đầu tiên hoặc null
-    if (activeStoreId.value && !newCarts.find((c) => c.storeId === activeStoreId.value)) {
-      activeStoreId.value = newCarts.length > 0 ? newCarts[0].storeId : null
-    }
+
+    activeStoreId.value = carts[0].storeId
   },
-  { immediate: true, deep: true },
+  { immediate: true }
 )
+
 
 // 2. Computed
 const activeCart = computed(() => {
@@ -51,7 +56,7 @@ const activeTotal = computed(() => {
 
   return items.reduce((sum, item) => {
     const price = item.finalPrice || item.price || 0
-    return sum + (price * item.quantity)
+    return sum + price * item.quantity
   }, 0)
 })
 

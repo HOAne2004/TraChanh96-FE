@@ -236,24 +236,7 @@ export const useOrderStore = defineStore('order', () => {
   /**
    * Tính phí giao hàng
    */
-  async function calculateShippingFeeAction(storeId, addressId) {
-    if (!storeId || !addressId) {
-      shippingFee.value = 0
-      return
-    }
 
-    isCalculatingShip.value = true
-    try {
-      const res = await orderService.calculateShippingFee(storeId, addressId)
-      // Cập nhật thẳng vào State của Store
-      shippingFee.value = res.data.fee
-    } catch (err) {
-      console.error('Lỗi tính phí ship:', err)
-      shippingFee.value = 0
-    } finally {
-      isCalculatingShip.value = false
-    }
-  }
 
   // Helper để reset (dùng khi rời trang hoặc xóa giỏ hàng)
   function resetShippingFee() {
@@ -338,7 +321,6 @@ export const useOrderStore = defineStore('order', () => {
     updateStatusAction,
     assignShipperAction,
     cancelOrderAction,
-    calculateShippingFeeAction,
     shippingFee,
     isCalculatingShip,
     resetShippingFee,

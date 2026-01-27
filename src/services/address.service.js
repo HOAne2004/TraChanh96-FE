@@ -1,56 +1,46 @@
 // src/services/address.service.js
 import api from './axiosClient'
 
-const ENDPOINT = '/users/addresses'
-
 export default {
-    /**
-     * Lấy danh sách địa chỉ của User hiện tại
-     * Mapping: [HttpGet]
-     */
-    getAll() {
-        return api.get(ENDPOINT)
-    },
+  // --- USER ADDRESSES ---
+  async getAll() {
+    return (await api.get('/users/addresses')).data
+  },
 
-    /**
-     * Lấy chi tiết 1 địa chỉ
-     * Mapping: [HttpGet("{id}")]
-     */
-    getById(id) {
-        return api.get(`${ENDPOINT}/${id}`)
-    },
+  async getById(id) {
+    return (await api.get(`/users/addresses/${id}`)).data
+  },
 
-    /**
-     * Tạo địa chỉ mới
-     * Mapping: [HttpPost]
-     * Payload: AddressCreateDto
-     */
-    create(data) {
-        return api.post(ENDPOINT, data)
-    },
+  async create(data) {
+    return (await api.post('/users/addresses', data)).data
+  },
 
-    /**
-     * Cập nhật địa chỉ
-     * Mapping: [HttpPut("{id}")]
-     * Payload: AddressUpdateDto
-     */
-    update(id, data) {
-        return api.put(`${ENDPOINT}/${id}`, data)
-    },
+  async update(id, data) {
+    return (await api.put(`/users/addresses/${id}`, data)).data
+  },
 
-    /**
-     * Xóa địa chỉ
-     * Mapping: [HttpDelete("{id}")]
-     */
-    delete(id) {
-        return api.delete(`${ENDPOINT}/${id}`)
-    },
+  async delete(id) {
+    return (await api.delete(`/users/addresses/${id}`)).data
+  },
 
-    /**
-     * Đặt làm địa chỉ mặc định
-     * Mapping: [HttpPatch("{id}/set-default")]
-     */
-    setDefault(id) {
-        return api.patch(`${ENDPOINT}/${id}/set-default`)
-    }
+  async setDefault(id) {
+    return (await api.patch(`/users/addresses/${id}/set-default`)).data
+  },
+
+  // --- STORE ADDRESSES ---
+
+  async createForStore(data) {
+    // 👇 PHẢI DÙNG AWAIT
+    return (await api.post('/stores/addresses', data)).data
+  },
+
+  async updateForStore(id, data) {
+    return (await api.put(`/stores/addresses/${id}`, data)).data
+  },
+
+  async deleteForStore(id, storeId) {
+    return (await api.delete(`/stores/addresses/${id}`, {
+      data: { storeId: storeId },
+    })).data
+  },
 }

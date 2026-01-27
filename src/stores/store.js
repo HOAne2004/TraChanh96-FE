@@ -111,11 +111,11 @@ export const useStoreStore = defineStore('store', () => {
   /**
    * [PUBLIC] Lấy chi tiết theo ID
    */
-async function fetchStoreById(id) {
+  async function fetchStoreById(id) {
     // 1. Tìm cache
-    const existing = stores.value.find(s => s.id === id)
+    const existing = stores.value.find((s) => s.id === id)
     if (existing && existing.latitude && existing.longitude) {
-       return existing
+      return existing
     }
 
     // 2. Gọi API
@@ -126,20 +126,48 @@ async function fetchStoreById(id) {
       // 🟢 MAPPING DỮ LIỆU (QUAN TRỌNG)
       // Chuyển đổi cấu trúc lồng nhau của BE thành cấu trúc phẳng cho FE dùng
       const formattedStore = {
-          ...data,
-          // Lấy thông tin từ object Address lồng bên trong
-          address: data.address?.fullAddress || data.address?.addressDetail || 'Chưa cập nhật địa chỉ',
-          latitude: data.address?.latitude || 0,
-          longitude: data.address?.longitude || 0,
+        ...data,
+        // Lấy thông tin từ object Address lồng bên trong
+        addressId: data.address?.id,
+        address: data.address?.fullAddress || 'Chưa cập nhật địa chỉ',
+        latitude: data.address?.latitude || 0,
+        longitude: data.address?.longitude || 0,
 
-          // Fallback nếu chưa config bán kính
-          deliveryRadius: data.deliveryRadius || 20
+        // Fallback nếu chưa config bán kính
+        deliveryRadius: data.deliveryRadius || 20,
       }
 
       return formattedStore
     } catch (error) {
       console.error('Lỗi fetchStoreById:', error)
       return null
+    }
+  }
+
+  /**
+   * [ADMIN] Lấy chi tiết cửa hàng theo ID (Dùng cho trang Edit)
+   */
+  async function fetchAdminStoreById(id) {
+    loading.value = true
+    try {
+      // Gọi API Admin thay vì API Public
+      const res = await storeService.getAdminById(id)
+      const data = res.data
+
+      // MAPPING Data giống fetchStoreById
+      const formattedStore = {
+        ...data,
+        addressId: data.address?.id,
+        address: data.address?.fullAddress || '',
+        latitude: data.address?.latitude || 0,
+        longitude: data.address?.longitude || 0,
+      }
+      return formattedStore
+    } catch (error) {
+      console.error('Lỗi fetchAdminStoreById:', error)
+      return null
+    } finally {
+      loading.value = false
     }
   }
 
@@ -253,6 +281,7 @@ async function fetchStoreById(id) {
     selectedStoreId,
     fetchActiveStores,
     fetchStoreById,
+    fetchAdminStoreById,
     fetchStoreBySlug,
     fetchAdminStores,
     createStore,

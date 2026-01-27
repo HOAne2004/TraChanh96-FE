@@ -5,7 +5,7 @@ import { storeToRefs } from 'pinia'
 import { useOrderStore } from '@/stores/order'
 import { useToastStore } from '@/stores/toast'
 import { formatDate } from '@/utils/formatters'
-import { ORDER_STATUS_UI, ORDER_STATUS, ORDER_TYPE_UI } from '@/constants/order.constants'
+import { ORDER_STATUS, getOrderStatusConfig, getOrderTypeConfig } from '@/constants/order.constants'
 import api from '@/services/axiosClient'
 
 // Components
@@ -17,6 +17,7 @@ import OrderDetailItems from '@/components/common/order/OrderDetailItems.vue'
 import OrderSummaryCard from '@/components/common/order/OrderSummaryCard.vue'
 import OrderContactInfo from '@/components/common/order/OrderContactInfo.vue'
 import OrderPaymentModal from '@/components/common/order/OrderPaymentModal.vue'
+import NavLink from '@/components/common/NavLink.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,16 +33,6 @@ const showPaymentModal = ref(false)
 const isPaymentPendingLocal = ref(false)
 
 // --- COMPUTED ---
-const statusMeta = computed(() => {
-  if (!currentOrder.value) return {}
-  return (
-    ORDER_STATUS_UI[currentOrder.value.status] || {
-      label: 'Không xác định',
-      color: 'bg-gray-100 text-gray-600',
-      icon: '📦',
-    }
-  )
-})
 
 const isBankingUnpaid = computed(() => {
   const order = currentOrder.value
@@ -50,14 +41,14 @@ const isBankingUnpaid = computed(() => {
   return !order.isPaid && order.status !== ORDER_STATUS.CANCELLED && isBanking
 })
 
-const orderTypeMeta = computed(() => {
+const statusMeta = computed(() => {
   if (!currentOrder.value) return {}
-  return (
-    ORDER_TYPE_UI[currentOrder.value.orderType] || {
-      label: 'Khác',
-      color: 'bg-gray-100 text-gray-600',
-    }
-  )
+  return getOrderStatusConfig(currentOrder.value.status)
+})
+
+const orderTypeMeta = computed(() => {
+ if (!currentOrder.value) return {}
+  return getOrderTypeConfig(currentOrder.value.orderType)
 })
 
 const showPayButton = computed(() => {
@@ -104,7 +95,7 @@ const handlePayment = async () => {
   if (!pmId) {
     toastStore.show({
       type: 'error',
-      message: 'Lỗi dữ liệu: Không tìm thấy phương thức thanh toán.'
+      message: 'Lỗi dữ liệu: Không tìm thấy phương thức thanh toán.',
     })
     return
   }
@@ -204,16 +195,16 @@ const startCountdown = () => {
 }
 
 const onCompleteOrder = async () => {
-  if(!confirm('Bạn xác nhận đã nhận được hàng và muốn hoàn tất đơn này?')) return
+  if (!confirm('Bạn xác nhận đã nhận được hàng và muốn hoàn tất đơn này?')) return
 
   try {
-     // Gọi API update status sang COMPLETED
-     // Lưu ý: Cần đảm bảo API cho phép Customer update status này, hoặc tạo endpoint riêng
-     await orderStore.updateStatusAction(currentOrder.value.id, ORDER_STATUS.COMPLETED)
-     toastStore.show({ type: 'success', message: 'Cảm ơn bạn đã mua hàng!' })
-     orderStore.fetchOrderDetail(currentOrder.value.orderCode)
+    // Gọi API update status sang COMPLETED
+    // Lưu ý: Cần đảm bảo API cho phép Customer update status này, hoặc tạo endpoint riêng
+    await orderStore.updateStatusAction(currentOrder.value.id, ORDER_STATUS.COMPLETED)
+    toastStore.show({ type: 'success', message: 'Cảm ơn bạn đã mua hàng!' })
+    orderStore.fetchOrderDetail(currentOrder.value.orderCode)
   } catch (e) {
-     toastStore.show({ type: 'error', message: e.message || 'Lỗi cập nhật' })
+    toastStore.show({ type: 'error', message: e.message || 'Lỗi cập nhật' })
   }
 }
 
@@ -245,9 +236,17 @@ onMounted(async () => {
     </div>
 
     <div v-else-if="currentOrder" class="space-y-6 animate-fade-in">
+      <div class="text-sm text-gray-500 flex items-center gap-2">
+        <NavLink to="/profile?tab=orders" label="Lịch sử đơn hàng" variant="secondary" />
+        <span>/</span>
+        <span class="font-semibold text-gray-800 dark:text-gray-200">{{
+          currentOrder.orderCode
+        }}</span>
+      </div>
       <div
         class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between md:items-center gap-4"
       >
+
         <div>
           <div class="flex items-center gap-2">
             <h1 class="text-2xl font-bold text-gray-800 dark:text-white">
@@ -268,7 +267,38 @@ onMounted(async () => {
           "
           class="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-xl flex items-center justify-between shadow-sm animate-pulse"
         >
-          <div class="flex items-center gap-2">
+          <div class="flex flex-col items-left w-full">
+            <!-- Dòng trên: Icon + Text + Thời gian -->
+            <div class="flex flex-row items-center gap-2 mb-1">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span class="text-sm font-medium">Tự hủy sau:</span>
+              <span class="text-xl font-bold font-mono">{{ timeLeft }}</span>
+            </div>
+
+            <!-- Dòng dưới: Chú thích -->
+            <span class="text-xs text-gray-500 ml-7">
+              Đơn hàng sẽ tự hủy khi chưa được nhân viên xác nhận
+            </span>
+          </div>
+        </div>
+
+        <div
+          :class="`px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 ${statusMeta.color}`"
+        >
+          <span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               class="h-5 w-5"
@@ -280,17 +310,10 @@ onMounted(async () => {
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                :d="statusMeta.iconPath"
               />
             </svg>
-            <span class="text-sm font-medium">Tự hủy sau:</span>
-          </div>
-          <span class="text-xl font-bold font-mono ml-2">{{ timeLeft }}</span>
-        </div>
-        <div
-          :class="`px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 ${statusMeta.color}`"
-        >
-          <span>{{ statusMeta.icon }}</span>
+          </span>
           {{ statusMeta.label }}
         </div>
       </div>

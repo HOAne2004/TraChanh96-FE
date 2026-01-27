@@ -8,7 +8,6 @@ export const useBrandStore = defineStore('brand', () => {
   const loading = ref(false)
   const error = ref(null)
 
-
   // --- ACTIONS ---
 
   /**

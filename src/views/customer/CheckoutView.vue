@@ -128,8 +128,15 @@ const canSubmit = computed(() => {
 // --- WATCHERS ---
 
 // 1. Load Store Details khi targetStoreId đổi
+const displayStoreId = computed(() => {
+  if (route.query.previewStoreId) return parseInt(route.query.previewStoreId)
+  if (storeStore.selectedStoreId) return storeStore.selectedStoreId
+  return targetStoreId.value
+})
+
+// 1. Load Store Details khi displayStoreId đổi
 watch(
-  targetStoreId,
+  displayStoreId,
   async (newId) => {
     if (newId) {
       console.log('Fetching store details for ID:', newId) // Debug log
@@ -150,51 +157,38 @@ watch(
 )
 
 // 2. Tính khoảng cách khi đổi Địa chỉ hoặc Store
-watch([selectedAddressId, currentStore], ([addrId, store]) => {
-  console.log('🔄 Watcher triggered:', { addrId, storeName: store?.name }) // Log đầu vào
+watch([() => addresses.value, currentStore], ([listAddr, store]) => {
+  if (!store || !listAddr || listAddr.length === 0) return;
 
-  distanceKm.value = 0 // Reset
+  console.group('📍 KIỂM TRA KHOẢNG CÁCH (DEBUG)');
+  console.log(`Cửa hàng: ${store.name}`);
+  console.log(`Tọa độ Store: ${store.latitude}, ${store.longitude}`);
+  console.log(`Bán kính cho phép: ${store.deliveryRadius || 20} km`);
+  console.table(
+    listAddr.map(addr => {
+      // Tính thử khoảng cách
+      let dist = 0;
+      if (store.latitude && store.longitude && addr.latitude && addr.longitude) {
+        dist = calculateDistance(
+          Number(store.latitude),
+          Number(store.longitude),
+          Number(addr.latitude),
+          Number(addr.longitude)
+        );
+      }
 
-  // Kiểm tra điều kiện cơ bản
-  if (orderType.value !== ORDER_TYPE.DELIVERY) return
-  if (!addrId) return
-  if (!store?.latitude || !store?.longitude) {
-    console.warn('⚠️ Store thiếu tọa độ:', store)
-    return
-  }
-
-  // 🟢 Lấy danh sách địa chỉ an toàn
-  const listAddr = addresses.value || []
-  const addr = listAddr.find((a) => a.id === addrId)
-
-  if (!addr) {
-    console.error('❌ Không tìm thấy địa chỉ có ID:', addrId, 'trong danh sách:', listAddr)
-    return
-  }
-
-  // Log chi tiết để debug
-  console.group('📏 TÍNH KHOẢNG CÁCH')
-  console.log('🏪 Store:', { lat: store.latitude, lng: store.longitude })
-  console.log('🏠 Address:', {
-    id: addr.id,
-    lat: addr.latitude,
-    lng: addr.longitude,
-    full: addr.fullAddress || addr.addressDetail,
-  })
-
-  if (addr.latitude && addr.longitude) {
-    distanceKm.value = calculateDistance(
-      Number(store.latitude),
-      Number(store.longitude),
-      Number(addr.latitude),
-      Number(addr.longitude),
-    )
-    console.log('✅ Kết quả:', distanceKm.value, 'km')
-  } else {
-    console.warn('⚠️ Địa chỉ thiếu tọa độ!')
-  }
-  console.groupEnd()
-})
+      return {
+        ID: addr.id,
+        'Người nhận': addr.recipientName,
+        'Địa chỉ': addr.addressDetail, // Hoặc fullAddress
+        'Tọa độ (Lat, Long)': `${addr.latitude}, ${addr.longitude}`,
+        'Khoảng cách (Km)': dist.toFixed(3),
+        'Hợp lệ?': dist <= (store.deliveryRadius || 20) ? '✅ OK' : '❌ XA QUÁ'
+      };
+    })
+  );
+  console.groupEnd();
+}, { deep: true });
 
 // 3. Reset state khi đổi Order Type
 watch(orderType, (newType) => {
@@ -203,20 +197,22 @@ watch(orderType, (newType) => {
     console.log('Payment Method hiện tại:', selectedPaymentMethod.value)
 
     if (selectedPaymentMethod.value) {
-       // Lấy type từ object
-       const type = selectedPaymentMethod.value.paymentType;
-       const code = selectedPaymentMethod.value.code;
+      // Lấy type từ object
+      const type = selectedPaymentMethod.value.paymentType
+      const code = selectedPaymentMethod.value.code
 
-       // 🟢 SỬA LOGIC: So sánh với 'cod' (chữ thường) do CamelCase
-       // Hoặc an toàn nhất là convert sang string rồi lower case
-       const isCod = String(type).toLowerCase() === 'cod' ||
-                     String(code).toLowerCase() === 'cod';
+      // 🟢 SỬA LOGIC: So sánh với 'cod' (chữ thường) do CamelCase
+      // Hoặc an toàn nhất là convert sang string rồi lower case
+      const isCod = String(type).toLowerCase() === 'cod' || String(code).toLowerCase() === 'cod'
 
-       if (isCod) {
-          console.log('>>> Phát hiện COD, đang reset về null...')
-          selectedPaymentMethod.value = null
-          toastStore.show({ message: 'Đơn hàng "Đến lấy" vui lòng thanh toán Online (VNPAY/Momo).', type: 'info' })
-       }
+      if (isCod) {
+        console.log('>>> Phát hiện COD, đang reset về null...')
+        selectedPaymentMethod.value = null
+        toastStore.show({
+          message: 'Đơn hàng "Đến lấy" vui lòng thanh toán Online (VNPAY/Momo).',
+          type: 'info',
+        })
+      }
     }
   }
 })

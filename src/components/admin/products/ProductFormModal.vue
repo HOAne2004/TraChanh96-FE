@@ -5,7 +5,7 @@ import { useCategoryStore } from '@/stores/category'
 import { useProductStore } from '@/stores/product'
 
 import OptionsFormModal from '../options/OptionsFormModal.vue'
-import CategorySelectInput from '@/components/admin/categories/CategorySelectInput.vue'
+import CategorySelectInput from '@/components/admin/categories/category/CategorySelectInput.vue'
 import uploadApi from '@/services/upload.service'
 import { formatPrice, parsePrice } from '@/utils/formatters'
 

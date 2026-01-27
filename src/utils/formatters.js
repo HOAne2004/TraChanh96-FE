@@ -36,6 +36,31 @@ export const formatPrice = (value) => {
 
   return number.toLocaleString('vi-VN') // 1.000.000
 }
+export const formatCurrencyCompact = (value) => {
+  if (value === null || value === undefined) return '0'
+  const number = Number(value)
+  if (isNaN(number)) return '0'
+
+  // 1. Tỷ (>= 1.000.000.000)
+  if (number >= 1_000_000_000) {
+    // toFixed(1): lấy 1 số thập phân (VD: 1.5)
+    // replace: nếu là 1.0 thì bỏ .0 đi thành 1
+    return (number / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + ' Tỷ'
+  }
+
+  // 2. Triệu (>= 1.000.000)
+  if (number >= 1_000_000) {
+    return (number / 1_000_000).toFixed(1).replace(/\.0$/, '') + ' Tr'
+  }
+
+  // 3. Nghìn (>= 1.000) - Tùy chọn, nếu muốn hiện 500k thay vì 500.000
+  if (number >= 1_000) {
+     return (number / 1_000).toFixed(1).replace(/\.0$/, '') + ' k'
+  }
+
+  // Nhỏ hơn 1 nghìn thì hiển thị bình thường
+  return number.toLocaleString('vi-VN')
+}
 export const parsePrice = (value) => {
   if (!value) return 0
 

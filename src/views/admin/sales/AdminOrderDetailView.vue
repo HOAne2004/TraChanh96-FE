@@ -5,7 +5,7 @@ import { storeToRefs } from 'pinia'
 import { useOrderStore } from '@/stores/order'
 import { useAdminStore } from '@/stores/admin'
 import { formatDate } from '@/utils/formatters'
-import {  ORDER_STATUS_UI } from '@/constants/order.constants'
+import { getOrderStatusConfig } from '@/constants/order.constants'
 import { USER_ROLE } from '@/constants/user.constants'
 import { useToastStore } from '@/stores/toast'
 
@@ -33,9 +33,8 @@ const shipperOptions = computed(() => {
 
 const currentStatusConfig = computed(() => {
   if (!order.value) return {}
-  return ORDER_STATUS_UI[order.value.status] || {}
+  return getOrderStatusConfig(order.value.status)
 })
-
 
 // --- ACTIONS ---
 
@@ -157,23 +156,27 @@ const handleVerifyPickup = async (code) => {
           <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
               Đơn hàng #{{ order.orderCode }}
-              <span
-                :class="[
-                  'px-3 py-1 rounded-full text-sm font-medium border flex items-center gap-1',
-                  currentStatusConfig.color,
-                ]"
+              <div
+                :class="`px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 ${currentStatusConfig.color}`"
               >
-                <svg
-                  v-if="currentStatusConfig.iconPath"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  class="w-4 h-4"
-                >
-                  <path fill-rule="evenodd" clip-rule="evenodd" :d="currentStatusConfig.iconPath" />
-                </svg>
+                <span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      :d="currentStatusConfig.iconPath"
+                    />
+                  </svg>
+                </span>
                 {{ currentStatusConfig.label }}
-              </span>
+              </div>
             </h1>
             <p class="text-sm text-gray-500 mt-1">Đặt lúc: {{ formatDate(order.createdAt) }}</p>
           </div>

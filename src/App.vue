@@ -1,17 +1,18 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useUIStore } from '@/stores/uiStore'
-//import LoginModal from '@/components/auth/LoginModal.vue'
-import { useUserStore } from '@/stores/user' // 1. THÊM: Import userStore
+import { useUserStore } from '@/stores/user'
+import { useModalStore } from '@/stores/modal'
 import AppToast from '@/components/AppToast.vue'
+import GlobalModal from '@/components/GlobalModal.vue'
+
 const ui = useUIStore()
-const userStore = useUserStore() // 2. THÊM: Khởi tạo userStore
+const userStore = useUserStore()
+const modalStore = useModalStore()
 
 onMounted(() => {
-  // 3. SỬA: Thực thi hàm (thêm '()')
   ui.initTheme()
 
-  // 4. THÊM: Gọi hàm tải user khi ứng dụng khởi động
   userStore.fetchUserProfile()
 })
 </script>
@@ -19,5 +20,5 @@ onMounted(() => {
 <template>
   <RouterView />
   <AppToast />
-  <!-- <LoginModal v-if="ui.loginModalVisible" @close="ui.hideLoginModal" /> -->
+  <GlobalModal v-if="modalStore.isVisible" />
 </template>

@@ -3,21 +3,26 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useOrderStore } from '@/stores/order'
+import { useStoreStore } from '@/stores/store'
 import { formatDate, formatPrice } from '@/utils/formatters'
 import { useToastStore } from '@/stores/toast'
-import { getStatusOptions } from '@/constants/order.constants'
-// Import Components mới tách
+import {
+  getOrderStatusOptions,
+  getOrderStatusConfig,
+  getOrderTypeConfig,
+} from '@/constants/order.constants'
+
 import AdminFilterBar from '@/components/admin/common/AdminFilterBar.vue'
 import AdminPagination from '@/components/admin/common/AdminPagination.vue'
 import AdminDataTable from '@/components/admin/common/AdminDataTable.vue' // Import Generic Table
-import { ORDER_STATUS_UI } from '@/constants/order.constants'
 
 const router = useRouter()
 const orderStore = useOrderStore()
+const storeStore = useStoreStore()
+const { stores } = storeToRefs(storeStore)
 const { orders, pagination, loading } = storeToRefs(orderStore)
 const toastStore = useToastStore()
 // Options trạng thái cho FilterBar
-const statusOptions = getStatusOptions()
 
 // Lưu trạng thái filter hiện tại để dùng cho phân trang
 const currentFilters = ref({})
@@ -39,14 +44,12 @@ const orderColumns = [
 ]
 
 // Helper lấy UI status (như cũ)
-const getStatusConfig = (statusEnum) => ORDER_STATUS_UI[statusEnum] || {}
 const handleDeleteOrder = async (code) => {
-    await orderStore.deleteOrderAction(code)
-    toastStore.showToast({
-      title: 'Thành công',
-      message: 'Xóa đơn hàng thành công',
-      type: 'success',
-    })
+  await orderStore.deleteOrderAction(code)
+  toastStore.show({
+    message: 'Xóa đơn hàng thành công',
+    type: 'success',
+  })
 }
 const prepareApiParams = (filterParams = {}, page = 1) => {
   const params = {
@@ -54,29 +57,19 @@ const prepareApiParams = (filterParams = {}, page = 1) => {
     pageSize: 10,
     ...filterParams,
   }
-
+  if (params.storeId) {
+    params.storeId = Number(params.storeId)
+  }
   // Loại bỏ giá trị rỗng
   Object.keys(params).forEach((key) => {
     if (params[key] === '' || params[key] === null || params[key] === undefined) {
       delete params[key]
     }
   })
-
-  // Đặc biệt xử lý status: phải là số hợp lệ
-  if (params.status !== undefined) {
-    const statusNum = Number(params.status)
-    if (!isNaN(statusNum)) {
-      params.status = statusNum
-    } else {
-      delete params.status // Nếu không phải số thì xóa
-    }
-  }
-
-  console.log('🧹 Cleaned API params:', params)
   return params
 }
 
-const fetchOrders = async (filterParams = {}, page = 1) => {
+const loadData = async (filterParams = {}, page = 1) => {
   currentFilters.value = filterParams
 
   const apiParams = prepareApiParams(filterParams, page)
@@ -85,8 +78,7 @@ const fetchOrders = async (filterParams = {}, page = 1) => {
     await orderStore.fetchOrders(apiParams)
   } catch (err) {
     console.error('Lỗi tải đơn hàng:', err)
-    toastStore.showToast({
-      title: 'Lỗi',
+    toastStore.show({
       message: 'Lỗi tải đơn hàng',
       type: 'error',
     })
@@ -95,11 +87,11 @@ const fetchOrders = async (filterParams = {}, page = 1) => {
 
 const onFilterChange = (newFilters) => {
   console.log('🔍 Filter changed:', newFilters)
-  fetchOrders(newFilters, 1)
+  loadData(newFilters, 1)
 }
 
 const onPageChange = (newPage) => {
-  fetchOrders(currentFilters.value, newPage)
+  loadData(currentFilters.value, newPage)
 }
 
 const goToDetail = (code) => {
@@ -109,8 +101,7 @@ const goToDetail = (code) => {
 // ⭐️ FIX LỖI 5: Hàm Xuất Excel (CSV cơ bản)
 const exportToExcel = () => {
   if (!orders.value || orders.value.length === 0) {
-    toastStore.showToast({
-      title: 'Lỗi',
+    toastStore.show({
       message: 'Không có dữ liệu để xuất',
       type: 'error',
     })
@@ -126,7 +117,7 @@ const exportToExcel = () => {
     o.recipientName || o.userName || 'Khách vãng lai',
     o.recipientPhone || '',
     formatDate(o.createdAt),
-    o.isAtCounter ? 'Tại quầy' : 'Giao hàng',
+    getOrderTypeConfig(o.orderType).label,
     formatPrice(o.grandTotal),
     o.status,
   ])
@@ -155,8 +146,8 @@ const exportToExcel = () => {
 }
 
 // --- LIFECYCLE ---
-onMounted(() => {
-  fetchOrders()
+onMounted(async () => {
+  await Promise.all([loadData(), storeStore.fetchActiveStores()])
 })
 </script>
 
@@ -169,7 +160,9 @@ onMounted(() => {
 
     <AdminFilterBar
       placeholder="Tìm mã đơn, tên khách, SĐT..."
-      :status-options="statusOptions"
+      :status-options="getOrderStatusOptions()"
+      :store-options="stores"
+      :is-find-store="true"
       @change="onFilterChange"
       @export="exportToExcel"
     />
@@ -196,15 +189,10 @@ onMounted(() => {
 
       <template #cell-orderType="{ item }">
         <span
-          v-if="item.isAtCounter"
-          class="px-2 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-100"
-          >Tại quầy</span
+          :class="['px-2 py-0.5 rounded text-xs border', getOrderTypeConfig(item.orderType).color]"
         >
-        <span
-          v-else
-          class="px-2 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-100"
-          >Giao hàng</span
-        >
+          {{ getOrderTypeConfig(item.orderType).label }}
+        </span>
       </template>
 
       <template #cell-grandTotal="{ value }"> {{ formatPrice(value) }} đ </template>
@@ -213,33 +201,53 @@ onMounted(() => {
         <span
           :class="[
             'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border',
-            getStatusConfig(value).color,
+            getOrderStatusConfig(value).color,
           ]"
         >
           <svg
-            v-if="getStatusConfig(value).iconPath"
+            v-if="getOrderStatusConfig(value).iconPath"
             xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            fill="none"
             viewBox="0 0 24 24"
-            fill="currentColor"
-            class="w-3.5 h-3.5"
+            stroke="currentColor"
           >
-            <path fill-rule="evenodd" clip-rule="evenodd" :d="getStatusConfig(value).iconPath" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              :d="getOrderStatusConfig(value).iconPath"
+            />
           </svg>
-          {{ getStatusConfig(value).label }}
+          {{ getOrderStatusConfig(value).label }}
         </span>
       </template>
 
       <template #action="{ item }">
         <div class="flex items-center justify-center gap-2">
-
           <button
             @click="goToDetail(item.orderCode || item.id)"
             class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
             title="Xem chi tiết"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-5 h-5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
           </button>
 
@@ -248,11 +256,21 @@ onMounted(() => {
             class="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
             title="Xóa đơn hàng"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-5 h-5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+              />
             </svg>
           </button>
-
         </div>
       </template>
     </AdminDataTable>

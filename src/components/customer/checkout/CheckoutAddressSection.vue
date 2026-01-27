@@ -72,7 +72,7 @@ const handleAddressSubmit = async (formData) => {
   try {
     const newAddr = await addressStore.createAddress({
       ...formData,
-      FullAddress: `${formData.street}, ${formData.ward}, ${formData.district}, ${formData.city}`,
+      FullAddress: `${formData.addressDetail}, ${formData.commune}, ${formData.district}, ${formData.province}`,
       Latitude: formData.latitude || 21.0285,
       Longitude: formData.longitude || 105.8542,
     })

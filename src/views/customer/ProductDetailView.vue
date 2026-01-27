@@ -191,8 +191,20 @@ const handleAddToCart = async (isBuyNow = false) => {
       quantity: 1,
     }))
 
+    // [WORKAROUND] Tự động lấy storeId hợp lệ nếu store hiện tại chưa được gán sản phẩm
+    let productStoreIds = currentProduct.value.storeIds
+    if (!productStoreIds || productStoreIds.length === 0) {
+      // Fallback: Tìm trong danh sách products (vì API List thường có storeIds đầy đủ hơn API Detail)
+      const pInList = products.value?.find((p) => p.id === currentProduct.value.id)
+      if (pInList) productStoreIds = pInList.storeIds
+    }
+
+    const validStoreId = productStoreIds?.includes(selectedStoreId.value)
+      ? selectedStoreId.value
+      : productStoreIds?.[0] || selectedStoreId.value
+
     const payload = {
-      storeId: selectedStoreId.value,
+      storeId: validStoreId,
       productId: currentProduct.value.id,
       quantity: quantity.value,
       sizeId: selectedSize.value ? selectedSize.value.id : null,
@@ -205,7 +217,10 @@ const handleAddToCart = async (isBuyNow = false) => {
     await cartStore.addToCart(payload)
 
     if (isBuyNow) {
-      router.push('/checkout')
+      router.push({
+        path: '/checkout',
+        query: { storeId: validStoreId }
+      })
     } else {
       toastStore.show({ type: 'success', message: 'Đã thêm món vào giỏ hàng!' })
       quantity.value = 1
@@ -304,8 +319,6 @@ const handleAddToCart = async (isBuyNow = false) => {
           <div class="text-3xl font-extrabold text-primary mb-6">
             {{ formatPrice(finalPrice) }}đ
           </div>
-
-
 
           <div v-if="isDrink" class="space-y-6 mb-8">
             <hr class="border-gray-200 dark:border-gray-700 mb-6" />
@@ -494,7 +507,6 @@ const handleAddToCart = async (isBuyNow = false) => {
                 :disabled="isActionDisabled"
                 @click="handleAddToCart(true)"
               />
-
             </div>
             <div v-if="!selectedStoreId" class="w-full flex gap-10 items-center">
               <Button

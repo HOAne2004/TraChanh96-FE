@@ -58,6 +58,10 @@ const storeStatus = computed(() => {
   return storeStore.getStoreStatus(store)
 })
 
+const isClosed = computed(() => {
+  return storeStore.selectedStoreId && !storeStatus.value.isOpen
+})
+
 const isDisabled = computed(() => {
   // Disable nếu đang adding HOẶC (đã chọn store VÀ store đóng)
   return isAdding.value || (storeStore.selectedStoreId && !storeStatus.value.isOpen)
@@ -81,8 +85,16 @@ const addToCart = async (event) => {
     return
   }
 
+ let validStoreId = storeStore.selectedStoreId
+
+  if (props.product.storeIds && props.product.storeIds.length > 0) {
+      validStoreId = props.product.storeIds.includes(storeStore.selectedStoreId)
+        ? storeStore.selectedStoreId
+        : props.product.storeIds[0]
+  }
+  
   const itemToAdd = {
-    storeId: storeStore.selectedStoreId,
+    storeId: validStoreId,
     productId: props.product.id,
     quantity: quantity.value,
     sizeId: defaultSize.value ? defaultSize.value.id : null,
@@ -119,13 +131,13 @@ const link = computed(() => {
 
 <template>
   <div
-class="group flex-shrink-0 max-w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-full relative"
-    :class="{ 'opacity-75 grayscale': isClosed }"  >
+    class="group flex-shrink-0 max-w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-full relative"
+    :class="{ 'opacity-75': isClosed }"
+  >
     <div
       v-if="storeStore.selectedStoreId && !storeStatus.isOpen"
       class="absolute inset-0 z-20 bg-gray-900/50 flex flex-col items-center justify-center text-white backdrop-blur-[1px]"
     >
-    
       <span class="text-sm font-medium bg-red-600 px-3 py-1 rounded-full">
         {{ storeStatus.message }}
       </span>
@@ -198,7 +210,11 @@ class="group flex-shrink-0 max-w-64 bg-white dark:bg-gray-800 rounded-2xl shadow
             @click.stop.prevent="addToCart"
             :disabled="isDisabled"
             class="w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            :class="!isDisabled ? 'bg-green-100 text-green-600 hover:bg-green-600 hover:text-white' : 'bg-gray-200 text-gray-400'"
+            :class="
+              !isDisabled
+                ? 'bg-green-100 text-green-600 hover:bg-green-600 hover:text-white'
+                : 'bg-gray-200 text-gray-400'
+            "
             :title="!storeStatus.isOpen ? storeStatus.message : 'Thêm nhanh vào giỏ'"
           >
             <span

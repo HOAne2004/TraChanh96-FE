@@ -52,7 +52,7 @@ const getStatusConfig = (statusNumber) => {
   if (!config) {
     return {
       label: 'Không xác định',
-      color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+      color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
     }
   }
 
@@ -104,21 +104,35 @@ const goToPage = (page) => {
       >
         <div class="flex justify-between items-start mb-3 border-b dark:border-gray-700 pb-2">
           <div>
-            <span class="text-sm font-semibold text-gray-600 dark:text-gray-400 block">Mã Đơn hàng:</span>
-            <span class="text-xl font-bold text-green-700 dark:text-green-400">#{{ order.orderCode }}</span>
+            <span class="text-sm font-semibold text-gray-600 dark:text-gray-400 block"
+              >Mã Đơn hàng:</span
+            >
+            <span class="text-xl font-bold text-green-700 dark:text-green-400"
+              >#{{ order.orderCode }}</span
+            >
           </div>
 
-          <span
-            :class="[
-              'px-3 py-1 text-xs font-semibold rounded-full flex items-center gap-1',
-              getStatusConfig(order.status).color, // Lấy màu từ Config
-            ]"
+          <div
+            :class="`px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 ${getStatusConfig(order.status).color}`"
           >
-             <svg v-if="getStatusConfig(order.status).iconPath" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3">
-                <path fill-rule="evenodd" clip-rule="evenodd" :d="getStatusConfig(order.status).iconPath" />
-             </svg>
-            {{ getStatusConfig(order.status).label }} </span>
-
+            <span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  :d="getStatusConfig(order.status).iconPath"
+                />
+              </svg>
+            </span>
+            {{ getStatusConfig(order.status).label }}
+          </div>
         </div>
 
         <div class="text-sm space-y-2">
@@ -128,23 +142,31 @@ const goToPage = (page) => {
           </p>
           <p class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">Địa chỉ giao hàng:</span>
-            <span class="font-medium text-right max-w-[70%]">{{ order.shippingAddress || order.address }}</span>
+            <span class="font-medium text-right max-w-[70%]">{{
+              order.shippingAddress || order.address
+            }}</span>
           </p>
           <p class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">Phương thức thanh toán:</span>
             <span class="font-medium">
-                {{ order.paymentMethod?.name  || (order.paymentMethod === 'cash' ? 'COD' : 'Chuyển khoản') }}
+              {{
+                order.paymentMethod?.name ||
+                (order.paymentMethod === 'cash' ? 'COD' : 'Chuyển khoản')
+              }}
             </span>
           </p>
-          <div class="border-t pt-2 mt-2 dark:border-gray-700 flex justify-between font-bold text-lg">
+          <div
+            class="border-t pt-2 mt-2 dark:border-gray-700 flex justify-between font-bold text-lg"
+          >
             <span>TỔNG CỘNG:</span>
-            <span class="text-red-600 dark:text-red-400">{{ formatPrice(order.grandTotal || order.totalAmount) }}</span>
+            <span class="text-red-600 dark:text-red-400">{{
+              formatPrice(order.grandTotal || order.totalAmount)
+            }}</span>
           </div>
         </div>
       </div>
     </div>
 
-    <div v-if="totalPages > 1" class="flex justify-center items-center space-x-2 mt-8">
-        </div>
+    <div v-if="totalPages > 1" class="flex justify-center items-center space-x-2 mt-8"></div>
   </div>
 </template>

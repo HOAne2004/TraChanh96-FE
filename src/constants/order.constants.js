@@ -79,10 +79,10 @@ export const ORDER_STATUS_UI = {
 
   // 8: RECEIVED
   [ORDER_STATUS.RECEIVED]: {
-    label: 'Đã nhận hàng',
+    label: 'Khách đã lấy hàng',
     color: 'bg-green-100 text-green-700 border-green-200',
     iconPath:
-      'M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016.543.623 1.354 1.016 2.25 1.016.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72l1.189-1.19A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.25h10.5a.75.75 0 00.75-.75v-5.04c0-.402-.324-.73-.723-.75-2.755-.143-5.631-.143-8.386 0-.399.02-.723.348-.723.75v5.04a.75.75 0 00.75.75z',
+      'M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z',
   },
   [ORDER_STATUS.DELETED]: {
     label: 'Đã xóa',
@@ -224,9 +224,9 @@ export const CANCEL_REASON_UI = {
 // --- HELPER FUNCTIONS ---
 
 // Lấy danh sách status cho filter
-export const getStatusOptions = () => {
+export const getOrderStatusOptions = () => {
   return Object.entries(ORDER_STATUS_UI).map(([key, config]) => ({
-    value: Number(key),
+    value: String(key),
     label: config.label,
   }))
 }
@@ -234,7 +234,7 @@ export const getStatusOptions = () => {
 // Lấy danh sách order type cho filter
 export const getOrderTypeOptions = () => {
   return Object.entries(ORDER_TYPE_UI).map(([key, config]) => ({
-    value: Number(key),
+    value: String(key),
     label: config.label,
   }))
 }
@@ -242,7 +242,7 @@ export const getOrderTypeOptions = () => {
 // Lấy danh sách cancel reasons cho dropdown
 export const getCancelReasonOptions = () => {
   return Object.entries(CANCEL_REASON_UI).map(([key, config]) => ({
-    value: Number(key),
+    value: String(key),
     label: config.label,
     type: config.type,
   }))

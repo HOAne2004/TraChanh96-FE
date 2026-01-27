@@ -1,7 +1,8 @@
 <script setup>
-import { defineProps, defineEmits, ref, computed } from 'vue'
+import { defineProps, defineEmits, ref, computed, watch } from 'vue'
 
-const emit = defineEmits(['change-page', 'action']) // Bỏ sort-column vì ta xử lý nội bộ
+// Thêm event 'sort' để báo ra ngoài khi ở chế độ Server
+const emit = defineEmits(['change-page', 'action', 'sort'])
 
 const props = defineProps({
   items: { type: Array, required: true },
@@ -10,64 +11,67 @@ const props = defineProps({
   totalCount: { type: Number, default: 0 },
   pagination: { type: Object, default: () => ({ pageIndex: 1, pageSize: 10 }) },
   actions: { type: Array, default: () => [] },
+
+  // 🛠️ MỚI: Bật chế độ Server Side (Mặc định false -> Tự sort)
+  serverSide: { type: Boolean, default: false },
 })
 
-// --- STATE SẮP XẾP ---
-const sortKey = ref('') // Cột đang được sort
-const sortOrder = ref('asc') // 'asc' (tăng) hoặc 'desc' (giảm)
+// State sort
+const sortKey = ref('')
+const sortOrder = ref('desc') // 'asc' hoặc 'desc'
 
-// --- HÀM HELPER LẤY DỮ LIỆU ---
+// --- HÀM HELPER ---
 const getCellValue = (item, key) => {
   return key.split('.').reduce((o, i) => (o ? o[i] : null), item)
 }
 
-// --- LOGIC SẮP XẾP TỰ ĐỘNG ---
-const sortedItems = computed(() => {
-  // 1. Copy mảng gốc để tránh mutate prop (Vue warning)
-  let data = [...props.items]
+// --- HÀM XỬ LÝ CLICK HEADER ---
+const handleSort = (key) => {
+  // 1. Cập nhật state UI (Đổi chiều mũi tên)
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortOrder.value = 'asc' // Mặc định cột mới là tăng dần
+  }
 
-  // 2. Nếu không có key sort, trả về mặc định
+  // 2. Kiểm tra chế độ
+  if (props.serverSide) {
+    // 📡 Server Mode: Emit ra ngoài để gọi API
+    emit('sort', { key: sortKey.value, order: sortOrder.value })
+  } else {
+    // 💻 Local Mode: Không làm gì cả, computed 'displayItems' sẽ tự chạy lại
+  }
+}
+
+// --- LOGIC HIỂN THỊ DỮ LIỆU ---
+const displayItems = computed(() => {
+  // TRƯỜNG HỢP 1: Server Side -> Hiển thị nguyên gốc (API đã sort rồi)
+  if (props.serverSide) return props.items
+
+  // TRƯỜNG HỢP 2: Local -> Tự sort mảng items
+  let data = [...props.items]
   if (!sortKey.value) return data
 
-  // 3. Thực hiện sort
   data.sort((a, b) => {
     let valueA = getCellValue(a, sortKey.value)
     let valueB = getCellValue(b, sortKey.value)
 
-    // Xử lý null/undefined (đẩy xuống cuối)
     if (valueA == null) return 1
     if (valueB == null) return -1
 
-    // So sánh số
     if (typeof valueA === 'number' && typeof valueB === 'number') {
       return (valueA - valueB) * (sortOrder.value === 'asc' ? 1 : -1)
     }
 
-    // So sánh chuỗi (Tiếng Việt) và Ngày tháng
     valueA = valueA.toString().toLowerCase()
     valueB = valueB.toString().toLowerCase()
 
-    if (sortOrder.value === 'asc') {
-      return valueA.localeCompare(valueB)
-    } else {
-      return valueB.localeCompare(valueA)
-    }
+    if (sortOrder.value === 'asc') return valueA.localeCompare(valueB)
+    return valueB.localeCompare(valueA)
   })
-
   return data
 })
-
-// --- HÀM CLICK HEADER ---
-const handleSort = (key) => {
-  if (sortKey.value === key) {
-    // Nếu click lại cột cũ -> Đảo chiều
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    // Nếu click cột mới -> Set cột mới, mặc định asc
-    sortKey.value = key
-    sortOrder.value = 'asc'
-  }
-}
 </script>
 
 <template>
@@ -176,7 +180,7 @@ const handleSort = (key) => {
 
       <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
         <tr
-          v-for="(item, index) in sortedItems"
+          v-for="(item, index) in displayItems"
           :key="item.id || index"
           class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
         >

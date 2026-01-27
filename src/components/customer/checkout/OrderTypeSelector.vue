@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { ORDER_TYPE } from '@/constants/order.constants'
 
 const props = defineProps({
-  modelValue: { type: Number, required: true },
+  modelValue: { type: String, required: true },
   types: { type: Array, default: () => [ORDER_TYPE.DELIVERY, ORDER_TYPE.PICKUP] }
 })
 

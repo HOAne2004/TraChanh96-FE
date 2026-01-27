@@ -9,7 +9,7 @@ export const useToastStore = defineStore('toast', () => {
 
     toasts.value.push({
       id,
-      type,       // success | error | warning | info
+      type, // success | error | warning | info
       message,
     })
 
@@ -19,9 +19,8 @@ export const useToastStore = defineStore('toast', () => {
   }
 
   function removeToast(id) {
-    toasts.value = toasts.value.filter(t => t.id !== id)
+    toasts.value = toasts.value.filter((t) => t.id !== id)
   }
-
   return {
     toasts,
     show,

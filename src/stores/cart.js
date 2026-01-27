@@ -8,7 +8,7 @@ export const useCartStore = defineStore('cart', () => {
   // --- STATE ---
   const carts = ref([])
   const loading = ref(false)
-
+  const lastActiveStoreId = ref(null)
   // --- GETTERS ---
 
   const totalItems = computed(() => {
@@ -25,12 +25,12 @@ export const useCartStore = defineStore('cart', () => {
   // Danh sách items
   const cartItems = computed(() =>
     carts.value.flatMap((cart) =>
-      (cart.items || []).map(item => ({
+      (cart.items || []).map((item) => ({
         ...item,
         storeId: cart.storeId,
-        storeName: cart.storeName
-      }))
-    )
+        storeName: cart.storeName,
+      })),
+    ),
   )
   // --- ACTIONS ---
 
@@ -64,11 +64,12 @@ export const useCartStore = defineStore('cart', () => {
     loading.value = true
     try {
       const res = await cartService.addToCart(payload)
-      carts.value = res.data // 🟢 Cập nhật lại toàn bộ danh sách
+      carts.value = res.data
+      lastActiveStoreId.value = payload.storeId
       return true
     } catch (err) {
       console.error('Lỗi thêm giỏ hàng:', err)
-      throw err // Ném lỗi để Component hiển thị Toast Error
+      throw err
     } finally {
       loading.value = false
     }
@@ -167,6 +168,7 @@ export const useCartStore = defineStore('cart', () => {
 
   return {
     carts,
+    lastActiveStoreId,
     loading,
     totalItems,
     totalPrice,
