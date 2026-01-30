@@ -1,77 +1,116 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useCartStore } from '@/stores/cart' // Check lại tên file store cart của bạn
+import { useRouter } from 'vue-router'
+import { useCartStore } from '@/stores/cart'
 import { useUserStore } from '@/stores/user'
-import { resolveImage } from '@/utils/image'
 import { useStoreStore } from '@/stores/store'
+import { useProductStore } from '@/stores/product'
 import { useToastStore } from '@/stores/toast'
+import { resolveImage } from '@/utils/image'
 import { formatPrice, formatSold } from '@/utils/formatters'
 import { SugarLevel, IceLevel } from '@/constants/enums'
 import defaultDrink from '@/assets/images/others/default-drink.png'
-import { useProductStore } from '@/stores/product'
 
 const props = defineProps({
   product: { type: Object, required: true },
 })
 
+// Stores & Router
+const router = useRouter()
 const cartStore = useCartStore()
 const userStore = useUserStore()
 const storeStore = useStoreStore()
 const toastStore = useToastStore()
 const productStore = useProductStore()
 
+// State
 const quantity = ref(1)
 const isAdding = ref(false)
 
+// --- COMPUTED PROPERTIES ---
+
 const fullImageUrl = computed(() => resolveImage(props.product.imageUrl, defaultDrink))
-const handleImageError = (e) => {
-  e.target.src = defaultDrink
-  e.target.onerror = null
-}
+
+const isNew = computed(() => productStore.checkIsNew(props.product.id))
+const isBestSeller = computed(() => productStore.checkIsBestSeller(props.product.id))
+
 const defaultSize = computed(() => {
   const sizes = props.product.availableSizes || []
   if (sizes.length === 0) return null
-
   return sizes.reduce(
     (prev, curr) => (prev.priceModifier < curr.priceModifier ? prev : curr),
     sizes[0],
   )
 })
 
-const defaultSugarId = SugarLevel.PERCENT_100
-const defaultIceId = IceLevel.PERCENT_100
-
-const isNew = computed(() => {
-  return productStore.checkIsNew(props.product.id)
-})
-
-const isBestSeller = computed(() => {
-  return productStore.checkIsBestSeller(props.product.id)
-})
-
-// --- LOGIC MỚI: KIỂM TRA TRẠNG THÁI STORE ---
+// 1. Logic kiểm tra trạng thái Cửa hàng (Mở/Đóng)
 const storeStatus = computed(() => {
-  // Nếu chưa chọn store thì cho phép xem (nhưng lúc add to cart sẽ bắt chọn)
   if (!storeStore.selectedStoreId) return { isOpen: true, message: '' }
 
-  const store = storeStore.stores.find((s) => s.id === storeStore.selectedStoreId)
+  // Tìm store trong list hoặc fallback về currentStore (fix lỗi khi vào thẳng trang chi tiết)
+  let store = storeStore.stores.find((s) => s.id === storeStore.selectedStoreId)
+  if (!store && storeStore.currentStore?.id === storeStore.selectedStoreId) {
+    store = storeStore.currentStore
+  }
+
+  if (!store) return { isOpen: true, message: '' }
   return storeStore.getStoreStatus(store)
 })
 
-const isClosed = computed(() => {
-  return storeStore.selectedStoreId && !storeStatus.value.isOpen
+// 2. 🔥 CORE LOGIC: Xác định trạng thái khả dụng của sản phẩm
+// Trả về Object { label: 'Lý do', class: 'màu sắc' } hoặc Null (nếu mua được)
+const availabilityStatus = computed(() => {
+  // A. Chưa chọn quán -> Xem bình thường
+  if (!storeStore.selectedStoreId) return null
+
+  // B. Quán Đóng cửa
+  if (!storeStatus.value.isOpen) {
+    return { label: storeStatus.value.message || 'Đóng cửa', class: 'bg-red-600' }
+  }
+
+  // C. Sản phẩm Không bán tại quán này
+  // (Chỉ check nếu sản phẩm có danh sách storeIds - trường hợp xem ở list tổng)
+  if (
+    props.product.storeIds &&
+    Array.isArray(props.product.storeIds) &&
+    props.product.storeIds.length > 0
+  ) {
+    if (!props.product.storeIds.includes(storeStore.selectedStoreId)) {
+      return { label: 'Không bán tại đây', class: 'bg-gray-500' }
+    }
+  }
+
+  // D. Hết hàng (Check cả cờ isSoldOut và status string từ BE)
+  if (props.product.isSoldOut || props.product.storeStatus === 'OutOfStock') {
+    return { label: 'Tạm hết hàng', class: 'bg-orange-500' }
+  }
+
+  return null // Available
 })
 
-const isDisabled = computed(() => {
-  // Disable nếu đang adding HOẶC (đã chọn store VÀ store đóng)
-  return isAdding.value || (storeStore.selectedStoreId && !storeStatus.value.isOpen)
+// Disable tương tác nếu có status bất thường hoặc đang add
+const isDisabled = computed(() => !!availabilityStatus.value || isAdding.value)
+
+const cardClasses = computed(() => {
+  return isDisabled.value ? 'opacity-80 grayscale-[0.5]' : 'hover:shadow-lg hover:-translate-y-1'
 })
+
+const link = computed(() => `/products/${props.product.slug}`)
+
+const handleImageError = (e) => {
+  e.target.src = defaultDrink
+  e.target.onerror = null
+}
+
+// --- METHODS ---
 
 const addToCart = async (event) => {
-  event.preventDefault()
+  event.preventDefault() // Chặn link router
+
+  // 1. Validate nhanh (dù UI đã chặn)
   if (isDisabled.value) {
-    if (!storeStatus.value.isOpen) {
-      toastStore.show({ type: 'warning', message: `Cửa hàng ${storeStatus.value.message}` })
+    if (availabilityStatus.value) {
+      toastStore.show({ type: 'warning', message: availabilityStatus.value.label })
     }
     return
   }
@@ -81,68 +120,66 @@ const addToCart = async (event) => {
     return
   }
 
-  if (props.product.availableSizes?.length > 0 && !defaultSize.value) {
+  if (!storeStore.selectedStoreId) {
+    toastStore.show({ type: 'warning', message: 'Vui lòng chọn cửa hàng trước khi mua' })
     return
   }
 
- let validStoreId = storeStore.selectedStoreId
-
-  if (props.product.storeIds && props.product.storeIds.length > 0) {
-      validStoreId = props.product.storeIds.includes(storeStore.selectedStoreId)
-        ? storeStore.selectedStoreId
-        : props.product.storeIds[0]
+  if (props.product.availableSizes?.length > 0 && !defaultSize.value) {
+    toastStore.show({ type: 'warning', message: 'Vui lòng chọn size cho sản phẩm' })
+    return
   }
-  
+
+  // 2. Prepare Payload
   const itemToAdd = {
-    storeId: validStoreId,
+    storeId: storeStore.selectedStoreId,
     productId: props.product.id,
     quantity: quantity.value,
-    sizeId: defaultSize.value ? defaultSize.value.id : null,
-    sugarLevelId: defaultSugarId,
-    iceLevelId: defaultIceId,
+    sizeId: defaultSize.value?.id ?? null,
+    sugarLevelId: SugarLevel.PERCENT_100,
+    iceLevelId: IceLevel.PERCENT_100,
     note: '',
     toppings: [],
   }
 
+  // 3. Call API
   isAdding.value = true
   try {
     await cartStore.addToCart(itemToAdd)
-
     toastStore.show({
       type: 'success',
-      message: `Đã thêm ${props.product.name} vào giỏ hàng!`,
+      message: `Đã thêm ${props.product.name} vào giỏ hàng`,
     })
-
-    quantity.value = 1 // Reset số lượng
   } catch (err) {
     console.error('Lỗi thêm giỏ hàng:', err)
     toastStore.show({
       type: 'error',
-      message: err.response?.data?.message || 'Lỗi thêm vào giỏ',
+      message: err.response?.data?.message || 'Lỗi thêm vào giỏ hàng',
     })
   } finally {
     isAdding.value = false
   }
 }
-const link = computed(() => {
-  return `/products/${props.product.slug}`
-})
 </script>
 
 <template>
   <div
-    class="group flex-shrink-0 max-w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-full relative"
-    :class="{ 'opacity-75': isClosed }"
+    class="group flex-shrink-0 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-full relative transition-all duration-300"
+    :class="cardClasses"
   >
     <div
-      v-if="storeStore.selectedStoreId && !storeStatus.isOpen"
-      class="absolute inset-0 z-20 bg-gray-900/50 flex flex-col items-center justify-center text-white backdrop-blur-[1px]"
+      v-if="availabilityStatus"
+      class="absolute inset-0 z-20 flex items-center justify-center bg-gray-900/10 pointer-events-none"
     >
-      <span class="text-sm font-medium bg-red-600 px-3 py-1 rounded-full">
-        {{ storeStatus.message }}
+      <span
+        class="text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg backdrop-blur-sm"
+        :class="availabilityStatus.class"
+      >
+        {{ availabilityStatus.label }}
       </span>
     </div>
-    <router-link :to="link" class="block flex-1 flex-col">
+
+    <router-link :to="link" class="block flex-1 flex-col h-full">
       <div class="relative w-full aspect-square overflow-hidden bg-gray-50 dark:bg-gray-900">
         <img
           :src="fullImageUrl"
@@ -169,6 +206,7 @@ const link = computed(() => {
             />
           </svg>
         </div>
+
         <div class="absolute top-2 left-2 flex flex-col gap-1 items-start">
           <span
             v-if="isBestSeller"
@@ -191,6 +229,7 @@ const link = computed(() => {
         >
           {{ product.name }}
         </h3>
+
         <div class="mb-3">
           <span
             class="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded"
@@ -198,30 +237,24 @@ const link = computed(() => {
             Đã bán {{ formatSold(product.totalSold) }}
           </span>
         </div>
-        <div class="mt-auto flex items-end justify-between">
+
+        <div class="mt-auto flex items-end justify-between relative z-30">
           <div class="flex flex-col">
-            <span class="font-extrabold text-primary text-xl">{{
-              formatPrice(product.basePrice)
-            }}</span>
+            <span class="font-extrabold text-primary text-xl">
+              {{ formatPrice(product.displayPrice || product.basePrice) }}
+            </span>
           </div>
 
           <button
-            v-if="storeStore.selectedStoreId"
-            @click.stop.prevent="addToCart"
-            :disabled="isDisabled"
-            class="w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            :class="
-              !isDisabled
-                ? 'bg-green-100 text-green-600 hover:bg-green-600 hover:text-white'
-                : 'bg-gray-200 text-gray-400'
-            "
-            :title="!storeStatus.isOpen ? storeStatus.message : 'Thêm nhanh vào giỏ'"
+            v-if="storeStore.selectedStoreId && !isDisabled"
+            @click.stop="addToCart"
+            class="w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm active:scale-95 bg-green-100 text-green-600 hover:bg-green-600 hover:text-white"
+            title="Thêm nhanh vào giỏ"
           >
             <span
               v-if="isAdding"
-              class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"
+              class="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full"
             ></span>
-
             <svg
               v-else
               xmlns="http://www.w3.org/2000/svg"
@@ -238,6 +271,7 @@ const link = computed(() => {
               />
             </svg>
           </button>
+
           <span
             v-else
             class="text-xs font-medium text-gray-400 group-hover:text-green-600 flex items-center gap-1 transition-colors"

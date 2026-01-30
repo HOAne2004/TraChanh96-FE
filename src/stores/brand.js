@@ -7,6 +7,7 @@ export const useBrandStore = defineStore('brand', () => {
   const brand = ref(null)
   const loading = ref(false)
   const error = ref(null)
+  const storeProducts = ref([])
 
   // --- ACTIONS ---
 
@@ -63,12 +64,66 @@ export const useBrandStore = defineStore('brand', () => {
     }
   }
 
+  /**
+   * [ADMIN] Lấy danh sách sản phẩm tại cửa hàng
+   */
+  async function fetchStoreProducts(storeId) {
+    loading.value = true
+    error.value = null
+    try {
+      const res = await brandService.getStoreProducts(storeId)
+      storeProducts.value = res.data
+    } catch (err) {
+      console.error('Lỗi tải sản phẩm cửa hàng:', err)
+      error.value = 'Không thể tải danh sách sản phẩm'
+    } finally {
+      loading.value = false
+    }
+  }
+  /**
+   * [ADMIN] Bật bán sản phẩm tại store
+   */
+  async function enableProductAtStore(storeId, productId) {
+    try {
+      await brandService.enableProduct(storeId, productId)
+
+      // cập nhật local state cho UI mượt
+      const item = storeProducts.value.find((p) => p.productId === productId)
+      if (item) item.status = 'Available'
+    } catch (err) {
+      console.error('Enable product failed:', err)
+      throw err
+    }
+  }
+
+  /**
+   * [ADMIN] Tắt bán sản phẩm tại store
+   */
+  async function disableProductAtStore(storeId, productId) {
+    try {
+      await brandService.disableProduct(storeId, productId)
+
+      const item = storeProducts.value.find((p) => p.productId === productId)
+      if (item) item.status = 'Disabled'
+    } catch (err) {
+      console.error('Disable product failed:', err)
+      throw err
+    }
+  }
+
   return {
     brand,
+    storeProducts,
     loading,
     error,
+
     fetchPublicBrandInfo,
     createBrand,
     updateBrand,
+
+    // admin – store
+    fetchStoreProducts,
+    enableProductAtStore,
+    disableProductAtStore,
   }
 })

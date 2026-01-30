@@ -70,4 +70,12 @@ export default {
   delete(id) {
     return api.delete(`${ENDPOINT}/${id}`)
   },
+
+  /**
+   * [PUBLIC] Lấy Menu bán hàng của Store
+   * GET /api/stores/{id}/menu
+   */
+  getMenu(id) {
+    return api.get(`${ENDPOINT}/${id}/menu`)
+  },
 }

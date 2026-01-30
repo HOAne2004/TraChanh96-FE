@@ -169,15 +169,20 @@ export const adminRoutes = [
         path: '/admin/stores/create',
         name: 'admin-store-create',
         component: () => import('@/views/admin/settings/store/AdminStoreFormView.vue'),
-        meta: { title: 'Thêm cửa hàng mới' },
+        meta: { role: USER_ROLE.ADMIN, title: 'Thêm cửa hàng mới' },
       },
       {
         path: '/admin/stores/edit/:id',
         name: 'admin-store-edit',
         component: () => import('@/views/admin/settings/store/AdminStoreFormView.vue'),
-        meta: { title: 'Cập nhật cửa hàng' },
+        meta: { role: USER_ROLE.ADMIN, title: 'Cập nhật cửa hàng' },
       },
-
+      {
+        path: '/admin/stores/:id/menu',
+        name: 'admin.store.menu',
+        component: () => import('@/views/admin/settings/store/AdminStoreMenu.vue'),
+        meta: { role: USER_ROLE.ADMIN, title: 'Quản lý thực đơn' },
+      },
       {
         path: 'settings/general', // Brand, Social Media
         name: 'admin.settings.general',

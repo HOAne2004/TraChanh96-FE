@@ -59,8 +59,9 @@ const distanceKm = ref(0) // Khoảng cách tính toán
 
 // --- COMPUTED: STORE & ITEMS ---
 const targetStoreId = computed(() => {
-  if (route.query.storeId) return parseInt(route.query.storeId)
-  return allCartItems.value.length > 0 ? allCartItems.value[0].storeId : null
+  if (route.query.storeId) return Number(route.query.storeId)
+  if (cartStore.lastActiveStoreId) return cartStore.lastActiveStoreId
+  return null
 })
 
 const checkoutItems = computed(() => {

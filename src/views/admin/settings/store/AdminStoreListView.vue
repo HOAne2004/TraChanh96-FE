@@ -83,7 +83,7 @@ async function handleAction({ type, item }) {
   if (type === 'delete') {
     // Cách 1: Dùng helper method (khuyến nghị)
     const confirmed = await modalStore.confirmDelete(
-      `Bạn có chắc muốn xóa cửa hàng <strong>"${item.name}"</strong>?`
+      `Bạn có chắc muốn xóa cửa hàng <strong>"${item.name}"</strong>?`,
     )
 
     // Cách 2: Dùng config tùy chỉnh
@@ -101,14 +101,14 @@ async function handleAction({ type, item }) {
 
         toastStore.show({
           type: 'success',
-          message: 'Đã xóa cửa hàng thành công'
+          message: 'Đã xóa cửa hàng thành công',
         })
 
         fetchData() // Reload lại danh sách
       } catch (error) {
         toastStore.show({
           type: 'error',
-          message: 'Xóa thất bại: ' + (error.message || 'Lỗi server')
+          message: 'Xóa thất bại: ' + (error.message || 'Lỗi server'),
         })
       }
     }
@@ -122,6 +122,17 @@ function formatOperatingTime(open, close) {
   const o = open.substring(0, 5)
   const c = close.substring(0, 5)
   return `${o} - ${c}`
+}
+
+const handleMenu = (item) => {
+  router.push({
+    name: 'admin.store.menu',
+    params: { id: item.id },
+    state: {
+      storeName: item.name,
+      storeData: item,
+    },
+  })
 }
 </script>
 
@@ -172,9 +183,36 @@ function formatOperatingTime(open, close) {
                 </svg>
               </div>
             </div>
+
             <div>
               <div class="font-medium text-gray-900">{{ item.name }}</div>
-              <div class="text-xs text-gray-500">{{ item.slug }}</div>
+
+              <div class="flex items-center gap-2 mt-0.5">
+                <div class="text-xs text-gray-500">{{ item.slug }}</div>
+
+                <span class="text-gray-300">|</span>
+                <button
+                  @click.stop="handleMenu(item)"
+                  class="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 transition-colors"
+                  title="Quản lý thực đơn của quán này"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-3 h-3"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
+                    />
+                  </svg>
+                  Thực đơn
+                </button>
+              </div>
             </div>
           </div>
         </template>

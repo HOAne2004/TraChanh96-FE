@@ -10,7 +10,7 @@ export const useStoreStore = defineStore('store', () => {
   const loading = ref(false)
   const error = ref(null)
   const selectedStoreId = ref(null)
-
+  const storeMenu = ref([])
   const BUFFER_MINUTES = 30
 
   // --- GETTERS ---
@@ -270,11 +270,26 @@ export const useStoreStore = defineStore('store', () => {
     selectedStoreId.value = id
   }
 
+  async function fetchStoreMenu(storeId) {
+    loading.value = true
+    try {
+      const res = await storeService.getMenu(storeId)
+      storeMenu.value = res.data
+      return res.data
+    } catch (err) {
+      console.error('Lỗi tải menu:', err)
+      storeMenu.value = []
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     stores,
     currentStore,
     loading,
     error,
+    storeMenu,
     selectedStore,
     getStoreStatus,
     canOrderCurrentStore,
@@ -288,5 +303,6 @@ export const useStoreStore = defineStore('store', () => {
     updateStore,
     deleteStore,
     setSelectedStore,
+    fetchStoreMenu,
   }
 })

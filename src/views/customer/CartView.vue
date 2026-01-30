@@ -24,7 +24,7 @@ const activeStoreId = ref(null)
 watch(
   () => cartStore.carts,
   (carts) => {
-    if (!carts.length) return
+    if (!Array.isArray(carts) || carts.length === 0) return
 
     if (
       cartStore.lastActiveStoreId &&
@@ -38,6 +38,7 @@ watch(
   },
   { immediate: true }
 )
+
 
 
 // 2. Computed

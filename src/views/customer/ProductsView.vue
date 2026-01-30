@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProductStore } from '@/stores/product'
 import { useStoreStore } from '@/stores/store'
@@ -14,18 +14,38 @@ const productStore = useProductStore()
 const storeStore = useStoreStore() // 3. Init
 
 const { products, categories, loading: productLoading } = storeToRefs(productStore)
-const { stores, selectedStoreId } = storeToRefs(storeStore) // 4. Lấy danh sách store
+const { stores, selectedStoreId, storeMenu } = storeToRefs(storeStore) // 4. Lấy danh sách store
 
 const selectedCategories = ref([])
 const isInitialLoad = ref(true)
+const isMenuLoading = ref(false)
+
+watch(selectedStoreId, async (newId) => {
+  if (newId) {
+    isMenuLoading.value = true
+    try {
+      await storeStore.fetchStoreMenu(newId)
+    } finally {
+      isMenuLoading.value = false
+    }
+  } else {
+    // Nếu bỏ chọn quán -> Reset menu để dùng list gốc
+    storeStore.storeMenu = []
+  }
+})
 
 // Hàm load dữ liệu
 const loadData = async () => {
   try {
     await Promise.all([
       productStore.fetchProducts(),
-      storeStore.fetchActiveStores(), // 6. Gọi API lấy store nếu chưa có
+      storeStore.fetchActiveStores(),
     ])
+
+    // Nếu F5 trang mà đã có sẵn storeId trong localStorage/Pinia -> load menu luôn
+    if (selectedStoreId.value) {
+        await storeStore.fetchStoreMenu(selectedStoreId.value)
+    }
   } catch (err) {
     console.error('Lỗi tải trang sản phẩm:', err)
   } finally {
@@ -39,36 +59,37 @@ onMounted(() => {
 
 // Xử lý khi người dùng tick chọn bộ lọc
 const handleFilterChange = (ids) => {
-  // Chuyển hết về string để so sánh id an toàn
   selectedCategories.value = ids.map((id) => String(id))
 }
 
 // ⭐ TÍNH TOÁN DATA HIỂN THỊ (Đã cập nhật logic Store)
 const displayedSections = computed(() => {
-  let filteredProducts = products.value || []
+  let sourceProducts = []
 
-  // A. Lọc theo Store (Nếu có chọn)
-  // Lưu ý: Cần đảm bảo object Product có field storeId hoặc logic tương đương
-  // Tạm thời giả định logic lọc đơn giản hoặc lọc client-side
-  // [TEMPORARY FIX] Hiển thị tất cả sản phẩm cho mọi cửa hàng
-  // vì Admin chưa có chức năng gán sản phẩm vào Store.
-  if (selectedStoreId.value) {
-    // filteredProducts = filteredProducts.filter((p) => p.storeIds.includes(selectedStoreId.value))
+  // CASE 1: Đang chọn Store -> Dùng storeMenu (Để có giá & status đúng của quán)
+  if (selectedStoreId.value && storeMenu.value.length > 0) {
+    sourceProducts = storeMenu.value.map(p => ({
+        ...p,
+        id: p.id || p.productId, // Map ID cho khớp ProductCard
+        basePrice: p.displayPrice || p.basePrice // Map giá bán tại quán
+    }))
+  }
+  // CASE 2: Không chọn Store (hoặc đang load) -> Dùng list gốc của Brand
+  else {
+    sourceProducts = products.value || []
   }
 
+  // --- Lọc theo Category ---
   let cats = categories.value || []
-
-  // B. Lọc theo Category
   if (selectedCategories.value.length > 0) {
     cats = cats.filter((c) => selectedCategories.value.includes(String(c.id)))
   }
 
-  // C. Map cấu trúc
+  // --- Gom nhóm ---
   const sections = cats.map((cat) => ({
     id: cat.id,
     name: cat.name,
-    // Dùng danh sách đã lọc (filteredProducts) thay vì products gốc
-    items: filteredProducts.filter((p) => String(p.categoryId) === String(cat.id)),
+    items: sourceProducts.filter((p) => String(p.categoryId) === String(cat.id)),
   }))
 
   return sections.filter((section) => section.items.length > 0)
@@ -76,6 +97,8 @@ const displayedSections = computed(() => {
 
 // Kiểm tra xem có đang loading không (kết hợp store loading và lần load đầu)
 const isLoading = computed(() => productLoading.value && isInitialLoad.value)
+
+
 </script>
 
 <template>
