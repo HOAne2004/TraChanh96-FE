@@ -3,6 +3,9 @@ import { ref, reactive } from 'vue'
 
 export const useModalStore = defineStore('modal', () => {
   const isVisible = ref(false)
+  const isMobileMenuOpen = ref(false)
+  const isLoginModalOpen = ref(false)
+
   const modalConfig = reactive({
     type: 'info',
     title: 'Xác nhận',
@@ -12,8 +15,22 @@ export const useModalStore = defineStore('modal', () => {
     cancelButtonText: 'Hủy',
     showCancelButton: true,
     backdropClose: true,
-    escClose: true
+    escClose: true,
   })
+
+  function openLoginModal() {
+    isLoginModalOpen.value = true
+  }
+
+  function closeLoginModal() {
+    isLoginModalOpen.value = false
+  }
+  function openMobileMenu() {
+    isMobileMenuOpen.value = true
+  }
+  function closeMobileMenu() {
+    isMobileMenuOpen.value = false
+  }
 
   // Resolver promise
   let resolvePromise = null
@@ -56,7 +73,7 @@ export const useModalStore = defineStore('modal', () => {
       title: 'Xác nhận xóa',
       message,
       confirmButtonText: 'Xóa',
-      cancelButtonText: 'Hủy'
+      cancelButtonText: 'Hủy',
     })
   }
 
@@ -66,7 +83,7 @@ export const useModalStore = defineStore('modal', () => {
       title,
       message,
       confirmButtonText: 'Tiếp tục',
-      cancelButtonText: 'Hủy'
+      cancelButtonText: 'Hủy',
     })
   }
 
@@ -76,7 +93,7 @@ export const useModalStore = defineStore('modal', () => {
       title,
       message,
       showCancelButton: false,
-      confirmButtonText: 'OK'
+      confirmButtonText: 'OK',
     })
   }
 
@@ -86,13 +103,19 @@ export const useModalStore = defineStore('modal', () => {
       title,
       message,
       showCancelButton: false,
-      confirmButtonText: 'OK'
+      confirmButtonText: 'OK',
     })
   }
 
   return {
     isVisible,
     modalConfig,
+    isLoginModalOpen,
+    isMobileMenuOpen,
+    openLoginModal,
+    closeLoginModal,
+    openMobileMenu,
+    closeMobileMenu,
     show,
     hide,
     confirm,
@@ -100,6 +123,6 @@ export const useModalStore = defineStore('modal', () => {
     confirmDelete,
     confirmAction,
     showSuccess,
-    showError
+    showError,
   }
 })

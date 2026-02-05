@@ -207,7 +207,7 @@ const handleVerifyPickup = async (code) => {
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
-          <OrderDetailItems :items="order.items" />
+          <OrderDetailItems :items="order.items" :order-status="order.status" />
 
           <OrderSummaryCard :order="order"> </OrderSummaryCard>
         </div>

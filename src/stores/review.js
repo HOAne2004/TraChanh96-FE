@@ -7,6 +7,8 @@ export const useReviewStore = defineStore('review', () => {
   // --- STATE ---
   const reviews = ref([]) // Danh sách review hiện tại
   const canReview = ref(false) // User có được quyền review món này không?
+  const adminReviews = ref([]) // Danh sách review hiện tại
+  const adminTotalItems = ref(0) // Tổng số item
   const loading = ref(false) // Trạng thái loading chung
   const submitting = ref(false) // Trạng thái khi đang gửi form (để disable nút)
 
@@ -125,10 +127,73 @@ export const useReviewStore = defineStore('review', () => {
       loading.value = false
     }
   }
+  // ==========================================================
+  // 🟢 ADMIN ACTIONS (Mới bổ sung)
+  // ==========================================================
 
+  /**
+   * Lấy danh sách review cho trang quản lý
+   * @param {Object} filterParams
+   */
+  async function fetchAdminReviews(filterParams) {
+    loading.value = true
+    try {
+      const res = await reviewService.getReviewsForAdmin(filterParams)
+      //console.log("🔥 API Response:", res.data)
+      if (Array.isArray(res.data)) {
+          adminReviews.value = res.data
+          adminTotalItems.value = res.data.length // Tạm thời lấy length làm total
+      } else {
+          // Trường hợp 2: API trả về PagedResult { items: [], totalItems: 100 }
+          adminReviews.value = res.data.items || []
+          adminTotalItems.value = res.data.totalItems || 0
+      }
+    } catch (err) {
+      console.error('Admin fetch error:', err)
+      toast.show({ type: 'error', message: 'Lỗi tải danh sách đánh giá.' })
+      adminReviews.value = []
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Admin duyệt/ẩn hoặc trả lời đánh giá
+   */
+  async function updateReviewStatusOrReply(reviewId, payload) {
+    // payload: { status, adminResponse }
+    submitting.value = true
+    try {
+      await reviewService.adminUpdateReview(reviewId, payload)
+
+      toast.show({ type: 'success', message: 'Cập nhật thành công!' })
+
+      const index = adminReviews.value.findIndex((r) => r.id === reviewId)
+      if (index !== -1) {
+        if (payload.status !== undefined) adminReviews.value[index].status = payload.status // Cập nhật status string nếu BE trả về enum string hoặc map lại sau
+        if (payload.adminResponse !== undefined)
+          adminReviews.value[index].adminResponse = payload.adminResponse
+
+        // Vì API trả về ReviewReadDto mới nhất, ta nên gán đè vào để chuẩn xác nhất
+        // const updatedData = await reviewService.adminUpdateReview(...) -> gán res.data vào adminReviews[index]
+      }
+
+      // Hoặc đơn giản là fetch lại trang hiện tại (an toàn hơn)
+      // await fetchAdminReviews(...) -> Component gọi
+      return true
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Cập nhật thất bại.'
+      toast.show({ type: 'error', message: msg })
+      return false
+    } finally {
+      submitting.value = false
+    }
+  }
   return {
     reviews,
     canReview,
+    adminReviews,
+    adminTotalItems,
     loading,
     submitting,
     fetchReviews,
@@ -136,5 +201,7 @@ export const useReviewStore = defineStore('review', () => {
     submitReview,
     editReview,
     removeReview,
+    fetchAdminReviews,
+    updateReviewStatusOrReply,
   }
 })

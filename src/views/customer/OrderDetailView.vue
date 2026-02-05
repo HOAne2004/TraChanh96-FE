@@ -18,6 +18,7 @@ import OrderSummaryCard from '@/components/common/order/OrderSummaryCard.vue'
 import OrderContactInfo from '@/components/common/order/OrderContactInfo.vue'
 import OrderPaymentModal from '@/components/common/order/OrderPaymentModal.vue'
 import NavLink from '@/components/common/NavLink.vue'
+import ReviewModal from '@/components/customer/review/ReviewModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -31,6 +32,33 @@ const showCancelModal = ref(false)
 const isCancelling = ref(false)
 const showPaymentModal = ref(false)
 const isPaymentPendingLocal = ref(false)
+
+// State mới cho Review
+const showReviewModal = ref(false)
+const reviewProductData = ref(null)
+
+const onOpenReview = (item) => {
+  // Map dữ liệu từ OrderItem sang format hiển thị trên Modal
+  reviewProductData.value = {
+    id: item.productId, // ProductId (quan trọng để gửi API)
+    name: item.productName,
+    imageUrl: item.productImage,
+    sizeName: item.sizeName,
+  }
+  showReviewModal.value = true
+}
+
+const reviewedProductIds = computed(() => {
+  const reviews = currentOrder.value?.reviews || []
+  return reviews.map((r) => r.productId)
+})
+
+const onReviewSuccess = async () => {
+  toastStore.show({ type: 'success', message: 'Đánh giá của bạn đã được ghi nhận!' })
+  if (currentOrder.value?.orderCode) {
+    await orderStore.fetchOrderDetail(currentOrder.value.orderCode)
+  }
+}
 
 // --- COMPUTED ---
 
@@ -47,7 +75,7 @@ const statusMeta = computed(() => {
 })
 
 const orderTypeMeta = computed(() => {
- if (!currentOrder.value) return {}
+  if (!currentOrder.value) return {}
   return getOrderTypeConfig(currentOrder.value.orderType)
 })
 
@@ -246,7 +274,6 @@ onMounted(async () => {
       <div
         class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between md:items-center gap-4"
       >
-
         <div>
           <div class="flex items-center gap-2">
             <h1 class="text-2xl font-bold text-gray-800 dark:text-white">
@@ -326,7 +353,13 @@ onMounted(async () => {
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
-          <OrderDetailItems :items="currentOrder.items" user-role="Customer" />
+          <OrderDetailItems
+            :items="currentOrder.items"
+            :order-status="currentOrder.status"
+            :allow-review="true"
+            :reviewed-ids="reviewedProductIds"
+            @review="onOpenReview"
+          />
         </div>
 
         <div class="space-y-6">
@@ -360,6 +393,14 @@ onMounted(async () => {
       :order="currentOrder"
       @close="showPaymentModal = false"
       @confirm="onPaymentConfirm"
+    />
+    <ReviewModal
+      v-if="currentOrder"
+      :is-open="showReviewModal"
+      :product="reviewProductData"
+      :order-id="currentOrder.id"
+      @close="showReviewModal = false"
+      @success="onReviewSuccess"
     />
   </div>
 </template>

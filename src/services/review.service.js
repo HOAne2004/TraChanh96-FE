@@ -41,5 +41,20 @@ export default {
    */
   deleteReview(id) {
     return api.delete(`${ENDPOINT}/${id}`)
-  }
+  },
+
+  /**
+   * Tìm kiếm và lọc
+   */
+  getReviewsForAdmin(params) {
+    return api.get(`${ENDPOINT}/admin-search`, { params })
+  },
+  /**
+   * Admin cập nhật trạng thái hoặc trả lời đánh giá
+   * @param {Number} id - Review ID
+   * @param {Object} data - { status: Number, adminResponse: String }
+   */
+  adminUpdateReview(id, data) {
+    return api.put(`${ENDPOINT}/${id}/admin-reply`, data)
+  },
 }

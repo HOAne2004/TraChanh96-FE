@@ -164,7 +164,7 @@ const addToCart = async (event) => {
 
 <template>
   <div
-    class="group flex-shrink-0 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-full relative transition-all duration-300"
+    class="group flex-shrink-0 max-w-[200px] bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-full relative transition-all duration-300"
     :class="cardClasses"
   >
     <div

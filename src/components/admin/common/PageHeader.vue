@@ -5,6 +5,8 @@ const props = defineProps({
   description: { type: String, default: '' },
   filterOptions: { type: Array, default: () => [] },
   isAddButton: { type: Boolean, default: true },
+  isFindStore: { type: Boolean, default: false },
+  isFilterRating: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['create', 'change'])
@@ -50,6 +52,8 @@ const handleFilterChange = (newFilters) => {
     <AdminFilterBar
       :placeholder="`Tìm theo tên ${title}...`"
       :status-options="filterOptions"
+      :is-find-store="isFindStore"
+      :is-filter-rating="isFilterRating"
       @change="handleFilterChange"
     />
   </div>

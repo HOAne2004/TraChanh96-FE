@@ -6,7 +6,8 @@ const props = defineProps({
   placeholder: { type: String, default: 'Tìm kiếm...' },
   statusOptions: { type: Array, default: () => [] },
   storeOptions: { type: Array, default: () => [] },
-  isFindStore:{type:Boolean,default:false}
+  isFindStore:{type:Boolean,default:false},
+  isFilterRating: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['change', 'export'])
@@ -15,6 +16,7 @@ const filters = reactive({
   search: '',
   status: '',
   storeId: '',
+  rating: '',
   fromDate: '',
   toDate: '',
 })
@@ -38,6 +40,7 @@ const emitChange = () => {
     keyword: filters.search ? filters.search.trim() : undefined,
     status: filters.status === '' ? undefined : filters.status,
     storeId: filters.storeId === '' ? undefined : filters.storeId,
+    rating: filters.rating === '' ? undefined : Number(filters.rating),
     fromDate: filters.fromDate || undefined,
     toDate: filters.toDate || undefined,
   }
@@ -46,7 +49,7 @@ const emitChange = () => {
 
 // Watch changes
 watch(
-  () => [filters.status, filters.storeId, filters.fromDate, filters.toDate],
+  () => [filters.status, filters.storeId, filters.rating, filters.fromDate, filters.toDate],
   () => {
     if (filters.fromDate && filters.toDate && filters.fromDate > filters.toDate) {
       filters.toDate = ''
@@ -65,6 +68,7 @@ const onReset = () => {
   filters.search = ''
   filters.status = ''
   filters.storeId = ''
+  filters.rating = ''
   filters.fromDate = ''
   filters.toDate = ''
   emitChange()
@@ -164,7 +168,50 @@ const onReset = () => {
             </div>
           </div>
         </div>
-
+        <div v-if="isFilterRating">
+          <label class="block text-xs font-medium text-gray-500 mb-1">Đánh giá</label>
+          <div class="relative">
+            <select
+              v-model="filters.rating"
+              class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-green-500 appearance-none"
+            >
+              <option value="">Tất cả sao</option>
+              <option value="5">5 Sao (Tuyệt vời)</option>
+              <option value="4">4 Sao (Tốt)</option>
+              <option value="3">3 Sao (Khá)</option>
+              <option value="2">2 Sao (Trung bình)</option>
+              <option value="1">1 Sao (Tệ)</option>
+            </select>
+            <button
+              v-if="filters.rating !== ''"
+              @click="clearField('rating')"
+              class="absolute right-6 top-2.5 text-gray-400 hover:text-red-500 bg-white dark:bg-gray-700"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-4 h-4"
+              >
+                <path
+                  d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
+                />
+              </svg>
+            </button>
+            <div
+              class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
         <div>
           <label class="block text-xs font-medium text-gray-500 mb-1">Trạng thái</label>
           <div class="relative">
