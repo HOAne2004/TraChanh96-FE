@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import { useUserStore } from '@/stores/user'
 import { useStoreStore } from '@/stores/store'
@@ -16,7 +15,7 @@ const props = defineProps({
 })
 
 // Stores & Router
-const router = useRouter()
+
 const cartStore = useCartStore()
 const userStore = useUserStore()
 const storeStore = useStoreStore()
@@ -184,7 +183,7 @@ const addToCart = async (event) => {
         <img
           :src="fullImageUrl"
           :alt="product.name"
-          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
           loading="lazy"
           @error="handleImageError"
         />

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useReviewStore } from '@/stores/review'
 import { formatDate } from '@/utils/formatters'
@@ -73,18 +73,20 @@ const fetchData = async () => {
 
 // Xử lý sự kiện từ PageHeader (FilterBar)
 const handleFilterChange = (newFilters) => {
-  filters.keyword = newFilters.keyword ?? ''
-  filters.status = newFilters.status ?? ''
-  filters.storeId = newFilters.storeId ?? ''
-  filters.rating = newFilters.rating ?? ''
-  filters.hasReply = newFilters.hasReply ?? ''
-  filters.fromDate = newFilters.fromDate ?? ''
-  filters.toDate = newFilters.toDate ?? ''
+Object.assign(filters, newFilters)
 
   filters.pageIndex = 1
   fetchData()
 }
 
+const handleReset = () => {
+  filters.rating = '' // Reset biến rating
+  // Không cần gọi fetchData() ở đây vì AdminFilterBar sẽ emit 'change' ngay sau khi reset core -> kích hoạt handleCoreFilterChange
+}
+watch(() => filters.rating, () => {
+  filters.pageIndex = 1
+  fetchData()
+})
 // Xử lý phân trang
 const handlePageChange = (page) => {
   filters.pageIndex = page
@@ -113,12 +115,39 @@ onMounted(() => {
   <div class="p-6">
     <PageHeader
       title="Đánh giá & Bình luận"
-      description="Quản lý phản hồi từ khách hàng"
       :filter-options="filterOptions"
       :is-add-button="false"
-      :is-filter-rating="true"
       @change="handleFilterChange"
-    />
+      @reset="handleReset"
+    >
+      <template #filter-ext>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Đánh giá</label>
+          <div class="relative">
+            <select
+              v-model="filters.rating"
+              class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-green-500 appearance-none"
+            >
+              <option value="">Tất cả sao</option>
+              <option value="5">5 Sao (Tuyệt vời)</option>
+              <option value="4">4 Sao (Tốt)</option>
+              <option value="3">3 Sao (Khá)</option>
+              <option value="2">2 Sao (Trung bình)</option>
+              <option value="1">1 Sao (Tệ)</option>
+            </select>
+            <button
+              v-if="filters.rating !== ''"
+              @click="filters.rating = ''"
+              class="absolute right-6 top-2.5 text-gray-400 hover:text-red-500 bg-white dark:bg-gray-700"
+            >
+               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg>
+            </button>
+          </div>
+        </div>
+
+      </template>
+    </PageHeader>
 
     <AdminDataTable
       :items="adminReviews"

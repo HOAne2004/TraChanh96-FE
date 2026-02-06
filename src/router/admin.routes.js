@@ -43,7 +43,7 @@ export const adminRoutes = [
       // --- 2. CATALOG (Sản phẩm) ---
       {
         path: 'products',
-        name: 'admin.products.list',
+        name: 'admin.products',
         component: () => import('@/views/admin/catalog/product/AdminProductListView.vue'),
         meta: { role: USER_ROLE.ADMIN, title: 'Danh sách Sản phẩm' },
       },

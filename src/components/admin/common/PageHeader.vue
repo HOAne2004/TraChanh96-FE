@@ -5,11 +5,9 @@ const props = defineProps({
   description: { type: String, default: '' },
   filterOptions: { type: Array, default: () => [] },
   isAddButton: { type: Boolean, default: true },
-  isFindStore: { type: Boolean, default: false },
-  isFilterRating: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['create', 'change'])
+const emit = defineEmits(['create', 'change', 'reset', 'export'])
 
 const handleCreate = () => {
   emit('create')
@@ -18,13 +16,21 @@ const handleCreate = () => {
 const handleFilterChange = (newFilters) => {
   emit('change', newFilters)
 }
+
+const handleReset = () => {
+  emit('reset')
+}
+
+const handleExport = () => {
+  emit('export')
+}
 </script>
 
 <template>
   <div>
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white"> Quản lý {{ title }}</h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Quản lý {{ title }}</h1>
         <p class="text-sm text-gray-500 mt-1">{{ description }}</p>
       </div>
 
@@ -52,9 +58,11 @@ const handleFilterChange = (newFilters) => {
     <AdminFilterBar
       :placeholder="`Tìm theo tên ${title}...`"
       :status-options="filterOptions"
-      :is-find-store="isFindStore"
-      :is-filter-rating="isFilterRating"
       @change="handleFilterChange"
-    />
+      @reset="handleReset"
+      @export="handleExport"
+    >
+      <template #custom-filters> <slot name="filter-ext"></slot> </template
+    ></AdminFilterBar>
   </div>
 </template>

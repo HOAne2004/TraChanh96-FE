@@ -8,8 +8,6 @@ const isAnimating = ref(false)
 
 // Tạo overlay toàn màn hình
 const overlay = ref(null)
-const sunElement = ref(null)
-const moonElement = ref(null)
 
 const handleToggle = () => {
   if (isAnimating.value) return

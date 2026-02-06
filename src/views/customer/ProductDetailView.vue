@@ -12,7 +12,6 @@ import { usePolicyStore } from '@/stores/policy'
 import { useToastStore } from '@/stores/toast'
 import { useSizeStore } from '@/stores/size'
 import { useReviewStore } from '@/stores/review'
-
 // Constants
 import { SugarLevel, IceLevel } from '@/constants/enums'
 import { formatPrice } from '@/utils/formatters'
@@ -62,7 +61,9 @@ const isAvailableAtStore = computed(() => {
   if (!selectedStoreId.value) return true
   if (storeMenu.value.length > 0) {
     // Check cả ID (User) lẫn ProductId (Admin) để an toàn
-    const itemInStore = storeMenu.value.find(p => p.id === currentProduct.value.id || p.productId === currentProduct.value.id)
+    const itemInStore = storeMenu.value.find(
+      (p) => p.id === currentProduct.value.id || p.productId === currentProduct.value.id,
+    )
     return !!itemInStore
   }
   return true
@@ -75,9 +76,11 @@ const storeStatus = computed(() => {
 })
 
 const isActionDisabled = computed(() => {
-  return isAdding.value ||
-         (selectedStoreId.value && !storeStatus.value.isOpen) ||
-         !isAvailableAtStore.value
+  return (
+    isAdding.value ||
+    (selectedStoreId.value && !storeStatus.value.isOpen) ||
+    !isAvailableAtStore.value
+  )
 })
 
 const isDrink = computed(() => currentProduct.value.productType?.toLowerCase() === 'drink')
@@ -86,10 +89,12 @@ const isSoldOut = computed(() => {
   if (!selectedStoreId.value) return false
 
   if (storeMenu.value.length > 0) {
-    const item = storeMenu.value.find(p => p.id === currentProduct.value.id || p.productId === currentProduct.value.id)
+    const item = storeMenu.value.find(
+      (p) => p.id === currentProduct.value.id || p.productId === currentProduct.value.id,
+    )
     // Nếu tìm thấy item trong menu nhưng có cờ isSoldOut hoặc status OutOfStock
     if (item && (item.isSoldOut || item.storeStatus === 'OutOfStock')) {
-        return true
+      return true
     }
   }
   return false
@@ -98,24 +103,93 @@ const isSoldOut = computed(() => {
 // 2. Filter Toppings
 const availableToppings = computed(() => {
   if (!products.value) return []
+
+  // 1. Lấy danh sách ID cho phép từ sản phẩm hiện tại (Lấy từ backend trả về)
+  const allowedIds = currentProduct.value.allowedToppingIds || []
+
+  // 2. Lọc danh sách
   return products.value.filter((p) => {
-    const isTopping = p.productType?.toLowerCase() === 'topping' || p.categoryName?.toLowerCase() === 'topping'
+    // Phải là sản phẩm loại Topping
+    const isTopping =
+      p.productType?.toLowerCase() === 'topping' || p.categoryName?.toLowerCase() === 'topping'
+
+    // 🟢 [QUAN TRỌNG] Phải nằm trong danh sách Admin đã chọn
+    // (Nếu danh sách rỗng, tức là không có topping nào được chọn -> Không hiện gì)
+    const isAllowed = allowedIds.includes(p.id)
+
+    // Check store availability (Giữ nguyên)
+    let isAvailableInStore = true
     if (selectedStoreId.value && p.storeIds) {
-      return isTopping && p.storeIds.includes(selectedStoreId.value)
+      isAvailableInStore = p.storeIds.includes(selectedStoreId.value)
     }
-    return isTopping
+
+    return isTopping && isAllowed && isAvailableInStore
   })
+})
+
+// 🟢 [MỚI] Computed Sizes cho UI
+// Logic: Merge thông tin từ Product (PriceOverride) + Global Store (Tên Size)
+const renderedSizes = computed(() => {
+  if (!currentProduct.value || !currentProduct.value.productSizes) return []
+
+  return currentProduct.value.productSizes
+    .map((ps) => {
+      // 1. Tìm thông tin gốc từ Global Store (để lấy Tên size)
+      const globalSize = sizes.value.find((s) => s.id === ps.sizeId)
+      // Nếu size không tồn tại trong global (ví dụ đã bị xóa), bỏ qua
+      if (!globalSize) return null
+
+      // 2. Tính chênh lệch giá để hiển thị lên UI (+...)
+      // Nếu có Override -> Chênh lệch = Override - BasePrice
+      // Nếu không -> Chênh lệch = Default Modifier của Size
+      let displayDiff = 0
+      if (ps.priceOverride && Number(ps.priceOverride) > 0) {
+        displayDiff = Number(ps.priceOverride) - Number(currentProduct.value.basePrice)
+      } else {
+        displayDiff = Number(globalSize.priceModifier || 0)
+      }
+
+      // 3. Trả về Object chuẩn cho ProductSelectors
+      return {
+        id: ps.sizeId,
+        label: globalSize.name || globalSize.label || 'Size',
+        priceModifier: displayDiff, // Key này để UI hiển thị (+10.000)
+
+        // Quan trọng: Truyền kèm các field gốc để logic finalPrice dùng
+        priceOverride: ps.priceOverride,
+        originalModifier: globalSize.priceModifier,
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => (a.originalModifier || 0) - (b.originalModifier || 0) || a.id - b.id)
 })
 
 // 3. Price Calculation
 const finalPrice = computed(() => {
   if (!currentProduct.value) return 0
+
   let price = Number(currentProduct.value.basePrice)
-  if (selectedSize.value) price += Number(selectedSize.value.priceModifier || 0)
+
+  // 🟢 LOGIC MỚI: Xử lý Size
+  if (selectedSize.value) {
+    // Nếu size này có giá ghi đè (Override) -> Dùng luôn giá đó làm gốc (bỏ qua BasePrice sản phẩm)
+    if (selectedSize.value.priceOverride && Number(selectedSize.value.priceOverride) > 0) {
+      price += Number(selectedSize.value.priceOverride)
+    }
+    // Nếu không -> Dùng công thức cũ: Giá gốc + Giá Modifier
+    else {
+      // Fallback: Nếu không có override, ta dùng originalModifier (lấy từ globalSize)
+      // Lưu ý: selectedSize lúc này là object từ renderedSizes
+      price += Number(selectedSize.value.originalModifier || 0)
+    }
+  }
+
+  // Cộng thêm giá Topping
   if (selectedToppings.value.length > 0) {
     const toppingsTotal = selectedToppings.value.reduce((sum, t) => sum + Number(t.basePrice), 0)
     price += toppingsTotal
   }
+
   return price
 })
 
@@ -139,13 +213,14 @@ const loadData = async () => {
   if (currentProduct.value) {
     // Auto select menu if store selected
     if (selectedStoreId.value) {
-        await storeStore.fetchStoreMenu(selectedStoreId.value)
+      await storeStore.fetchStoreMenu(selectedStoreId.value)
     }
 
-    if (isDrink.value && currentProduct.value.availableSizes?.length > 0) {
-      const sortedSizes = [...currentProduct.value.availableSizes].sort((a, b) => (a.priceModifier || 0) - (b.priceModifier || 0))
-      selectedSize.value = sortedSizes[0]
+    // 🟢 [SỬA] Auto-select size đầu tiên từ danh sách đã xử lý
+    if (isDrink.value && renderedSizes.value.length > 0) {
+      selectedSize.value = renderedSizes.value[0]
     }
+
     await reviewStore.fetchReviews(currentProduct.value.id)
     if (userStore.isLoggedIn) {
       await reviewStore.checkUserEligibility(currentProduct.value.id)
@@ -157,7 +232,7 @@ onMounted(loadData)
 watch(() => route.params.slug, loadData)
 // Watch store change to fetch menu logic for validation
 watch(selectedStoreId, async (newId) => {
-    if(newId) await storeStore.fetchStoreMenu(newId)
+  if (newId) await storeStore.fetchStoreMenu(newId)
 })
 
 const toggleTopping = (topping) => {
@@ -169,22 +244,33 @@ const toggleTopping = (topping) => {
 const handleAddToCart = async (isBuyNow = false) => {
   // Logic validate giữ nguyên
   if (selectedStoreId.value && !storeStatus.value.isOpen) {
-    return toastStore.show({ type: 'error', message: `Cửa hàng đang: ${storeStatus.value.message}` })
+    return toastStore.show({
+      type: 'error',
+      message: `Cửa hàng đang: ${storeStatus.value.message}`,
+    })
   }
   if (!userStore.isLoggedIn) {
     toastStore.show({ type: 'warning', message: 'Vui lòng đăng nhập để đặt món!' })
     return router.push('/login')
   }
-  if (!selectedStoreId.value) return toastStore.show({ type: 'warning', message: 'Vui lòng chọn cửa hàng trước!' })
-  if (!isAvailableAtStore.value) return toastStore.show({ type: 'error', message: 'Sản phẩm này không phục vụ tại cửa hàng đã chọn.' })
+  if (!selectedStoreId.value)
+    return toastStore.show({ type: 'warning', message: 'Vui lòng chọn cửa hàng trước!' })
+  if (!isAvailableAtStore.value)
+    return toastStore.show({
+      type: 'error',
+      message: 'Sản phẩm này không phục vụ tại cửa hàng đã chọn.',
+    })
 
   // Double check storeIds (Optional)
   const productStoreIds = currentProduct.value?.storeIds
   if (productStoreIds?.length && !productStoreIds.includes(selectedStoreId.value)) {
-    return toastStore.show({ type: 'error', message: 'Sản phẩm này hiện không bán tại cửa hàng đã chọn' })
+    return toastStore.show({
+      type: 'error',
+      message: 'Sản phẩm này hiện không bán tại cửa hàng đã chọn',
+    })
   }
 
-  if (!selectedSize.value && currentProduct.value?.availableSizes?.length > 0) {
+  if (!selectedSize.value && renderedSizes.value.length > 0) {
     return toastStore.show({ type: 'warning', message: 'Vui lòng chọn kích cỡ!' })
   }
 
@@ -221,9 +307,28 @@ const handleAddToCart = async (isBuyNow = false) => {
 
 <template>
   <main class="container mx-auto px-4 min-h-screen">
-    <div v-if="selectedStoreId && !storeStatus.isOpen" class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-3">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-      <div><span class="font-bold">Cửa hàng hiện không nhận đơn.</span> <span class="ml-1">({{ storeStatus.message }})</span></div>
+    <div
+      v-if="selectedStoreId && !storeStatus.isOpen"
+      class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-3"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+      <div>
+        <span class="font-bold">Cửa hàng hiện không nhận đơn.</span>
+        <span class="ml-1">({{ storeStatus.message }})</span>
+      </div>
     </div>
 
     <div v-if="loading" class="flex flex-col items-center justify-center py-20 text-gray-500">
@@ -235,7 +340,9 @@ const handleAddToCart = async (isBuyNow = false) => {
       <div class="mb-6 text-sm text-gray-500 flex items-center gap-2">
         <NavLink to="/products" label="Sản phẩm" variant="secondary" />
         <span>/</span>
-        <span class="font-semibold text-gray-800 dark:text-gray-200">{{ currentProduct.name }}</span>
+        <span class="font-semibold text-gray-800 dark:text-gray-200">{{
+          currentProduct.name
+        }}</span>
       </div>
 
       <div class="w-full grid grid-cols-1 md:grid-cols-[4fr_6fr] gap-10 lg:gap-16">
@@ -258,7 +365,7 @@ const handleAddToCart = async (isBuyNow = false) => {
 
           <ProductSelectors
             :is-drink="isDrink"
-            :sizes="sizes"
+            :sizes="renderedSizes"
             :available-toppings="availableToppings"
             v-model:selected-size="selectedSize"
             v-model:selected-sugar="selectedSugar"
@@ -283,34 +390,58 @@ const handleAddToCart = async (isBuyNow = false) => {
       </div>
 
       <div class="mt-12">
-        <TitledContainer title="Mô tả sản phẩm" controls="hidden">
-          <div class="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-300">
-            <p>{{ currentProduct.description || 'Đang cập nhật mô tả...' }}</p>
-          </div>
+        <TitledContainer v-if="currentProduct.description" title="Mô tả sản phẩm" controls="hidden">
+          <div
+            class="text-gray-600 text-sm leading-relaxed prose prose-sm max-w-none"
+            v-html="currentProduct.description"
+          ></div>
+        </TitledContainer>
+        <TitledContainer v-if="currentProduct.ingredient" title="Thành phần" controls="hidden">
+          <div
+            class="text-gray-600 text-sm leading-relaxed prose prose-sm max-w-none"
+            v-html="currentProduct.ingredient"
+          ></div>
         </TitledContainer>
         <DeliveryInfor v-if="policy" :policy="policy" class="mt-8" />
       </div>
     </div>
 
     <div v-else class="py-20 text-center">
-      <h3 class="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-4">Sản phẩm không tồn tại</h3>
+      <h3 class="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-4">
+        Sản phẩm không tồn tại
+      </h3>
       <Button label="Xem thực đơn" @click="router.push('/products')" />
     </div>
 
-    <div v-if="canReview" class="mt-4 p-4 bg-green-50 rounded-xl border border-green-200 flex items-center justify-between">
+    <div
+      v-if="canReview"
+      class="mt-4 p-4 bg-green-50 rounded-xl border border-green-200 flex items-center justify-between"
+    >
       <span class="text-green-800 text-sm font-medium">Bạn đã mua sản phẩm này?</span>
-      <router-link to="/profile/orders" class="text-green-600 font-bold hover:underline text-sm">Viết đánh giá trong Đơn hàng</router-link>
+      <router-link to="/profile/orders" class="text-green-600 font-bold hover:underline text-sm"
+        >Viết đánh giá trong Đơn hàng</router-link
+      >
     </div>
-    <div id="reviews-section" class="mt-12">
-      <ReviewList :reviews="reviewStore.reviews" />
+    <div id="reviews-section" class="my-12">
+      <TitledContainer title="Đánh giá sản phẩm" controls="hidden">
+        <ReviewList :reviews="reviewStore.reviews" />
+      </TitledContainer>
     </div>
   </main>
 </template>
 
 <style scoped>
-.animate-fade-in { animation: fadeIn 0.5s ease-out; }
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

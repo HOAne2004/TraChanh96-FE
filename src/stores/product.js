@@ -19,6 +19,12 @@ export const useProductStore = defineStore('product', () => {
   const sugarLevels = SUGAR_OPTIONS
   const iceLevels = ICE_OPTIONS
 
+  const pagination = ref({
+    pageIndex: 1,
+    pageSize: 10,
+    totalRecords: 0,
+    totalPages: 0,
+  })
   // --- GETTERS ---
   const activeProducts = computed(() =>
     products.value.filter((p) => p.status === 'Active' || p.status === 'Đang hoạt động'),
@@ -28,15 +34,16 @@ export const useProductStore = defineStore('product', () => {
 
   // 1. Top 10 Bán chạy (HOT)
   const bestSellingProducts = computed(() => {
-    return [...products.value]
-      .sort((a, b) => (b.totalSold || 0) - (a.totalSold || 0))
-      .slice(0, 10)
+    return [...products.value].sort((a, b) => (b.totalSold || 0) - (a.totalSold || 0)).slice(0, 10)
   })
 
   // 2. Top 10 Mới nhất (NEW)
   const newestProducts = computed(() => {
     return [...products.value]
-      .sort((a, b) => new Date(b.launchDateTime || b.createdAt) - new Date(a.launchDateTime || a.createdAt))
+      .sort(
+        (a, b) =>
+          new Date(b.launchDateTime || b.createdAt) - new Date(a.launchDateTime || a.createdAt),
+      )
       .slice(0, 10)
   })
 
@@ -51,12 +58,20 @@ export const useProductStore = defineStore('product', () => {
         sizeService.getAll(),
         categoryService.getAll(),
       ])
-      products.value = productRes.data
+      products.value = productRes.data.items || []
+      pagination.value = {
+        pageIndex: productRes.data.pageIndex,
+        pageSize: productRes.data.pageSize,
+        totalRecords: productRes.data.totalRecords,
+        totalPages: Math.ceil(productRes.data.totalRecords / productRes.data.pageSize),
+      }
       sizes.value = sizeRes.data
       categories.value = categoriesRes.data
+      return productRes.data
     } catch (err) {
       console.error(err)
       error.value = 'Không thể tải danh sách sản phẩm'
+      products.value = []
     } finally {
       loading.value = false
     }
@@ -200,15 +215,16 @@ export const useProductStore = defineStore('product', () => {
   // --- HELPER FUNCTIONS (Để ProductCard dùng) ---
   // Kiểm tra 1 sản phẩm có nằm trong top bán chạy không
   function checkIsBestSeller(productId) {
-    return bestSellingProducts.value.some(p => p.id === productId)
+    return bestSellingProducts.value.some((p) => p.id === productId)
   }
 
   // Kiểm tra 1 sản phẩm có nằm trong top mới không
   function checkIsNew(productId) {
-    return newestProducts.value.some(p => p.id === productId)
+    return newestProducts.value.some((p) => p.id === productId)
   }
   return {
     products,
+    pagination,
     sizes,
     currentProduct,
     loading,

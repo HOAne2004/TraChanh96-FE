@@ -11,10 +11,8 @@ const formatDate = (date) => new Date(date).toLocaleDateString('vi-VN')
 
 <template>
   <div class="space-y-6">
-    <h3 class="text-2xl font-bold text-gray-800 dark:text-white">Đánh giá từ khách hàng</h3>
-
     <div v-if="reviews.length === 0" class="text-center py-8 text-gray-500 bg-gray-50 rounded-xl">
-        Chưa có đánh giá nào. Hãy là người đầu tiên!
+        Chưa có đánh giá nào. Hãy mua sản phẩm để được đánh giá!
     </div>
 
     <div v-else class="grid gap-6">
