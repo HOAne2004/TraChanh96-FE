@@ -149,7 +149,7 @@ onUnmounted(() => {
       >
         <!-- Header -->
         <div
-          class="flex items-center justify-between p-6 border-b dark:border-gray-700"
+          class="flex items-center justify-between rounded-xl p-6 border-b dark:border-gray-700"
           :class="headerClasses"
         >
           <div class="flex items-center gap-3">

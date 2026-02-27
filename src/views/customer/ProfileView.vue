@@ -18,31 +18,25 @@ const route = useRoute()
 const { user } = storeToRefs(userStore)
 const { orders } = storeToRefs(orderStore)
 
-// Quản lý tab
-const activeTab = ref(route.query.tab || 'info') // 'info' | 'orders' | 'security'
+const activeTab = ref(route.query.tab || 'info')
 
 watch(
   () => route.query.tab,
   (newTab) => {
-    // Nếu có query param 'tab', cập nhật activeTab
     if (newTab) {
       activeTab.value = newTab
     } else {
-      // Nếu query param 'tab' bị xóa (chuyển từ /profile?tab=orders về /profile)
       activeTab.value = 'info'
     }
   },
   { immediate: true },
 )
 
-// Tải dữ liệu khi vào trang
 onMounted(async () => {
-  // Nếu chưa đăng nhập, chuyển hướng về trang đăng nhập
   if (!user.value) {
     router.replace('/login')
     return
   }
-  // Tải lịch sử đơn hàng
   await orderStore.fetchMyOrders()
 })
 </script>

@@ -197,6 +197,7 @@ onMounted(() => {
           {{ getProductStatusConfig(item.status).label }}
         </span>
       </template>
+      
     </AdminDataTable>
 
     <AdminPagination

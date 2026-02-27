@@ -21,7 +21,7 @@ import {
 // Components
 import AdminProductPreview from '@/components/admin/catalog/product/AdminProductPreview.vue'
 import AdminProductForm from '@/components/admin/catalog/product/AdminProductForm.vue'
-
+import FormHeader from '@/components/admin/common/FormHeader.vue'
 const route = useRoute()
 const router = useRouter()
 const toastStore = useToastStore()
@@ -31,6 +31,9 @@ const productStore = useProductStore()
 const categoryStore = useCategoryStore()
 const sizeStore = useSizeStore()
 const { sizes } = storeToRefs(sizeStore)
+
+const pageTitle = computed(() => (isEditMode.value ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm mới'))
+const buttonLabel = computed(() => (isEditMode.value ? 'Lưu thay đổi' : 'Tạo sản phẩm'))
 
 // --- STATE ---
 const isEditMode = computed(() => !!route.params.id)
@@ -232,51 +235,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="p-6 bg-gray-50 min-h-screen">
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
-        <button
-          @click="router.back()"
-          class="p-2 rounded-full bg-white border border-gray-300 hover:bg-gray-100 text-gray-600 transition-colors"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            class="w-5 h-5"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
-            />
-          </svg>
-        </button>
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-            {{ isEditMode ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm mới' }}
-          </h1>
-          <p class="text-sm text-gray-500">Điền thông tin chi tiết sản phẩm</p>
-        </div>
-      </div>
-      <div class="flex gap-3">
-        <button
-          @click="router.back()"
-          class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium text-sm"
-        >
-          Hủy
-        </button>
-        <button
-          @click="handleSubmit"
-          class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm shadow-lg shadow-green-200"
-        >
-          {{ isEditMode ? 'Lưu thay đổi' : 'Tạo sản phẩm' }}
-        </button>
-      </div>
-    </div>
-
+  <div class="p-6 bg-gray-50 min-h-screen dark:bg-gray-900 rounded-xl">
+    <FormHeader
+      :title="pageTitle"
+      description="Điền thông tin chi tiết sản phẩm"
+      :loading="isLoading"
+      :submit-label="buttonLabel"
+      @submit="handleSubmit"
+    />
     <div v-if="isLoading" class="text-center py-20">
       <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600 mx-auto"></div>
       <p class="text-gray-500 mt-2 text-sm">Đang tải dữ liệu...</p>

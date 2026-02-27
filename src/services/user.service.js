@@ -2,6 +2,12 @@
 import api from './axiosClient'
 const ENDPOINT = '/users'
 export default {
+  getAll(params = {}) {
+    return api.get(ENDPOINT, { params })
+  },
+  getById(id) {
+    return api.get(`${ENDPOINT}/${id}`)
+  },
   /**
    * Lấy thông tin cá nhân (Profile)
    * Mapping: [HttpGet("me")]
@@ -20,6 +26,11 @@ export default {
     return api.put(`${ENDPOINT}/me`, data)
   },
 
+  /** Cập nhật role Admin */
+  update(id, data){
+    return api.put(`${ENDPOINT}/${id}`, data)
+  },
+  
   /**
    * Tự xóa tài khoản
    * Mapping: [HttpDelete("me")]

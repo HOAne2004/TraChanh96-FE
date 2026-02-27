@@ -1,9 +1,11 @@
 <script setup>
-import ForgotPasswordForm from '@auth/ForgotPasswordForm.vue';
+import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm.vue'
 </script>
+
 <template>
-  <div class="max-w-md mx-auto py-10">
-    <h1 class="text-3xl font-bold mb-6 text-center">Khôi phục Mật khẩu</h1>
-    <ForgotPasswordForm /> 
+  <div class="min-h-[80vh] flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-12">
+    <div class="max-w-md w-full">
+      <ForgotPasswordForm />
+    </div>
   </div>
 </template>
