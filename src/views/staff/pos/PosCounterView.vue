@@ -283,16 +283,16 @@ const handlePrintBill = (order) => {
             :key="product.id"
             @click="handleProductClick(product)"
             class="bg-white p-3 rounded-2xl shadow-sm hover:shadow-md cursor-pointer border border-transparent transition-all flex flex-col h-full active:scale-95 duration-150 group relative"
-            :class="(product.status === 'OutOfStock' || product.status === 'Hết hàng' || product.status === 4) ? 'opacity-90 grayscale-[20%] border-red-100/50' : 'hover:border-blue-500'"
+            :class="(product.status === 'OutOfStock') ? 'opacity-90 grayscale-[20%] border-red-100/50' : 'hover:border-blue-500'"
           >
             <!-- Nút Cập nhật Hết hàng/Mở bán -->
             <button
               @click.stop="toggleProductStatus(product)"
               class="absolute top-4 right-4 p-1.5 rounded-lg text-white shadow hover:scale-110 transition-transform flex items-center justify-center z-10"
-              :class="(product.status === 'OutOfStock' || product.status === 'Hết hàng' || product.status === 4) ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'"
-              :title="(product.status === 'OutOfStock' || product.status === 'Hết hàng' || product.status === 4) ? 'Đang Hết hàng (Bấm để Mở bán)' : 'Đang Bán (Bấm để báo Hết hàng)'"
+              :class="(product.status === 'OutOfStock') ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'"
+              :title="(product.status === 'OutOfStock') ? 'Đang Hết hàng (Bấm để Mở bán)' : 'Đang Bán (Bấm để báo Hết hàng)'"
             >
-              <svg v-if="(product.status === 'OutOfStock' || product.status === 'Hết hàng' || product.status === 4)" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <svg v-if="(product.status === 'OutOfStock')" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
             </button>
 
@@ -310,14 +310,14 @@ const handlePrintBill = (order) => {
               </span>
 
               <!-- Nhãn Hết hàng mờ đè lên ảnh -->
-              <div v-if="(product.status === 'OutOfStock' || product.status === 'Hết hàng' || product.status === 4)" class="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none z-10">
+              <div v-if="(product.status === 'OutOfStock')" class="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none z-10">
                 <span class="bg-red-600 text-white font-extrabold text-sm px-4 py-1.5 rounded-lg rotate-[-15deg] uppercase border-2 border-red-300 shadow-xl tracking-widest leading-none">Hết hàng</span>
               </div>
             </div>
 
             <div class="flex-1 flex flex-col justify-between">
               <h3 class="text-sm font-bold text-gray-800 line-clamp-2 mb-1 leading-snug"
-                  :class="{ 'text-gray-500 italic line-through decoration-red-400': product.status === 'OutOfStock' || product.status === 'Hết hàng' || product.status === 4}">
+                  :class="{ 'text-gray-500 italic line-through decoration-red-400': product.status === 'OutOfStock'}">
                 {{ product.name }}
               </h3>
               <span class="text-xs text-gray-400 font-medium">{{ product.code || 'SP' + product.id }}</span>

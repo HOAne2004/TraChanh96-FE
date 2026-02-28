@@ -18,7 +18,7 @@ const ForgotPasswordView = () => import('@/views/customer/ForgotPasswordView.vue
 const ResetPasswordView = () => import('@/views/customer/ResetPasswordView.vue')
 const VerifyEmailView = () => import('@/views/customer/VerifyEmailView.vue')
 const FranchiseView = () => import('@/views/customer/FranchiseView.vue')
-const NotificationView = () => import('@/views/customer/NotificationView.vue')
+
 
 export const clientRoutes = [
   {
@@ -150,15 +150,7 @@ export const clientRoutes = [
         component: FranchiseView,
         meta: { title: 'Nhượng quyền' },
       },
-      {
-        path: 'notifications',
-        name: 'notification',
-        component: NotificationView,
-        meta: {
-          title: 'Thông báo',
-          requiresAuth: true,
-        },
-      },
+
     ],
   },
 ]

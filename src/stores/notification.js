@@ -32,10 +32,26 @@ export const useNotificationStore = defineStore('notification', () => {
     error.value = null
     try {
       const response = await notificationService.getMyNotifications()
+
+      const userStore = useUserStore()
+      const userId = userStore.user?.id || 'guest'
+      const deletedKey = `deletedNotis_${userId}`
+      const readKey = `readNotis_${userId}`
+
+      const deletedIds = JSON.parse(localStorage.getItem(deletedKey) || '[]')
+      const readIds = JSON.parse(localStorage.getItem(readKey) || '[]')
+
+      // Lọc bỏ những thông báo đã xóa khỏi local, và cập nhật trạng thái isRead dựa vào local cache cho broadcast
       notifications.value = response.data
+        .filter(n => !deletedIds.includes(n.id))
+        .map(n => {
+           if (readIds.includes(n.id)) {
+              n.isRead = true
+           }
+           return n
+        })
     } catch (err) {
       console.error(err)
-      // Không cần hiện lỗi quá gắt gao với thông báo, chỉ log
       error.value = err.response?.data?.message || 'Lỗi tải thông báo'
     } finally {
       loading.value = false
@@ -66,32 +82,64 @@ export const useNotificationStore = defineStore('notification', () => {
    * @param {number} id - ID thông báo
    */
   async function markAsReadAction(id) {
-    // Không cần loading toàn trang
     try {
       await notificationService.markAsRead(id)
-
-      // Cập nhật state ở Client ngay lập tức (Optimistic Update)
-      // Tìm thông báo trong list và set isRead = true
-      const noti = notifications.value.find((n) => n.id === id)
-      if (noti) {
-        noti.isRead = true
-      }
     } catch (err) {
       console.error('Lỗi đánh dấu đã đọc:', err)
-      // Có thể throw hoặc bỏ qua tùy trải nghiệm người dùng
+      // Vẫn tiếp tục xử lý UI (Optimistic)
+    }
+
+    const noti = notifications.value.find((n) => n.id === id)
+    if (noti && !noti.isRead) {
+      noti.isRead = true
+      // Lưu vào cache để những thông báo chung (broadcast) vẫn giữ được trạng thái Read
+      const userStore = useUserStore()
+      const userId = userStore.user?.id || 'guest'
+      const readKey = `readNotis_${userId}`
+      const readIds = JSON.parse(localStorage.getItem(readKey) || '[]')
+      if (!readIds.includes(id)) {
+        readIds.push(id)
+        localStorage.setItem(readKey, JSON.stringify(readIds))
+      }
     }
   }
 
-  /**
-   * (Optional) Đánh dấu tất cả là đã đọc (FE Loop)
-   * Vì BE chưa có API markAllAsRead, ta có thể tạm thời loop hoặc đợi BE bổ sung.
-   * Hiện tại hàm này chỉ mang tính demo logic.
-   */
   async function markAllAsReadAction() {
     const unreadItems = notifications.value.filter((n) => !n.isRead)
-    // Gọi song song hoặc tuần tự
-    for (const item of unreadItems) {
-      await markAsReadAction(item.id)
+    if (unreadItems.length === 0) return
+
+    // Cập nhật UI ngay lập tức
+    unreadItems.forEach((n) => { n.isRead = true })
+
+    const userStore = useUserStore()
+    const userId = userStore.user?.id || 'guest'
+    const readKey = `readNotis_${userId}`
+    let readIds = JSON.parse(localStorage.getItem(readKey) || '[]')
+
+    unreadItems.forEach(n => {
+      if (!readIds.includes(n.id)) readIds.push(n.id)
+    })
+    localStorage.setItem(readKey, JSON.stringify(readIds))
+
+    // Gọi API song song cho tất cả để không bị chậm
+    await Promise.allSettled(
+      unreadItems.map(item => notificationService.markAsRead(item.id))
+    )
+  }
+
+  async function deleteNotificationAction(id) {
+    // Ẩn phía UI
+    notifications.value = notifications.value.filter(n => n.id !== id)
+
+    // Lưu cache
+    const userStore = useUserStore()
+    const userId = userStore.user?.id || 'guest'
+    const deletedKey = `deletedNotis_${userId}`
+    const deletedIds = JSON.parse(localStorage.getItem(deletedKey) || '[]')
+
+    if (!deletedIds.includes(id)) {
+      deletedIds.push(id)
+      localStorage.setItem(deletedKey, JSON.stringify(deletedIds))
     }
   }
 
@@ -157,6 +205,7 @@ export const useNotificationStore = defineStore('notification', () => {
     createNotificationAction,
     markAsReadAction,
     markAllAsReadAction,
+    deleteNotificationAction,
     initSignalR,
     stopSignalR,
     fetchAdminNotifications,

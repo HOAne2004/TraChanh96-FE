@@ -1,9 +1,9 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useNotificationStore } from '@/stores/notification'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import { formatDate } from '@/utils/formatters' // Giả sử có hàm format
+import NotificationModal from '@/components/common/NotificationModal.vue'
 
 const props = defineProps({
   isAdmin: { type: Boolean, default: false }
@@ -14,6 +14,7 @@ const { notifications, unreadCount } = storeToRefs(notificationStore)
 const router = useRouter()
 
 const isOpen = ref(false)
+const isModalOpen = ref(false)
 
 // Lấy 5 tin mới nhất để hiện popup
 const recentNotifications = computed(() => {
@@ -46,7 +47,7 @@ const handleNotificationClick = async (noti) => {
 }
 
 const viewAll = () => {
-  router.push('/notifications')
+  isModalOpen.value = true
   isOpen.value = false
 }
 
@@ -105,6 +106,12 @@ const closeDropdown = () => {
     </div>
 
     <div v-if="isOpen" @click="closeDropdown" class="fixed inset-0 z-40 bg-transparent cursor-default"></div>
+
+    <NotificationModal
+      :is-visible="isModalOpen"
+      :is-admin="isAdmin"
+      @close="isModalOpen = false"
+    />
   </div>
 </template>
 
