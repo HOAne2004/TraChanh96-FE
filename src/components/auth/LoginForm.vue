@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useModalStore } from '@/stores/modal'
 import { useUserStore } from '@/stores/user'
 import { useCartStore } from '@/stores/cart'
@@ -21,6 +22,7 @@ const inputRefs = ref([]) // Dùng để bắt focus (nhảy ô) tự động
 const modal = useModalStore()
 const auth = useUserStore()
 const cart = useCartStore()
+const router = useRouter()
 
 const emit = defineEmits(['forgot-password'])
 
@@ -76,6 +78,17 @@ const handleLogin = async () => {
     await auth.login({ email: email.value.trim(), password: password.value })
     await Promise.all([auth.fetchUserProfile(), cart.fetchCart()])
     modal.closeLoginModal()
+
+    if(auth.user.role === 'ADMIN') {
+      router.push('/admin')
+    }else if(auth.user.role === 'STAFF') {
+      router.push('/staff')
+    }else if (auth.user.role === 'MANAGER') {
+      router.push('/manager')
+    }
+    else {
+      router.push('/')
+    }
   } catch (err) {
     const msg = auth.error || ''
     if (msg.toLowerCase().includes('xác thực') || msg.toLowerCase().includes('kiểm tra email')) {

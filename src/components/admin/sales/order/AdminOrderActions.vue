@@ -45,7 +45,7 @@ const onVerifyPickup = () => {
 
     <div class="flex flex-col gap-3">
       <button
-        v-if="!order.isPaid && order.status !== ORDER_STATUS.CANCELLED && !isCOD"
+        v-if="!order.isPaid && order.status !== ORDER_STATUS.CANCELLED"
         @click="onManualConfirmPayment"
         :disabled="isProcessing"
         class="w-full py-2.5 bg-green-100 hover:bg-green-200 text-green-700 border border-green-200 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"

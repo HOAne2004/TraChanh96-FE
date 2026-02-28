@@ -41,10 +41,10 @@ const handleRegister = async () => {
     const redirectPath = route.query.redirect || '/'
     router.push(redirectPath)
   } catch (err) {
-    toast.show({
-        type: 'error',
-        message: 'Lỗi đăng ký: ' + err.message
-      })
+    // toast.show({
+    //     type: 'error',
+    //     message: 'Lỗi đăng ký: ' + err.message
+    //   })
   }
   finally {
     isLoading.value = false
@@ -107,76 +107,148 @@ const clearError = () => {
         />
       </div>
 
-      <div class="relative">
-        <label for="register_password" class="block text-sm font-medium mb-1">Mật khẩu</label>
-        <input
-          :type="showPassword ? 'text' : 'password'"
-          id="register_password"
-          v-model.trim="formData.password"
-          required
-          minlength="6"
-          class="w-full border rounded-lg px-3 py-2 pr-10 focus:ring focus:ring-green-300 outline-none dark:bg-gray-700 dark:border-gray-600"
-          placeholder="Tối thiểu 6 ký tự"
-        />
-        <button
-          type="button"
-          class="absolute right-3 top-8 text-gray-500 hover:text-gray-700 dark:hover:text-gray-400"
-          @click="showPassword = !showPassword"
-          tabindex="-1"
-        >
-          <span v-if="showPassword">
+      <div class="space-y-1.5">
+        <label for="register_password" class="block text-sm font-medium mb-1 ml-1 text-gray-700 dark:text-gray-200">Mật khẩu</label>
+        <div class="relative group">
+          <div
+            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-green-500 transition-colors"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              fill="none"
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
-              stroke-width="1.5"
+              fill="none"
               stroke="currentColor"
-              class="size-6"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"
-              />
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
-          </span>
-          <span v-else>
+          </div>
+          <input
+            :type="showPassword ? 'text' : 'password'"
+            id="register_password"
+            v-model.trim="formData.password"
+            required
+            minlength="6"
+            placeholder="Tối thiểu 6 ký tự"
+            class="w-full pl-11 pr-12 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all duration-200 text-gray-900 dark:text-white"
+          />
+          <button
+            type="button"
+            class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-500 transition-colors"
+            @click="showPassword = !showPassword"
+            tabindex="-1"
+          >
             <svg
+              v-if="!showPassword"
               xmlns="http://www.w3.org/2000/svg"
-              fill="none"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
-              stroke-width="1.5"
+              fill="none"
               stroke="currentColor"
-              class="size-6"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-              />
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
             </svg>
-          </span>
-        </button>
+            <svg
+              v-else
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+              <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+              <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+              <line x1="2" x2="22" y1="2" y2="22" />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      <div>
-        <label for="confirm-password" class="block text-sm font-medium mb-1"
-          >Xác nhận Mật khẩu</label
-        >
-        <input
-          :type="showPassword ? 'text' : 'password'"
-          id="confirm-password"
-          v-model.trim="formData.confirmPassword"
-          required
-          minlength="6"
-          class="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-green-300 outline-none dark:bg-gray-700 dark:border-gray-600"
-          placeholder="Nhập lại mật khẩu"
-        />
+      <div class="space-y-1.5">
+        <label for="confirm-password" class="block text-sm font-medium mb-1 ml-1 text-gray-700 dark:text-gray-200">Xác nhận Mật khẩu</label>
+        <div class="relative group">
+          <div
+            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-green-500 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <input
+            :type="showPassword ? 'text' : 'password'"
+            id="confirm-password"
+            v-model.trim="formData.confirmPassword"
+            required
+            minlength="6"
+            placeholder="Nhập lại mật khẩu"
+            class="w-full pl-11 pr-12 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all duration-200 text-gray-900 dark:text-white"
+          />
+          <button
+            type="button"
+            class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-500 transition-colors"
+            @click="showPassword = !showPassword"
+            tabindex="-1"
+          >
+            <svg
+              v-if="!showPassword"
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <svg
+              v-else
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+              <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+              <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+              <line x1="2" x2="22" y1="2" y2="22" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       <button
@@ -197,3 +269,10 @@ const clearError = () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+</style>

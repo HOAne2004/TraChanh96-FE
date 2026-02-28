@@ -44,7 +44,9 @@ const addressStore = useAddressStore()
 const { cartItems: allCartItems } = storeToRefs(cartStore)
 const { isLoggedIn } = storeToRefs(userStore)
 const { addresses } = storeToRefs(addressStore)
-const { currentDiscountAmount, appliedVoucher } = storeToRefs(voucherStore)
+const { currentDiscountAmount, appliedVoucher  } = storeToRefs(voucherStore)
+const { shippingFee, isCalculatingShip } = storeToRefs(orderStore)
+const {calculateShippingFeeAction} = orderStore
 
 // --- STATE ---
 const orderType = ref(ORDER_TYPE.DELIVERY) // Mặc định là Giao hàng
@@ -53,7 +55,6 @@ const selectedPaymentMethod = ref(null)
 const pickupTime = ref(null) // Date Object hoặc String ISO
 const userNotes = ref('')
 const isSubmitting = ref(false)
-
 const currentStore = ref(null) // Chi tiết store (lat, lng, shipping config)
 const distanceKm = ref(0) // Khoảng cách tính toán
 
@@ -72,9 +73,7 @@ const checkoutItems = computed(() => {
 // --- COMPUTED: VALIDATION DELIVERY ---
 const isOutOfDeliveryRadius = computed(() => {
   if (orderType.value !== ORDER_TYPE.DELIVERY) return false
-  // Nếu chưa tính được khoảng cách -> coi như hợp lệ (để không chặn nhầm)
   if (!distanceKm.value) return false
-  // Lấy giới hạn từ Store, nếu không có thì mặc định 20km
   const maxRadius = currentStore.value?.deliveryRadius || 20
   return distanceKm.value > maxRadius
 })
@@ -85,29 +84,18 @@ const subtotal = computed(() => {
 })
 
 // Preview phí ship (Frontend Only)
-const shippingFeePreview = computed(() => {
-  // Pickup -> Free ship
-  if (orderType.value === ORDER_TYPE.PICKUP) return 0
+// const shippingFeePreview = computed(() => {
+//   if (orderType.value === ORDER_TYPE.PICKUP) return 0
+//   if (!distanceKm.value || !currentStore.value) return 0
+//   if (currentStore.value.shippingFeeFixed != null) {
+//     return currentStore.value.shippingFeeFixed
+//   }
+//   const feePerKm = currentStore.value.shippingFeePerKm || 5000 // Fallback 5k
+//   const rawFee = distanceKm.value * feePerKm
+//   return Math.ceil(rawFee / 1000) * 1000
+// })
 
-  // Chưa có địa chỉ hoặc chưa có store -> 0
-  if (!distanceKm.value || !currentStore.value) return 0
 
-  // Logic ưu tiên: Fixed -> PerKm
-  if (currentStore.value.shippingFeeFixed != null) {
-    return currentStore.value.shippingFeeFixed
-  }
-
-  const feePerKm = currentStore.value.shippingFeePerKm || 5000 // Fallback 5k
-  const rawFee = distanceKm.value * feePerKm
-
-  // Làm tròn lên hàng nghìn (VD: 12.300 -> 13.000)
-  return Math.ceil(rawFee / 1000) * 1000
-})
-
-const total = computed(() => {
-  const t = subtotal.value + shippingFeePreview.value - (currentDiscountAmount.value || 0)
-  return t > 0 ? t : 0
-})
 
 // --- COMPUTED: CAN SUBMIT ---
 const canSubmit = computed(() => {
@@ -140,12 +128,10 @@ watch(
   displayStoreId,
   async (newId) => {
     if (newId) {
-      console.log('Fetching store details for ID:', newId) // Debug log
       try {
         const store = await storeStore.fetchStoreById(newId)
         if (store) {
           currentStore.value = store
-          console.log('Store fetched successfully:', store) // Debug log
         } else {
           console.error('Store fetched is null')
         }
@@ -158,52 +144,47 @@ watch(
 )
 
 // 2. Tính khoảng cách khi đổi Địa chỉ hoặc Store
-watch([() => addresses.value, currentStore], ([listAddr, store]) => {
-  if (!store || !listAddr || listAddr.length === 0) return;
+const selectedAddress = computed(() => {
+  if (!selectedAddressId.value || !addresses.value) return null
+  return addresses.value.find(a => a.id === selectedAddressId.value)
+})
 
-  console.group('📍 KIỂM TRA KHOẢNG CÁCH (DEBUG)');
-  console.log(`Cửa hàng: ${store.name}`);
-  console.log(`Tọa độ Store: ${store.latitude}, ${store.longitude}`);
-  console.log(`Bán kính cho phép: ${store.deliveryRadius || 20} km`);
-  console.table(
-    listAddr.map(addr => {
-      // Tính thử khoảng cách
-      let dist = 0;
-      if (store.latitude && store.longitude && addr.latitude && addr.longitude) {
-        dist = calculateDistance(
-          Number(store.latitude),
-          Number(store.longitude),
-          Number(addr.latitude),
-          Number(addr.longitude)
-        );
-      }
+watch([selectedAddress, currentStore], ([addr, store]) => {
+  if (!addr || !store || !store.latitude || !addr.latitude) {
+    distanceKm.value = 0
+    return
+  }
+  const dist = calculateDistance(
+    Number(store.latitude),
+    Number(store.longitude),
+    Number(addr.latitude),
+    Number(addr.longitude)
+  )
+  distanceKm.value = dist
+}, { immediate: true })
 
-      return {
-        ID: addr.id,
-        'Người nhận': addr.recipientName,
-        'Địa chỉ': addr.addressDetail, // Hoặc fullAddress
-        'Tọa độ (Lat, Long)': `${addr.latitude}, ${addr.longitude}`,
-        'Khoảng cách (Km)': dist.toFixed(3),
-        'Hợp lệ?': dist <= (store.deliveryRadius || 20) ? '✅ OK' : '❌ XA QUÁ'
-      };
-    })
-  );
-  console.groupEnd();
-}, { deep: true });
+watch([selectedAddress, currentStore, orderType], async ([addr, store, type]) => {
+  if (type !== ORDER_TYPE.DELIVERY || !addr || !store) {
+    shippingFee.value = 0
+    return
+  }
 
+  await calculateShippingFeeAction(store.id, addr.id)
+}, { immediate: true })
+
+const total = computed(() => {
+  const t = subtotal.value + shippingFee.value - (currentDiscountAmount.value || 0)
+  return t > 0 ? t : 0
+})
 // 3. Reset state khi đổi Order Type
 watch(orderType, (newType) => {
   if (newType === ORDER_TYPE.PICKUP) {
-    // Debug để thấy rõ giá trị Backend trả về
     console.log('Payment Method hiện tại:', selectedPaymentMethod.value)
 
     if (selectedPaymentMethod.value) {
-      // Lấy type từ object
       const type = selectedPaymentMethod.value.paymentType
       const code = selectedPaymentMethod.value.code
 
-      // 🟢 SỬA LOGIC: So sánh với 'cod' (chữ thường) do CamelCase
-      // Hoặc an toàn nhất là convert sang string rồi lower case
       const isCod = String(type).toLowerCase() === 'cod' || String(code).toLowerCase() === 'cod'
 
       if (isCod) {
@@ -239,10 +220,8 @@ onMounted(async () => {
   await addressStore.fetchAddresses()
 
   if (addresses.value && addresses.value.length > 0) {
-    // Ưu tiên địa chỉ mặc định, nếu không có lấy cái đầu tiên
     const defaultAddr = addresses.value.find((a) => a.isDefault) || addresses.value[0]
     selectedAddressId.value = defaultAddr.id
-    console.log('✅ Auto-selected Address:', defaultAddr)
   }
 })
 
@@ -395,7 +374,7 @@ const handleSubmitOrder = async () => {
         <div class="sticky top-24 space-y-4">
           <OrderSummary
             :subtotal="subtotal"
-            :shipping-fee="shippingFeePreview"
+            :shipping-fee="shippingFee"
             :discount="currentDiscountAmount"
             :total="total"
             :order-type="orderType"

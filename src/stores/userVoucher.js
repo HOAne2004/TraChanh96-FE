@@ -65,7 +65,7 @@ export const useUserVoucherStore = defineStore('userVoucher', () => {
     try {
       const payload = {
         voucherCode: code,
-        orderTotalAmount: orderTotal
+        orderTotalAmount: orderTotal,
       }
 
       const response = await userVoucherService.applyVoucher(payload)
@@ -78,7 +78,6 @@ export const useUserVoucherStore = defineStore('userVoucher', () => {
       } else {
         throw new Error(result.message || 'Voucher không hợp lệ')
       }
-
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Áp dụng voucher thất bại'
       error.value = msg
@@ -124,6 +123,6 @@ export const useUserVoucherStore = defineStore('userVoucher', () => {
     fetchMyVouchers,
     applyVoucherAction,
     removeAppliedVoucher,
-    issueVoucherAction
+    issueVoucherAction,
   }
 })

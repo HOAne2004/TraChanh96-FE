@@ -38,11 +38,10 @@ watch(selectedStoreId, async (newId) => {
 const loadData = async () => {
   try {
     await Promise.all([
-      productStore.fetchProducts(),
+      productStore.fetchProducts({ pageSize: 1000 }),
       storeStore.fetchActiveStores(),
     ])
 
-    // Nếu F5 trang mà đã có sẵn storeId trong localStorage/Pinia -> load menu luôn
     if (selectedStoreId.value) {
         await storeStore.fetchStoreMenu(selectedStoreId.value)
     }
@@ -57,12 +56,10 @@ onMounted(() => {
   loadData()
 })
 
-// Xử lý khi người dùng tick chọn bộ lọc
 const handleFilterChange = (ids) => {
   selectedCategories.value = ids.map((id) => String(id))
 }
 
-// ⭐ TÍNH TOÁN DATA HIỂN THỊ (Đã cập nhật logic Store)
 const displayedSections = computed(() => {
   let sourceProducts = []
 

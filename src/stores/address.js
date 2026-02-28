@@ -43,7 +43,7 @@ export const useAddressStore = defineStore('address', () => {
     loading.value = true
     try {
       const res = await addressService.getByUserId(userId)
-      addresses.value = res.data || res // Tùy vào interceptor của bạn trả về data hay response
+      addresses.value = res.data || res
     } catch (err) {
       console.error('Lỗi tải địa chỉ user:', err)
       addresses.value = []
@@ -57,7 +57,10 @@ export const useAddressStore = defineStore('address', () => {
     loading.value = true
     try {
       const res = await addressService.create(payload)
-      // Cập nhật UI ngay lập tức
+      if (!Array.isArray(addresses.value)) {
+        addresses.value = []
+      }
+
       addresses.value.unshift(res)
 
       if (payload.isDefault) {
@@ -65,7 +68,7 @@ export const useAddressStore = defineStore('address', () => {
           if (addr.id !== res.id) addr.isDefault = false
         })
       }
-      return res // Trả về để form lấy ID
+      return res
     } catch (err) {
       console.error('Lỗi tạo địa chỉ:', err)
       throw err

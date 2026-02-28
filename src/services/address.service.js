@@ -1,48 +1,59 @@
 // src/services/address.service.js
 import api from './axiosClient'
 const ENDPOINT = '/users/addresses'
+
 export default {
   // --- USER ADDRESSES ---
-  getAll() {
-    return api.get(`${ENDPOINT}`).data
-  },
-  getByUserId(userId) {
-    return api.get(`${ENDPOINT}/user/${userId}`)
-  },
-  getById(id) {
-    return api.get(`/users/addresses/${id}`).data
+  async getAll() {
+    const res = await api.get(ENDPOINT)
+    return res.data
   },
 
-  create(data) {
-    return api.post('/users/addresses', data).data
+  async getByUserId(userId) {
+    const res = await api.get(`${ENDPOINT}/user/${userId}`)
+    return res.data
   },
 
-  update(id, data) {
-    return api.put(`/users/addresses/${id}`, data).data
+  async getById(id) {
+    const res = await api.get(`${ENDPOINT}/${id}`)
+    return res.data
   },
 
-  delete(id) {
-    return api.delete(`/users/addresses/${id}`).data
+  async create(data) {
+    const res = await api.post(ENDPOINT, data)
+    return res.data
   },
 
-  setDefault(id) {
-    return api.patch(`/users/addresses/${id}/set-default`).data
+  async update(id, data) {
+    const res = await api.put(`${ENDPOINT}/${id}`, data)
+    return res.data
+  },
+
+  async delete(id) {
+    const res = await api.delete(`${ENDPOINT}/${id}`)
+    return res.data
+  },
+
+  async setDefault(id) {
+    const res = await api.patch(`${ENDPOINT}/${id}/set-default`)
+    return res.data
   },
 
   // --- STORE ADDRESSES ---
-
-  createForStore(data) {
-    // 👇 PHẢI DÙNG AWAIT
-    return api.post('/stores/addresses', data).data
+  async createForStore(data) {
+    const res = await api.post('/stores/addresses', data)
+    return res.data
   },
 
-  updateForStore(id, data) {
-    return api.put(`/stores/addresses/${id}`, data).data
+  async updateForStore(id, data) {
+    const res = await api.put(`/stores/addresses/${id}`, data)
+    return res.data
   },
 
-  deleteForStore(id, storeId) {
-    return api.delete(`/stores/addresses/${id}`, {
-      data: { storeId: storeId },
-    }).data
+  async deleteForStore(id, storeId) {
+    const res = await api.delete(`/stores/addresses/${id}`, {
+      data: { storeId },
+    })
+    return res.data
   },
 }

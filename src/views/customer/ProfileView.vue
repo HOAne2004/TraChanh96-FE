@@ -16,7 +16,6 @@ const router = useRouter()
 const route = useRoute()
 
 const { user } = storeToRefs(userStore)
-const { orders } = storeToRefs(orderStore)
 
 const activeTab = ref(route.query.tab || 'info')
 

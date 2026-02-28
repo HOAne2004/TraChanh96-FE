@@ -10,7 +10,7 @@ const props = defineProps({
   isPaymentPending: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['cancel', 'pay', 'confirm', 'complete'])
+defineEmits(['cancel', 'pay', 'confirm', 'complete'])
 
 const showQrModal = ref(false)
 
@@ -55,7 +55,9 @@ const showCompleteBtn = computed(() => {
   // Chỉ hiện khi trạng thái là ĐANG GIAO (Delivering) hoặc ĐÃ NHẬN (Received - Tại quầy)
   // Và chưa hoàn tất (Completed)
   return (
-    props.userRole === 'Customer' && [ORDER_STATUS.DELIVERING].includes(s)
+    props.userRole === 'Customer' &&
+    [ORDER_STATUS.DELIVERING, ORDER_STATUS.RECEIVED].includes(s) &&
+    props.order.isPaid
   )
 })
 

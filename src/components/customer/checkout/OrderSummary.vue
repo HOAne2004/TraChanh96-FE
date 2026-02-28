@@ -8,7 +8,7 @@ const props = defineProps({
   shippingFee: Number,
   discount: Number,
   total: Number,
-  orderType: Number
+  orderType: String,
 })
 
 // Không cần emit event voucher ở đây nếu đã xử lý ở CartView,

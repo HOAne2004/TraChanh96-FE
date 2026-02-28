@@ -60,7 +60,7 @@ const handleSelectAddress = (addr) => {
   const meta = getAddressMeta(addr)
 
   if (!meta.valid) {
-    modalStore.showToast(`Địa chỉ quá xa (${meta.text}). Vui lòng chọn địa chỉ khác.`, 'warning')
+    modalStore.show(`Địa chỉ quá xa (${meta.text}). Vui lòng chọn địa chỉ khác.`, 'warning')
     return
   }
 
@@ -82,7 +82,7 @@ const handleAddressSubmit = async (formData) => {
     emit('update:modelValue', newAddr.id)
     showModal.value = false
   } catch (e) {
-    modalStore.showToast('Lỗi thêm địa chỉ', 'error')
+    modalStore.show('Lỗi thêm địa chỉ', 'error')
   }
 }
 </script>

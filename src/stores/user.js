@@ -89,7 +89,7 @@ export const useUserStore = defineStore('user', () => {
       loading.value = false
     }
   }
-  /**
+/**
    * REGISTER
    */
   async function register(payload) {
@@ -97,13 +97,10 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
     try {
       await authService.register(payload)
-      await login({
-        email: payload.email,
-        password: payload.password,
-      })
     } catch (err) {
-      error.value = err.response?.data?.message || 'Đăng ký thất bại'
-      throw err
+      const errorMessage = err.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.'
+      error.value = errorMessage
+      throw new Error(errorMessage)
     } finally {
       loading.value = false
     }

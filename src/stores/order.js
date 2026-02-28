@@ -95,7 +95,6 @@ export const useOrderStore = defineStore('order', () => {
       return response.data
     } catch (err) {
       error.value = err.response?.data?.message || 'Không tìm thấy đơn hàng'
-      // Nếu lỗi 403 (Forbid) -> UI có thể hiện thông báo "Không có quyền xem"
     } finally {
       loading.value = false
     }
@@ -120,7 +119,6 @@ export const useOrderStore = defineStore('order', () => {
     error.value = null
     try {
       const response = await orderService.createDelivery(data)
-      // Trả về Order Object (có thể chứa PaymentUrl nếu là Ví điện tử)
       return response.data
     } catch (err) {
       error.value = err.response?.data?.message || 'Đặt hàng thất bại'
@@ -147,7 +145,6 @@ export const useOrderStore = defineStore('order', () => {
   async function createPickupOrderAction(payload) {
     loading.value = true
     try {
-      // Gọi endpoint API (Giả sử BE là POST /orders/pickup)
       const res = await orderService.createPickup(payload)
       return res.data
     } catch (err) {
@@ -195,12 +192,8 @@ export const useOrderStore = defineStore('order', () => {
   async function assignShipperAction(id, shipperId) {
     loading.value = true
     try {
-      // 1. Gọi API Gán Shipper
-      // ⚠️ LƯU Ý: Hãy đảm bảo trong file 'services/order.service.js', hàm assignShipper
-      // phải gọi đúng URL: api.put(`/orders/${id}/assign-shipper`, { shipperId })
       await orderService.assignShipper(id, shipperId)
 
-      // 2. 🟢 FIX LỖI RELOAD: Dùng orderCode thay vì id
       if (currentOrder.value && currentOrder.value.orderCode) {
         await fetchOrderDetail(currentOrder.value.orderCode)
       }
@@ -236,7 +229,22 @@ export const useOrderStore = defineStore('order', () => {
   /**
    * Tính phí giao hàng
    */
-
+async function calculateShippingFeeAction(storeId, addressId) {
+  if (!storeId || !addressId) {
+    shippingFee.value = 0
+    return
+  }
+  isCalculatingShip.value = true
+  try {
+    const response = await orderService.calculateShippingFee(storeId, addressId)
+    shippingFee.value = response.data?.fee ?? 0
+  } catch (err) {
+    console.error('Lỗi tính phí ship:', err)
+    shippingFee.value = 0
+  } finally {
+    isCalculatingShip.value = false
+  }
+}
 
   // Helper để reset (dùng khi rời trang hoặc xóa giỏ hàng)
   function resetShippingFee() {
@@ -321,6 +329,7 @@ export const useOrderStore = defineStore('order', () => {
     updateStatusAction,
     assignShipperAction,
     cancelOrderAction,
+    calculateShippingFeeAction,
     shippingFee,
     isCalculatingShip,
     resetShippingFee,

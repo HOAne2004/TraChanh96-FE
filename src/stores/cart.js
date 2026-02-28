@@ -47,7 +47,7 @@ export const useCartStore = defineStore('cart', () => {
     loading.value = true
     try {
       const res = await cartService.getMyCart()
-      carts.value = res.data // 🟢 API trả về mảng
+      carts.value = res.data
     } catch (err) {
       console.error('Lỗi tải giỏ hàng:', err)
     } finally {
