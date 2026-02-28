@@ -34,11 +34,8 @@ const handleNotificationClick = async (noti) => {
  // 2. Điều hướng
   if (noti.type === 'Order' && noti.referenceId) {
      if (props.isAdmin) {
-        // 🔴 Nếu là Admin -> Sang trang chi tiết đơn Admin (Giả sử route name là 'admin-order-detail')
-        // Bạn cần đảm bảo đã định nghĩa route này trong router/admin.js
-        router.push({ path: `/admin/orders/${noti.referenceId}` }) // Hoặc query theo ID nếu BE trả về ID
+        router.push({ path: `/admin/orders/${noti.referenceId}` })
      } else {
-        // 🔵 Nếu là Customer -> Sang trang chi tiết đơn Customer
         router.push({ name: 'order-detail', params: { code: noti.referenceId } })
      }
   }

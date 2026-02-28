@@ -25,6 +25,20 @@ const handleRegister = async () => {
     auth.error = 'Mật khẩu và Xác nhận Mật khẩu không khớp.'
     return
   }
+
+  // Validate Email: Phải có @, không chứa dấu cách, có tên miền
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(formData.email)) {
+    auth.error = 'Email không đúng định dạng (Ví dụ: user@gmail.com, không chứa dấu cách).'
+    return
+  }
+
+  // Validate Phone: Đầu số VN 03, 05, 07, 08, 09 hoặc +84... và có 10 số
+  const phoneRegex = /^(0|\+84)(3|5|7|8|9)\d{8}$/
+  if (!formData.phone || !phoneRegex.test(formData.phone)) {
+    auth.error = 'Số điện thoại không hợp lệ (Phải đúng chuẩn Việt Nam, VD: 0912345678).'
+    return
+  }
   isLoading.value = true
   try {
     const payload = {

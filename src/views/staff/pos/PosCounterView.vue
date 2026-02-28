@@ -4,6 +4,7 @@ import { usePosStore } from '@/stores/pos'
 import { useProductStore } from '@/stores/product'
 import { useCategoryStore } from '@/stores/category'
 import { useStoreStore } from '@/stores/store'
+import { useUserStore } from '@/stores/user'
 import { useToastStore } from '@/stores/toast'
 import { useModalStore } from '@/stores/modal'
 import { formatPrice } from '@/utils/formatters'
@@ -22,6 +23,7 @@ const posStore = usePosStore()
 const productStore = useProductStore()
 const categoryStore = useCategoryStore()
 const storeStore = useStoreStore()
+const userStore = useUserStore()
 const toastStore = useToastStore()
 const modalStore = useModalStore()
 
@@ -31,9 +33,9 @@ const selectedProductForModal = ref(null)
 const isPaymentModalOpen = ref(false)
 const printingOrder = ref(null)
 const orderCode = ref('DH - ' + new Date().getTime().toString().slice(-6))
-const currentStoreName = computed(() => storeStore.currentStore?.name || 'TRÀ CHANH 96')
+const currentStoreName = computed(() => storeStore.currentStore?.name || userStore.user?.staff?.storeName || 'TRÀ CHANH 96')
 const currentStoreId = computed(() => {
-  return storeStore.currentStore?.id || null
+  return storeStore.currentStore?.id || userStore.user?.staff?.storeId || null
 })
 
 // Dropdown State
@@ -130,9 +132,58 @@ const toggleProductStatus = async (product) => {
   }
 }
 
-const handleConfirmAddToCart = (itemData) => {
+const handleConfirmAddToCart = async (itemData) => {
+  // Tìm xem món đã có trong giỏ chưa
+  const existingIndex = posStore.cartItems.findIndex((existing) => {
+    return (
+      existing.product.id === itemData.product.id &&
+      existing.options.sizeId === itemData.options.sizeId &&
+      existing.options.sugar === itemData.options.sugar &&
+      existing.options.ice === itemData.options.ice &&
+      (existing.note || '').trim() === (itemData.note || '').trim()
+    )
+  })
+
+  let currentQty = 0
+  if (existingIndex !== -1) {
+    currentQty = posStore.cartItems[existingIndex].quantity
+  }
+
+  const newQty = currentQty + itemData.quantity
+
+  if (newQty > 99) {
+    toastStore.show({ type: 'warning', message: `Số lượng tối đa cho phép là 99 món. Bạn chỉ có thể thêm tối đa ${99 - currentQty} món nữa.` })
+    // Không đóng modal để khách chỉnh lại sl
+    return
+  }
+
+  if (newQty > 50 && currentQty <= 50) {
+    const isConfirmed = await modalStore.confirmAction(
+      `Bạn chuẩn bị thêm số lượng lớn (${newQty} sản phẩm) cho món ${itemData.product.name}. Bạn có chắc chắn?`,
+      'Cảnh báo số lượng'
+    )
+    if (!isConfirmed) return
+  }
+
   posStore.addToCart(itemData)
   isModalOpen.value = false
+}
+
+const handleIncreaseCartQuantity = async (index, item) => {
+  if (item.quantity >= 99) {
+    toastStore.show({ type: 'warning', message: 'Chỉ được chọn tối đa 99 sản phẩm.' })
+    return
+  }
+
+  if (item.quantity === 50) {
+    const isConfirmed = await modalStore.confirmAction(
+      'Bạn đang tăng số lượng lên rất lớn (trên 50 sản phẩm). Bạn có tiếp tục?',
+      'Cảnh báo số lượng'
+    )
+    if (!isConfirmed) return
+  }
+
+  posStore.updateQuantity(index, item.quantity + 1)
 }
 
 const handleImageError = (e) => {
@@ -231,14 +282,14 @@ const handlePrintBill = (order) => {
             v-model="posStore.searchQuery"
             type="text"
             placeholder="Tìm món (F3)"
-            class="w-full py-2.5 pl-10 pr-4 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none text-sm"
+            class="w-full py-2.5 pl-10 pr-4 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-green-500 focus:bg-white transition-all outline-none text-sm"
           />
         </div>
 
         <div class="w-48 xl:w-64 max-w-md shrink-0 relative" ref="categoryDropdownRef">
           <button
             @click="isCategoryDropdownOpen = !isCategoryDropdownOpen"
-            class="w-full py-2.5 pl-4 pr-4 bg-gray-100 border border-transparent hover:bg-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium transition-colors cursor-pointer flex justify-between items-center text-gray-700"
+            class="w-full py-2.5 pl-4 pr-4 bg-gray-100 border border-transparent hover:bg-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm font-medium transition-colors cursor-pointer flex justify-between items-center text-gray-700"
           >
             <span class="truncate">{{ selectedCategoryName }}</span>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 transition-transform duration-200 text-gray-500" :class="{'rotate-180': isCategoryDropdownOpen}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -250,20 +301,20 @@ const handlePrintBill = (order) => {
             <button
               @click="selectCategory(null)"
               class="w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-gray-50 flex items-center justify-between transition-colors border-b border-gray-50"
-              :class="posStore.selectedCategory === null ? 'text-blue-600 bg-blue-50/50' : 'text-gray-700'"
+              :class="posStore.selectedCategory === null ? 'text-green-600 bg-green-50/50' : 'text-gray-700'"
             >
               Tất cả danh mục
-              <svg v-if="posStore.selectedCategory === null" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <svg v-if="posStore.selectedCategory === null" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
             </button>
             <button
               v-for="cat in categoryStore.flatCategories"
               :key="cat.id"
               @click="selectCategory(cat.id)"
               class="w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-gray-50 flex items-center justify-between transition-colors border-b border-gray-50 last:border-0"
-              :class="posStore.selectedCategory === cat.id ? 'text-blue-600 bg-blue-50/50' : 'text-gray-700'"
+              :class="posStore.selectedCategory === cat.id ? 'text-green-600 bg-green-50/50' : 'text-gray-700'"
             >
               <span class="truncate block whitespace-pre">{{ cat.displayName || cat.name }}</span>
-              <svg v-if="posStore.selectedCategory === cat.id" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <svg v-if="posStore.selectedCategory === cat.id" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
             </button>
           </div>
         </div>
@@ -274,7 +325,7 @@ const handlePrintBill = (order) => {
           v-if="productStore.loading"
           class="absolute inset-0 flex items-center justify-center bg-white/50 z-10"
         >
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
         </div>
 
         <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -283,7 +334,7 @@ const handlePrintBill = (order) => {
             :key="product.id"
             @click="handleProductClick(product)"
             class="bg-white p-3 rounded-2xl shadow-sm hover:shadow-md cursor-pointer border border-transparent transition-all flex flex-col h-full active:scale-95 duration-150 group relative"
-            :class="(product.status === 'OutOfStock') ? 'opacity-90 grayscale-[20%] border-red-100/50' : 'hover:border-blue-500'"
+            :class="(product.status === 'OutOfStock') ? 'opacity-90 grayscale-[20%] border-red-100/50' : 'hover:border-green-500'"
           >
             <!-- Nút Cập nhật Hết hàng/Mở bán -->
             <button
@@ -299,7 +350,7 @@ const handlePrintBill = (order) => {
             <div class="aspect-square rounded-xl overflow-hidden mb-3 bg-gray-100 relative">
               <img
                 :src="resolveImage(product.imageUrl)"
-                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
                 loading="lazy"
                 @error="handleImageError"
               />
@@ -340,7 +391,7 @@ const handlePrintBill = (order) => {
       >
         <div class="flex flex-col">
           <span class="text-xs text-gray-400 font-medium">Đơn hàng mới</span>
-          <span class="text-sm font-bold text-blue-600">#{{ orderCode }}</span>
+          <span class="text-sm font-bold text-green-600">#{{ orderCode }}</span>
         </div>
         <div class="bg-gray-100 p-1 rounded-lg flex text-xs font-medium">
           <button
@@ -348,7 +399,7 @@ const handlePrintBill = (order) => {
             class="px-3 py-1.5 rounded-md transition-all"
             :class="
               posStore.orderType === ORDER_TYPE.AT_COUNTER
-                ? 'bg-white text-blue-600 shadow-sm'
+                ? 'bg-white text-green-600 shadow-sm'
                 : 'text-gray-500'
             "
           >
@@ -359,7 +410,7 @@ const handlePrintBill = (order) => {
             class="px-3 py-1.5 rounded-md transition-all"
             :class="
               posStore.orderType === ORDER_TYPE.PICKUP
-                ? 'bg-white text-blue-600 shadow-sm'
+                ? 'bg-white text-green-600 shadow-sm'
                 : 'text-gray-500'
             "
           >
@@ -380,7 +431,7 @@ const handlePrintBill = (order) => {
         <div
           v-for="(item, index) in posStore.cartItems"
           :key="index"
-          class="flex p-3 bg-gray-50 rounded-xl border border-gray-100 group relative hover:border-blue-200 transition-colors"
+          class="flex p-3 bg-gray-50 rounded-xl border border-gray-100 group relative hover:border-green-200 transition-colors"
         >
           <div class="flex-1 cursor-pointer" @click="handleEditItem(item, index)">
             <div class="flex justify-between items-start">
@@ -407,14 +458,14 @@ const handlePrintBill = (order) => {
           </div>
           <div class="flex flex-col items-center justify-center mr-3 space-y-1">
             <button
-              @click="posStore.updateQuantity(index, 1)"
-              class="w-6 h-6 rounded bg-white border border-gray-200 text-blue-600 flex items-center justify-center hover:bg-blue-50"
+              @click="handleIncreaseCartQuantity(index, item)"
+              class="w-6 h-6 rounded bg-white border border-gray-200 text-green-600 flex items-center justify-center hover:bg-green-50"
             >
               +
             </button>
             <span class="text-sm font-bold w-6 text-center">{{ item.quantity }}</span>
             <button
-              @click="posStore.updateQuantity(index, -1)"
+              @click="posStore.updateQuantity(index, item.quantity - 1)"
               class="w-6 h-6 rounded bg-white border border-gray-200 text-gray-600 flex items-center justify-center hover:bg-red-50 hover:text-red-500"
             >
               -
@@ -441,7 +492,7 @@ const handlePrintBill = (order) => {
 
         <div class="flex justify-between items-end border-t border-gray-300 pt-3">
           <span class="text-base font-bold text-gray-800">Tổng thu</span>
-          <span class="text-2xl font-extrabold text-blue-600">{{
+          <span class="text-2xl font-extrabold text-green-600">{{
             formatPrice(posStore.totalAmount)
           }}</span>
         </div>
@@ -455,7 +506,7 @@ const handlePrintBill = (order) => {
             Hủy
           </button>
           <button
-            class="col-span-3 py-3 rounded-xl bg-blue-600 text-white font-bold text-lg shadow-lg shadow-blue-200 hover:bg-blue-700 active:translate-y-0.5 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="col-span-3 py-3 rounded-xl bg-green-600 text-white font-bold text-lg shadow-lg shadow-green-200 hover:bg-green-700 active:translate-y-0.5 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="posStore.cartItems.length === 0"
             @click="handleCheckoutClick"
           >

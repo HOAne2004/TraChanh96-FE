@@ -86,9 +86,9 @@ const handleLogout = () => {
 
 <style scoped>
 .nav-item {
-  @apply w-14 h-14 flex flex-col items-center justify-center rounded-xl text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 cursor-pointer;
+  @apply w-14 h-14 flex flex-col items-center justify-center rounded-xl text-gray-400 hover:bg-green-50 hover:text-green-600 transition-all duration-200 cursor-pointer;
 }
 .active-nav {
-  @apply bg-blue-100 text-blue-600 shadow-inner;
+  @apply bg-green-100 text-green-600 shadow-inner;
 }
 </style>

@@ -7,6 +7,8 @@ import {
   getIceOptions,
   getSugarOptions,
 } from '@/constants/option.constants'
+import { useToastStore } from '@/stores/toast'
+import { useModalStore } from '@/stores/modal'
 
 const props = defineProps({
   isOpen: Boolean,
@@ -14,6 +16,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'add-to-cart'])
+
+const toastStore = useToastStore()
+const modalStore = useModalStore()
 
 // --- Options Data ---
 const iceOptions = getIceOptions()
@@ -93,6 +98,23 @@ const confirmAdd = () => {
   emit('add-to-cart', item)
   closeModal()
 }
+
+const handleIncreaseQuantity = async () => {
+  if (quantity.value >= 99) {
+    toastStore.show({ type: 'warning', message: 'Chỉ được chọn tối đa 99 sản phẩm.' })
+    return
+  }
+
+  if (quantity.value === 50) {
+    const isConfirmed = await modalStore.confirmAction(
+      'Bạn đang chuẩn bị thêm số lượng lớn (hơn 50 sản phẩm). Bạn có chắc chắn muốn tiếp tục?',
+      'Cảnh báo số lượng'
+    )
+    if (!isConfirmed) return
+  }
+
+  quantity.value++
+}
 </script>
 
 <template>
@@ -105,7 +127,7 @@ const confirmAdd = () => {
       <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
         <div>
           <h3 class="font-bold text-lg text-gray-800">{{ product?.name }}</h3>
-          <p class="text-sm text-blue-600 font-bold">{{ formatPrice(currentUnitPrice) }}</p>
+          <p class="text-sm text-green-600 font-bold">{{ formatPrice(currentUnitPrice) }}</p>
         </div>
         <button @click="closeModal" class="p-2 hover:bg-gray-200 rounded-full text-gray-500">
           ✕
@@ -125,8 +147,8 @@ const confirmAdd = () => {
               class="px-4 py-2 rounded-xl border transition-all text-sm font-medium"
               :class="
                 selectedSize?.sizeId === pSize.sizeId
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                  ? 'bg-green-600 text-white border-green-600 shadow-md'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-green-300'
               "
             >
               {{ pSize.sizeLabel }}
@@ -148,7 +170,7 @@ const confirmAdd = () => {
               class="py-2 rounded-lg border text-sm transition-colors"
               :class="
                 sugarLevel === opt.value
-                  ? 'bg-blue-100 text-blue-700 border-blue-200 font-bold'
+                  ? 'bg-green-100 text-green-700 border-green-200 font-bold'
                   : 'border-gray-200 text-gray-600 hover:bg-gray-50'
               "
               :title="opt.fullLabel"
@@ -170,7 +192,7 @@ const confirmAdd = () => {
               class="py-2 rounded-lg border text-sm transition-colors"
               :class="
                 iceLevel === opt.value
-                  ? 'bg-blue-100 text-blue-700 border-blue-200 font-bold'
+                  ? 'bg-green-100 text-green-700 border-green-200 font-bold'
                   : 'border-gray-200 text-gray-600 hover:bg-gray-50'
               "
               :title="opt.fullLabel"
@@ -186,7 +208,7 @@ const confirmAdd = () => {
             v-model="note"
             rows="2"
             placeholder="VD: Mang về, để riêng đá..."
-            class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-green-500 outline-none"
           ></textarea>
         </div>
       </div>
@@ -201,7 +223,7 @@ const confirmAdd = () => {
           </button>
           <span class="font-bold text-gray-800">{{ quantity }}</span>
           <button
-            @click="quantity++"
+            @click="handleIncreaseQuantity"
             class="w-8 h-full text-xl font-bold text-gray-500 hover:text-black"
           >
             +
@@ -210,7 +232,7 @@ const confirmAdd = () => {
 
         <button
           @click="confirmAdd"
-          class="col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl py-3 shadow-lg shadow-blue-200 transition-all active:scale-95 flex flex-col items-center justify-center leading-none"
+          class="col-span-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl py-3 shadow-lg shadow-green-200 transition-all active:scale-95 flex flex-col items-center justify-center leading-none"
         >
           <span class="text-sm">Thêm vào đơn</span>
           <span class="text-xs opacity-90 mt-1">{{

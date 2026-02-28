@@ -96,6 +96,8 @@ const handleLogin = async () => {
       auth.error = null
       // Reset sạch 6 ô OTP
       otpArray.value = ['', '', '', '', '', '']
+      // Tự động gửi mã một lần khi mới bật modal lên
+      handleResendEmail()
     }
   } finally {
     isLoading.value = false

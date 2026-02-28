@@ -8,8 +8,8 @@ const props = defineProps({
 
 const headerColorClass = computed(() => {
     // Delivery/Mang về: Màu cam, Tại quán: Màu xanh
-    return props.order.orderType === ORDER_TYPE.AT_COUNTER 
-        ? 'bg-blue-100' 
+    return props.order.orderType === ORDER_TYPE.AT_COUNTER
+        ? 'bg-green-100'
         : 'bg-orange-100';
 });
 
@@ -21,8 +21,8 @@ const formatTime = (isoString) => {
 </script>
 <template>
   <div class="bg-white border rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col h-full">
-    
-    <div class="p-3 flex justify-between items-start" 
+
+    <div class="p-3 flex justify-between items-start"
          :class="headerColorClass">
         <div class="flex flex-col">
             <span class="font-bold text-gray-800 text-lg">
@@ -40,8 +40,8 @@ const formatTime = (isoString) => {
     <div class="p-3 flex-1 overflow-y-auto max-h-60 space-y-3">
         <div v-for="item in order.items" :key="item.id" class="flex justify-between items-start border-b border-dashed border-gray-100 pb-2 last:border-0">
             <div class="flex gap-2">
-                <span class="font-bold text-lg w-6 text-center text-blue-600">x{{ item.quantity }}</span>
-                
+                <span class="font-bold text-lg w-6 text-center text-green-600">x{{ item.quantity }}</span>
+
                 <div class="flex flex-col">
                     <span class="font-bold text-gray-800 leading-tight">{{ item.productName }}</span>
                     <div class="text-xs text-gray-500 mt-1 flex flex-wrap gap-1">
@@ -53,7 +53,7 @@ const formatTime = (isoString) => {
                 </div>
             </div>
         </div>
-        
+
         <div v-if="order.userNotes" class="bg-yellow-50 p-2 rounded-lg border border-yellow-200 mt-2">
             <p class="text-xs text-yellow-800 font-bold">⚠️ Note đơn: {{ order.userNotes }}</p>
         </div>

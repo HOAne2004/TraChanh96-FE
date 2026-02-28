@@ -36,12 +36,12 @@ const user = computed(() => userStore.user)
       <div class="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-2"></div>
 
       <div class="flex items-center space-x-2">
-        <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-sm uppercase border border-blue-200 dark:border-blue-800">
-          {{ user?.username?.charAt(0) || 'NV' }}
+        <div class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center text-green-600 dark:text-green-300 font-bold text-sm uppercase border border-green-200 dark:border-green-800">
+          {{ (user?.staff?.fullName?.charAt(0) || user?.username?.charAt(0)) || 'NV' }}
         </div>
         <div class="flex flex-col hidden sm:flex">
-          <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ user?.username }}</span>
-          <span class="text-[10px] text-gray-500 dark:text-gray-400">{{ user?.role || 'Nhân viên' }}</span>
+          <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ user?.staff?.fullName || user?.username }}</span>
+          <span class="text-[10px] text-gray-500 dark:text-gray-400">{{ user?.staff?.position || user?.role || 'Nhân viên' }}</span>
         </div>
       </div>
     </div>

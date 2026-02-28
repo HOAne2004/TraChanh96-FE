@@ -2,6 +2,11 @@
 import { computed } from 'vue'
 import Button from '@/components/common/Button.vue'
 import { formatPrice } from '@/utils/formatters'
+import { useModalStore } from '@/stores/modal'
+import { useToastStore } from '@/stores/toast'
+
+const modalStore = useModalStore()
+const toastStore = useToastStore()
 
 const props = defineProps({
   quantity: { type: Number, required: true },
@@ -39,8 +44,21 @@ const buyNowLabel = computed(() => {
   return 'Mua ngay'
 })
 
-const increase = () => {
-  if (props.quantity < 100) emit('update:quantity', props.quantity + 1)
+const increase = async () => {
+  if (props.quantity >= 99) {
+    toastStore.show({ type: 'warning', message: 'Bạn chỉ được chọn tối đa 99 sản phẩm.' })
+    return
+  }
+
+  if (props.quantity === 50) {
+    const isConfirmed = await modalStore.confirmAction(
+      'Bạn đang chuẩn bị chọn số lượng lớn (hơn 50 sản phẩm). Bạn có chắc chắn muốn tiếp tục?',
+      'Cảnh báo số lượng'
+    )
+    if (!isConfirmed) return
+  }
+
+  emit('update:quantity', props.quantity + 1)
 }
 const decrease = () => {
   if (props.quantity > 1) emit('update:quantity', props.quantity - 1)

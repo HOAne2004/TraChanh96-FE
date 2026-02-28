@@ -92,7 +92,7 @@ const setSuggestion = (amount) => {
 
 const handleConfirm = () => {
   if (!selectedMethod.value) return
-  
+
   if (isCash.value && customerPay.value < props.totalAmount) {
     alert('Khách đưa chưa đủ tiền!')
     return
@@ -119,7 +119,7 @@ const handleConfirm = () => {
         <div class="p-6 border-b border-gray-200">
           <h2 class="text-xl font-bold text-gray-800">Thanh toán</h2>
           <p class="text-sm text-gray-500">
-            Đơn hàng <span class="font-mono font-bold text-blue-600">#{{ orderCode }}</span>
+            Đơn hàng <span class="font-mono font-bold text-green-600">#{{ orderCode }}</span>
           </p>
         </div>
 
@@ -128,7 +128,7 @@ const handleConfirm = () => {
             <p class="text-gray-500 text-xs font-bold uppercase tracking-wider">
               Tổng tiền phải thu
             </p>
-            <p class="text-4xl font-extrabold text-blue-600 mt-2">{{ formatPrice(totalAmount) }}</p>
+            <p class="text-4xl font-extrabold text-green-600 mt-2">{{ formatPrice(totalAmount) }}</p>
           </div>
 
           <div>
@@ -143,8 +143,8 @@ const handleConfirm = () => {
                 class="flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left group active:scale-[0.98]"
                 :class="
                   selectedMethod?.id === method.id
-                    ? 'border-blue-600 bg-blue-50/50 shadow-inner'
-                    : 'border-white bg-white shadow-sm hover:border-blue-300'
+                    ? 'border-green-600 bg-green-50/50 shadow-inner'
+                    : 'border-white bg-white shadow-sm hover:border-green-300'
                 "
               >
                 <div
@@ -163,7 +163,7 @@ const handleConfirm = () => {
                 <div>
                   <span
                     class="block font-bold text-sm"
-                    :class="selectedMethod?.id === method.id ? 'text-blue-700' : 'text-gray-700'"
+                    :class="selectedMethod?.id === method.id ? 'text-green-700' : 'text-gray-700'"
                   >
                     {{ method.name }}
                   </span>
@@ -172,7 +172,7 @@ const handleConfirm = () => {
                   </span>
                 </div>
 
-                <div v-if="selectedMethod?.id === method.id" class="ml-auto text-blue-600">
+                <div v-if="selectedMethod?.id === method.id" class="ml-auto text-green-600">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     class="h-6 w-6"
@@ -221,7 +221,7 @@ const handleConfirm = () => {
                 type="text"
                 :value="formatNumber(customerPay)"
                 readonly
-                class="w-full text-right text-5xl font-bold text-gray-800 border-b-2 border-gray-200 py-2 focus:outline-none bg-transparent group-hover:border-blue-400 transition-colors"
+                class="w-full text-right text-5xl font-bold text-gray-800 border-b-2 border-gray-200 py-2 focus:outline-none bg-transparent group-hover:border-green-400 transition-colors"
                 placeholder="0"
               />
               <span
@@ -233,7 +233,7 @@ const handleConfirm = () => {
             <div class="flex gap-2 mt-10">
               <button
                 @click="setSuggestion(totalAmount)"
-                class="flex-1 py-2 px-3 text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 rounded-lg hover:bg-blue-100 transition-colors"
+                class="flex-1 py-2 px-3 text-xs font-bold bg-green-50 text-green-700 border border-green-100 rounded-lg hover:bg-green-100 transition-colors"
               >
                 Đủ tiền
               </button>
@@ -285,19 +285,19 @@ const handleConfirm = () => {
               v-for="n in [1, 2, 3, 4, 5, 6, 7, 8, 9]"
               :key="n"
               @click="appendNumber(n)"
-              class="bg-white text-2xl font-bold text-gray-700 hover:bg-gray-50 active:bg-blue-50 active:text-blue-600 transition-colors"
+              class="bg-white text-2xl font-bold text-gray-700 hover:bg-gray-50 active:bg-green-50 active:text-green-600 transition-colors"
             >
               {{ n }}
             </button>
             <button
               @click="appendNumber('000')"
-              class="bg-white text-lg font-bold text-gray-500 hover:bg-gray-50 active:bg-blue-50"
+              class="bg-white text-lg font-bold text-gray-500 hover:bg-gray-50 active:bg-green-50"
             >
               00
             </button>
             <button
               @click="appendNumber(0)"
-              class="bg-white text-2xl font-bold text-gray-700 hover:bg-gray-50 active:bg-blue-50"
+              class="bg-white text-2xl font-bold text-gray-700 hover:bg-gray-50 active:bg-green-50"
             >
               0
             </button>
@@ -334,9 +334,9 @@ const handleConfirm = () => {
             <p class="text-sm font-bold text-gray-400 uppercase tracking-wide">
               Số tiền thanh toán
             </p>
-            <p class="font-extrabold text-3xl text-blue-600">{{ formatPrice(totalAmount) }}</p>
+            <p class="font-extrabold text-3xl text-green-600">{{ formatPrice(totalAmount) }}</p>
           </div>
-          <div class="mt-8 p-4 bg-blue-50 rounded-xl text-blue-800 text-sm max-w-xs">
+          <div class="mt-8 p-4 bg-green-50 rounded-xl text-green-800 text-sm max-w-xs">
             Vui lòng kiểm tra thông báo biến động số dư trước khi xác nhận.
           </div>
         </div>
@@ -349,7 +349,7 @@ const handleConfirm = () => {
             :class="
               isProcessing || (isCash && customerPay < totalAmount)
                 ? 'bg-gray-300 cursor-not-allowed shadow-none'
-                : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200'
+                : 'bg-green-600 hover:bg-green-700 shadow-green-200'
             "
           >
             <span
@@ -359,7 +359,7 @@ const handleConfirm = () => {
             <span>{{ isCash ? 'Hoàn tất thanh toán' : 'Đã nhận được tiền' }}</span>
             <span
               v-if="isCash && customerPay >= totalAmount"
-              class="bg-blue-800 px-2 py-0.5 rounded text-sm"
+              class="bg-green-800 px-2 py-0.5 rounded text-sm"
               >Trả lại: {{ formatPrice(changeAmount) }}</span
             >
           </button>
