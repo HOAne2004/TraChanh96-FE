@@ -12,7 +12,7 @@ export const useModalStore = defineStore('modal', () => {
     cancelButtonText: 'Hủy',
     showCancelButton: true,
     backdropClose: true,
-    escClose: true
+    escClose: true,
   })
 
   // Resolver promise
@@ -56,7 +56,7 @@ export const useModalStore = defineStore('modal', () => {
       title: 'Xác nhận xóa',
       message,
       confirmButtonText: 'Xóa',
-      cancelButtonText: 'Hủy'
+      cancelButtonText: 'Hủy',
     })
   }
 
@@ -66,7 +66,7 @@ export const useModalStore = defineStore('modal', () => {
       title,
       message,
       confirmButtonText: 'Tiếp tục',
-      cancelButtonText: 'Hủy'
+      cancelButtonText: 'Hủy',
     })
   }
 
@@ -76,7 +76,7 @@ export const useModalStore = defineStore('modal', () => {
       title,
       message,
       showCancelButton: false,
-      confirmButtonText: 'OK'
+      confirmButtonText: 'OK',
     })
   }
 
@@ -86,7 +86,7 @@ export const useModalStore = defineStore('modal', () => {
       title,
       message,
       showCancelButton: false,
-      confirmButtonText: 'OK'
+      confirmButtonText: 'OK',
     })
   }
 
@@ -100,6 +100,6 @@ export const useModalStore = defineStore('modal', () => {
     confirmDelete,
     confirmAction,
     showSuccess,
-    showError
+    showError,
   }
 })

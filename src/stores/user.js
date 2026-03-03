@@ -89,7 +89,7 @@ export const useUserStore = defineStore('user', () => {
       loading.value = false
     }
   }
-/**
+  /**
    * REGISTER
    */
   async function register(payload) {

@@ -124,5 +124,5 @@ export default {
    */
   confirmPayment(id) {
     return api.put(`${ENDPOINT}/${id}/confirm-payment`)
-  }
+  },
 }

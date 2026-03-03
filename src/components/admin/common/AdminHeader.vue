@@ -75,7 +75,9 @@ const handleLogout = async () => {
             class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg py-1 border border-gray-100 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 transform origin-top-right"
           >
             <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 md:hidden">
-              <p class="text-sm font-bold text-gray-800 dark:text-white">{{ user?.staff?.fullName || user?.username }}</p>
+              <p class="text-sm font-bold text-gray-800 dark:text-white">
+                {{ user?.staff?.fullName || user?.username }}
+              </p>
             </div>
             <router-link
               to="/admin/settings/profile"

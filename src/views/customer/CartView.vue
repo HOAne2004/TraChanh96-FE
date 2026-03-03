@@ -28,7 +28,7 @@ watch(
 
     if (
       cartStore.lastActiveStoreId &&
-      carts.some(c => c.storeId === cartStore.lastActiveStoreId)
+      carts.some((c) => c.storeId === cartStore.lastActiveStoreId)
     ) {
       activeStoreId.value = cartStore.lastActiveStoreId
       return
@@ -36,10 +36,8 @@ watch(
 
     activeStoreId.value = carts[0].storeId
   },
-  { immediate: true }
+  { immediate: true },
 )
-
-
 
 // 2. Computed
 const activeCart = computed(() => {

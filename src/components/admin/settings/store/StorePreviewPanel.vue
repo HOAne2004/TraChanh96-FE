@@ -4,17 +4,19 @@ import StoreDetailView from '@/views/customer/StoreDetailView.vue'
 const props = defineProps({
   previewData: {
     type: Object,
-    required: true
+    required: true,
   },
   form: {
     type: Object,
-    required: true
-  }
+    required: true,
+  },
 })
 </script>
 
 <template>
-  <div class="hidden xl:flex flex-1 h-full bg-gray-100 items-center justify-center relative p-8 overflow-hidden">
+  <div
+    class="hidden xl:flex flex-1 h-full bg-gray-100 items-center justify-center relative p-8 overflow-hidden"
+  >
     <div
       class="absolute inset-0 opacity-10"
       style="

@@ -19,7 +19,6 @@ const ResetPasswordView = () => import('@/views/customer/ResetPasswordView.vue')
 const VerifyEmailView = () => import('@/views/customer/VerifyEmailView.vue')
 const FranchiseView = () => import('@/views/customer/FranchiseView.vue')
 
-
 export const clientRoutes = [
   {
     path: '/',
@@ -150,7 +149,6 @@ export const clientRoutes = [
         component: FranchiseView,
         meta: { title: 'Nhượng quyền' },
       },
-
     ],
   },
 ]

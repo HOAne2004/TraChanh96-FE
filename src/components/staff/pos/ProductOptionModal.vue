@@ -108,7 +108,7 @@ const handleIncreaseQuantity = async () => {
   if (quantity.value === 50) {
     const isConfirmed = await modalStore.confirmAction(
       'Bạn đang chuẩn bị thêm số lượng lớn (hơn 50 sản phẩm). Bạn có chắc chắn muốn tiếp tục?',
-      'Cảnh báo số lượng'
+      'Cảnh báo số lượng',
     )
     if (!isConfirmed) return
   }

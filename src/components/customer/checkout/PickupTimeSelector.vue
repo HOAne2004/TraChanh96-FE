@@ -63,7 +63,9 @@ watch([dateOption, timeOption], ([d, t]) => {
   <div
     class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700"
   >
-    <h2 class="font-bold text-gray-800 dark:text-white flex items-center gap-2 mb-4 text-xl border-l-4 border-green-500 pl-2">
+    <h2
+      class="font-bold text-gray-800 dark:text-white flex items-center gap-2 mb-4 text-xl border-l-4 border-green-500 pl-2"
+    >
       Thời gian đến lấy
     </h2>
 

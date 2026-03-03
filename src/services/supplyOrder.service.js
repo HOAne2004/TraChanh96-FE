@@ -38,5 +38,5 @@ export default {
    */
   update(id, data) {
     return api.put(`${ENDPOINT}/${id}`, data)
-  }
+  },
 }

@@ -42,16 +42,16 @@ const handleRegister = async () => {
   isLoading.value = true
   try {
     const payload = {
-        username: formData.username,
-        email: formData.email,
-        phone: formData.phone, // ⭐️ Gửi phone lên
-        password: formData.password
+      username: formData.username,
+      email: formData.email,
+      phone: formData.phone, // ⭐️ Gửi phone lên
+      password: formData.password,
     }
     await auth.register(payload)
     toast.show({
-        type: 'success',
-        message: 'Đăng ký thành công!',
-      })
+      type: 'success',
+      message: 'Đăng ký thành công!',
+    })
     const redirectPath = route.query.redirect || '/'
     router.push(redirectPath)
   } catch (err) {
@@ -59,8 +59,7 @@ const handleRegister = async () => {
     //     type: 'error',
     //     message: 'Lỗi đăng ký: ' + err.message
     //   })
-  }
-  finally {
+  } finally {
     isLoading.value = false
   }
 }
@@ -122,7 +121,11 @@ const clearError = () => {
       </div>
 
       <div class="space-y-1.5">
-        <label for="register_password" class="block text-sm font-medium mb-1 ml-1 text-gray-700 dark:text-gray-200">Mật khẩu</label>
+        <label
+          for="register_password"
+          class="block text-sm font-medium mb-1 ml-1 text-gray-700 dark:text-gray-200"
+          >Mật khẩu</label
+        >
         <div class="relative group">
           <div
             class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-green-500 transition-colors"
@@ -185,7 +188,9 @@ const clearError = () => {
               stroke-linejoin="round"
             >
               <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-              <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+              <path
+                d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"
+              />
               <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
               <line x1="2" x2="22" y1="2" y2="22" />
             </svg>
@@ -194,7 +199,11 @@ const clearError = () => {
       </div>
 
       <div class="space-y-1.5">
-        <label for="confirm-password" class="block text-sm font-medium mb-1 ml-1 text-gray-700 dark:text-gray-200">Xác nhận Mật khẩu</label>
+        <label
+          for="confirm-password"
+          class="block text-sm font-medium mb-1 ml-1 text-gray-700 dark:text-gray-200"
+          >Xác nhận Mật khẩu</label
+        >
         <div class="relative group">
           <div
             class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-green-500 transition-colors"
@@ -257,7 +266,9 @@ const clearError = () => {
               stroke-linejoin="round"
             >
               <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-              <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+              <path
+                d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"
+              />
               <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
               <line x1="2" x2="22" y1="2" y2="22" />
             </svg>
@@ -285,8 +296,8 @@ const clearError = () => {
 </template>
 
 <style scoped>
-input[type="password"]::-ms-reveal,
-input[type="password"]::-ms-clear {
-    display: none;
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
+  display: none;
 }
 </style>

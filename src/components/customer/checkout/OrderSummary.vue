@@ -16,7 +16,9 @@ const props = defineProps({
 </script>
 
 <template>
-  <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
+  <div
+    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700"
+  >
     <h3 class="font-bold text-lg mb-4 text-gray-800 dark:text-white">Tóm tắt đơn hàng</h3>
 
     <div class="space-y-3 text-sm">
@@ -39,12 +41,15 @@ const props = defineProps({
     <div class="border-t my-4 dark:border-gray-700"></div>
 
     <div class="flex justify-between items-end">
-       <span class="font-bold text-gray-800 dark:text-white">Tổng thanh toán</span>
-       <span class="text-2xl font-extrabold text-green-600">{{ formatPrice(total) }}</span>
+      <span class="font-bold text-gray-800 dark:text-white">Tổng thanh toán</span>
+      <span class="text-2xl font-extrabold text-green-600">{{ formatPrice(total) }}</span>
     </div>
 
-    <p v-if="orderType === ORDER_TYPE.DELIVERY" class="text-[10px] text-gray-400 mt-4 italic text-center">
-       *Phí vận chuyển được tính dựa trên khoảng cách thực tế đến cửa hàng.
+    <p
+      v-if="orderType === ORDER_TYPE.DELIVERY"
+      class="text-[10px] text-gray-400 mt-4 italic text-center"
+    >
+      *Phí vận chuyển được tính dựa trên khoảng cách thực tế đến cửa hàng.
     </p>
   </div>
 </template>

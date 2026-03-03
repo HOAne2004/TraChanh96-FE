@@ -6,8 +6,8 @@ import policyService from '@/services/policy.service'
 export const usePolicyStore = defineStore('policy', () => {
   // --- STATE ---
   const activePolicies = ref([]) // List cho Footer/Menu (Khách hàng)
-  const adminPolicies = ref([])  // List cho trang Quản lý (Admin)
-  const currentPolicy = ref(null)// Nội dung chi tiết bài viết (dùng cho cả xem và edit)
+  const adminPolicies = ref([]) // List cho trang Quản lý (Admin)
+  const currentPolicy = ref(null) // Nội dung chi tiết bài viết (dùng cho cả xem và edit)
 
   const loading = ref(false)
   const error = ref(null)
@@ -133,6 +133,6 @@ export const usePolicyStore = defineStore('policy', () => {
     fetchAdminPolicies,
     createPolicyAction,
     updatePolicyAction,
-    deletePolicyAction
+    deletePolicyAction,
   }
 })

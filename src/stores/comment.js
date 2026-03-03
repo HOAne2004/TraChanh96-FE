@@ -92,9 +92,9 @@ export const useCommentStore = defineStore('comment', () => {
 
       // Thông báo lỗi nhẹ (hoặc silent fail tùy UX)
       if (err.response?.status === 401) {
-         toast.show({ type: 'error', message: 'Vui lòng đăng nhập để thích bình luận.' })
+        toast.show({ type: 'error', message: 'Vui lòng đăng nhập để thích bình luận.' })
       } else {
-         console.error('Like failed', err)
+        console.error('Like failed', err)
       }
     }
   }
@@ -105,6 +105,6 @@ export const useCommentStore = defineStore('comment', () => {
     fetchComments,
     addComment,
     deleteComment,
-    toggleLike // Export action mới
+    toggleLike, // Export action mới
   }
 })

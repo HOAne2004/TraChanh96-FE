@@ -79,14 +79,13 @@ const handleLogin = async () => {
     await Promise.all([auth.fetchUserProfile(), cart.fetchCart()])
     modal.closeLoginModal()
 
-    if(auth.user.role === 'ADMIN') {
+    if (auth.user.role === 'ADMIN') {
       router.push('/admin')
-    }else if(auth.user.role === 'STAFF') {
+    } else if (auth.user.role === 'STAFF') {
       router.push('/staff')
-    }else if (auth.user.role === 'MANAGER') {
+    } else if (auth.user.role === 'MANAGER') {
       router.push('/manager')
-    }
-    else {
+    } else {
       router.push('/')
     }
   } catch (err) {
@@ -490,8 +489,8 @@ input[type='number'] {
     transform: translateY(0);
   }
 }
-input[type="password"]::-ms-reveal,
-input[type="password"]::-ms-clear {
-    display: none;
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
+  display: none;
 }
 </style>

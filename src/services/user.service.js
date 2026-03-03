@@ -27,10 +27,10 @@ export default {
   },
 
   /** Cập nhật role Admin */
-  update(id, data){
+  update(id, data) {
     return api.put(`${ENDPOINT}/${id}`, data)
   },
-  
+
   /**
    * Tự xóa tài khoản
    * Mapping: [HttpDelete("me")]

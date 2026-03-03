@@ -116,6 +116,6 @@ export const useStaffStore = defineStore('staff', () => {
     fetchStaffDetail,
     createStaffAction,
     updateStaffAction,
-    deleteStaffAction
+    deleteStaffAction,
   }
 })

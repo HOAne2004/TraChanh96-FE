@@ -69,7 +69,11 @@ onUnmounted(() => {
         :src="s.imageUrl"
         :alt="s.title || 'Banner'"
         class="w-full h-full object-cover"
-        @error="(e) => { e.target.src = funDefault }"
+        @error="
+          (e) => {
+            e.target.src = funDefault
+          }
+        "
         loading="lazy"
       />
 
@@ -91,7 +95,11 @@ onUnmounted(() => {
         v-for="(s, index) in displaySlides"
         :key="s.id || index"
         class="w-3 h-3 rounded-full transition-all duration-300 border border-white/50"
-        :class="currentIndex === index ? 'bg-green-500 scale-125 border-green-500' : 'bg-gray-300/50 hover:bg-white'"
+        :class="
+          currentIndex === index
+            ? 'bg-green-500 scale-125 border-green-500'
+            : 'bg-gray-300/50 hover:bg-white'
+        "
         @click="currentIndex = index"
       ></button>
     </div>

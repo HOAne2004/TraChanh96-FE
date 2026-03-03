@@ -43,7 +43,7 @@ const loadData = async () => {
     ])
 
     if (selectedStoreId.value) {
-        await storeStore.fetchStoreMenu(selectedStoreId.value)
+      await storeStore.fetchStoreMenu(selectedStoreId.value)
     }
   } catch (err) {
     console.error('Lỗi tải trang sản phẩm:', err)
@@ -65,10 +65,10 @@ const displayedSections = computed(() => {
 
   // CASE 1: Đang chọn Store -> Dùng storeMenu (Để có giá & status đúng của quán)
   if (selectedStoreId.value && storeMenu.value.length > 0) {
-    sourceProducts = storeMenu.value.map(p => ({
-        ...p,
-        id: p.id || p.productId, // Map ID cho khớp ProductCard
-        basePrice: p.displayPrice || p.basePrice // Map giá bán tại quán
+    sourceProducts = storeMenu.value.map((p) => ({
+      ...p,
+      id: p.id || p.productId, // Map ID cho khớp ProductCard
+      basePrice: p.displayPrice || p.basePrice, // Map giá bán tại quán
     }))
   }
   // CASE 2: Không chọn Store (hoặc đang load) -> Dùng list gốc của Brand
@@ -94,8 +94,6 @@ const displayedSections = computed(() => {
 
 // Kiểm tra xem có đang loading không (kết hợp store loading và lần load đầu)
 const isLoading = computed(() => productLoading.value && isInitialLoad.value)
-
-
 </script>
 
 <template>

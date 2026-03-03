@@ -15,7 +15,7 @@ const formatCurrency = (val) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
 
 const checkoutLabel = computed(() => {
-    return props.isLoggedIn ? 'THANH TOÁN NGAY' : 'ĐĂNG NHẬP ĐỂ THANH TOÁN'
+  return props.isLoggedIn ? 'THANH TOÁN NGAY' : 'ĐĂNG NHẬP ĐỂ THANH TOÁN'
 })
 </script>
 
@@ -39,7 +39,7 @@ const checkoutLabel = computed(() => {
     />
 
     <p v-if="!isLoggedIn" class="mt-3 text-center text-sm text-red-500 dark:text-red-400">
-        Bạn cần đăng nhập để tiến hành thanh toán.
+      Bạn cần đăng nhập để tiến hành thanh toán.
     </p>
   </div>
 </template>

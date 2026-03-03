@@ -58,7 +58,7 @@ watch(
     }
 
     selectedMethod.value =
-      activeMethods.value.find(m => m.paymentType === PAYMENT_TYPE.COD) ||
+      activeMethods.value.find((m) => m.paymentType === PAYMENT_TYPE.COD) ||
       activeMethods.value[0] ||
       null
   },
@@ -128,7 +128,9 @@ const handleConfirm = () => {
             <p class="text-gray-500 text-xs font-bold uppercase tracking-wider">
               Tổng tiền phải thu
             </p>
-            <p class="text-4xl font-extrabold text-green-600 mt-2">{{ formatPrice(totalAmount) }}</p>
+            <p class="text-4xl font-extrabold text-green-600 mt-2">
+              {{ formatPrice(totalAmount) }}
+            </p>
           </div>
 
           <div>

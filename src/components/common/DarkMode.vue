@@ -214,7 +214,7 @@ onMounted(() => {
 .sun-animation svg {
   width: 100%;
   height: 100%;
-  color: #FFD700;
+  color: #ffd700;
   filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
 }
 
@@ -241,7 +241,7 @@ onMounted(() => {
 .moon-animation svg {
   width: 100%;
   height: 100%;
-  color: #E6E6FA;
+  color: #e6e6fa;
   filter: drop-shadow(0 0 10px rgba(230, 230, 250, 0.5));
 }
 

@@ -9,22 +9,21 @@ const route = useRoute()
 
 // Chuyển sang trang Đăng ký
 const goToRegisterPage = () => {
-    modal.closeLoginModal()
-    const currentPath = route.fullPath
-    const redirectQuery = (currentPath !== '/' && !currentPath.includes('/login'))
-        ? { redirect: currentPath }
-        : {}
+  modal.closeLoginModal()
+  const currentPath = route.fullPath
+  const redirectQuery =
+    currentPath !== '/' && !currentPath.includes('/login') ? { redirect: currentPath } : {}
 
-    router.push({
-        path: '/register',
-        query: redirectQuery
-    })
+  router.push({
+    path: '/register',
+    query: redirectQuery,
+  })
 }
 
 // Chuyển sang trang Quên mật khẩu
 const goToForgotPassword = () => {
-    modal.closeLoginModal()
-    router.push('/forgot-password')
+  modal.closeLoginModal()
+  router.push('/forgot-password')
 }
 </script>
 
@@ -35,13 +34,22 @@ const goToForgotPassword = () => {
       class="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[9999]"
       @click.self="modal.closeLoginModal"
     >
-      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md relative animate-scale-in">
+      <div
+        class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md relative animate-scale-in"
+      >
         <button
           type="button"
           class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
           @click="modal.closeLoginModal"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            class="w-6 h-6"
+          >
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
@@ -67,12 +75,26 @@ const goToForgotPassword = () => {
 </template>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 
-.animate-scale-in { animation: scaleIn 0.3s ease-out forwards; }
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out forwards;
+}
 @keyframes scaleIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 </style>

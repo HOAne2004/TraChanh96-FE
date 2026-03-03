@@ -5,7 +5,7 @@ export const PUBLIC_STATUS = {
   PENDING: 'pending',
   ACTIVE: 'active',
   INACTIVE: 'inactive',
-  DELETED: 'deleted'
+  DELETED: 'deleted',
 }
 
 // Config hiển thị (Label & Màu sắc)
@@ -14,17 +14,17 @@ export const PUBLIC_STATUS_UI = {
   [PUBLIC_STATUS.PENDING]: {
     label: 'Chờ xử lý',
     value: 'pending',
-    color: 'text-yellow-600 bg-yellow-50 border-yellow-200'
+    color: 'text-yellow-600 bg-yellow-50 border-yellow-200',
   },
   [PUBLIC_STATUS.ACTIVE]: {
     label: 'Hoạt động',
     value: 'active',
-    color: 'text-green-600 bg-green-50 border-green-200'
+    color: 'text-green-600 bg-green-50 border-green-200',
   },
   [PUBLIC_STATUS.INACTIVE]: {
     label: 'Tạm dừng',
     value: 'inactive',
-    color: 'text-gray-600 bg-gray-50 border-gray-200'
+    color: 'text-gray-600 bg-gray-50 border-gray-200',
   },
   // Không đưa DELETED vào UI Dropdown để tránh user chọn nhầm
 }
@@ -34,11 +34,13 @@ export const PUBLIC_STATUS_UI = {
 export const mapLabelToValue = (label) => {
   if (!label) return null
   // Tìm key trong UI object có label khớp
-  const found = Object.values(PUBLIC_STATUS_UI).find(u => u.label === label || u.label.toLowerCase() === label.toLowerCase())
+  const found = Object.values(PUBLIC_STATUS_UI).find(
+    (u) => u.label === label || u.label.toLowerCase() === label.toLowerCase(),
+  )
   if (found) return found.value
 
   // Fallback: Map cứng nếu API trả về tiếng Anh
-  const map = { 'Active': 'active', 'Inactive': 'inactive', 'Pending': 'pending' }
+  const map = { Active: 'active', Inactive: 'inactive', Pending: 'pending' }
   return map[label] || null
 }
 

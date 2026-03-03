@@ -229,22 +229,22 @@ export const useOrderStore = defineStore('order', () => {
   /**
    * Tính phí giao hàng
    */
-async function calculateShippingFeeAction(storeId, addressId) {
-  if (!storeId || !addressId) {
-    shippingFee.value = 0
-    return
+  async function calculateShippingFeeAction(storeId, addressId) {
+    if (!storeId || !addressId) {
+      shippingFee.value = 0
+      return
+    }
+    isCalculatingShip.value = true
+    try {
+      const response = await orderService.calculateShippingFee(storeId, addressId)
+      shippingFee.value = response.data?.fee ?? 0
+    } catch (err) {
+      console.error('Lỗi tính phí ship:', err)
+      shippingFee.value = 0
+    } finally {
+      isCalculatingShip.value = false
+    }
   }
-  isCalculatingShip.value = true
-  try {
-    const response = await orderService.calculateShippingFee(storeId, addressId)
-    shippingFee.value = response.data?.fee ?? 0
-  } catch (err) {
-    console.error('Lỗi tính phí ship:', err)
-    shippingFee.value = 0
-  } finally {
-    isCalculatingShip.value = false
-  }
-}
 
   // Helper để reset (dùng khi rời trang hoặc xóa giỏ hàng)
   function resetShippingFee() {
@@ -305,7 +305,7 @@ async function calculateShippingFeeAction(storeId, addressId) {
 
       await orderService.verifyPickup(id, codeValue)
       return true
-    // eslint-disable-next-line no-useless-catch
+      // eslint-disable-next-line no-useless-catch
     } catch (err) {
       throw err
     } finally {

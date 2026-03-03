@@ -13,10 +13,10 @@ const notificationStore = useNotificationStore()
 onMounted(async () => {
   await notificationStore.fetchNotifications()
   await notificationStore.initSignalR()
-  
+
   // 🟢 SỬA LỖI TẠI ĐÂY:
   // Trong user.js hàm tên là fetchUserProfile, không phải fetchUser
-  await userStore.fetchUserProfile() 
+  await userStore.fetchUserProfile()
 })
 
 onUnmounted(() => {

@@ -15,31 +15,31 @@ export const useCategoryStore = defineStore('category', () => {
    * Getter: Làm phẳng danh sách danh mục (Dùng cho Dropdown chọn Parent trong Admin)
    * Nếu API trả về dạng cây (có Children), hàm này sẽ duỗi nó ra.
    */
- const flatCategories = computed(() => {
-  // Hàm sắp xếp mảng theo thứ tự tăng dần
-  const sortByOrder = (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)
+  const flatCategories = computed(() => {
+    // Hàm sắp xếp mảng theo thứ tự tăng dần
+    const sortByOrder = (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)
 
-  const flatten = (items, prefix = '') => {
-    let result = []
+    const flatten = (items, prefix = '') => {
+      let result = []
 
-    // 🛠️ BƯỚC 1: Sắp xếp danh sách hiện tại trước khi duyệt
-    const sortedItems = [...items].sort(sortByOrder)
+      // 🛠️ BƯỚC 1: Sắp xếp danh sách hiện tại trước khi duyệt
+      const sortedItems = [...items].sort(sortByOrder)
 
-    sortedItems.forEach((cat) => {
-      const item = { ...cat, displayName: prefix + cat.name }
-      result.push(item)
+      sortedItems.forEach((cat) => {
+        const item = { ...cat, displayName: prefix + cat.name }
+        result.push(item)
 
-      if (cat.children && cat.children.length > 0) {
-        // 🛠️ BƯỚC 2: Gọi đệ quy cũng sẽ áp dụng sắp xếp cho cấp con
-        result = result.concat(flatten(cat.children, prefix + '-- '))
-      }
-    })
-    return result
-  }
+        if (cat.children && cat.children.length > 0) {
+          // 🛠️ BƯỚC 2: Gọi đệ quy cũng sẽ áp dụng sắp xếp cho cấp con
+          result = result.concat(flatten(cat.children, prefix + '-- '))
+        }
+      })
+      return result
+    }
 
-  // Xử lý mảng gốc nếu có dữ liệu
-  return categories.value ? flatten(categories.value) : []
-})
+    // Xử lý mảng gốc nếu có dữ liệu
+    return categories.value ? flatten(categories.value) : []
+  })
 
   // --- ACTIONS ---
 

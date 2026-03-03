@@ -33,7 +33,9 @@ const selectedProductForModal = ref(null)
 const isPaymentModalOpen = ref(false)
 const printingOrder = ref(null)
 const orderCode = ref('DH - ' + new Date().getTime().toString().slice(-6))
-const currentStoreName = computed(() => storeStore.currentStore?.name || userStore.user?.staff?.storeName || 'TRÀ CHANH 96')
+const currentStoreName = computed(
+  () => storeStore.currentStore?.name || userStore.user?.staff?.storeName || 'TRÀ CHANH 96',
+)
 const currentStoreId = computed(() => {
   return storeStore.currentStore?.id || userStore.user?.staff?.storeId || null
 })
@@ -44,7 +46,7 @@ const categoryDropdownRef = ref(null)
 
 const selectedCategoryName = computed(() => {
   if (!posStore.selectedCategory) return 'Tất cả danh mục'
-  const cat = categoryStore.flatCategories.find(c => c.id === posStore.selectedCategory)
+  const cat = categoryStore.flatCategories.find((c) => c.id === posStore.selectedCategory)
   return cat ? (cat.displayName || cat.name).trim() : 'Tất cả danh mục'
 })
 
@@ -65,7 +67,10 @@ onMounted(async () => {
   posStore.selectedCategory = null
   posStore.searchQuery = ''
 
-  await Promise.all([productStore.fetchProducts({ pageSize: 1000 }), categoryStore.fetchCategories()])
+  await Promise.all([
+    productStore.fetchProducts({ pageSize: 1000 }),
+    categoryStore.fetchCategories(),
+  ])
 })
 
 onUnmounted(() => {
@@ -75,16 +80,16 @@ onUnmounted(() => {
 // --- COMPUTED ---
 // Lọc sản phẩm theo Category và Search (Dùng dữ liệu từ productStore)
 const filteredProducts = computed(() => {
-  let result = (productStore.products || []).filter(
-    (p) => ['Active', 'Đang hoạt động', 'OutOfStock', 'Hết hàng', 2, 4].includes(p.status)
+  let result = (productStore.products || []).filter((p) =>
+    ['Active', 'Đang hoạt động', 'OutOfStock', 'Hết hàng', 2, 4].includes(p.status),
   )
 
   if (posStore.selectedCategory) {
     const isMatchingCat = (pCatId) => {
-       if (pCatId === posStore.selectedCategory) return true;
-       const catObj = categoryStore.flatCategories.find(c => c.id === pCatId);
-       return catObj && catObj.parentId === posStore.selectedCategory;
-    };
+      if (pCatId === posStore.selectedCategory) return true
+      const catObj = categoryStore.flatCategories.find((c) => c.id === pCatId)
+      return catObj && catObj.parentId === posStore.selectedCategory
+    }
     result = result.filter((p) => isMatchingCat(p.categoryId))
   }
 
@@ -113,22 +118,23 @@ const handleProductClick = (product) => {
 
 // Chuyển đổi trạng thái nhanh Của Món Ăn
 const toggleProductStatus = async (product) => {
-  const isOutOfStock = product.status === 'OutOfStock' || product.status === 'Hết hàng' || product.status === 4;
-  const newStatus = isOutOfStock ? 2 : 4; // 2: Active (Mở bán), 4: OutOfStock (Hết hàng)
-  const actionName = isOutOfStock ? 'MỞ BÁN' : 'HẾT HÀNG';
+  const isOutOfStock =
+    product.status === 'OutOfStock' || product.status === 'Hết hàng' || product.status === 4
+  const newStatus = isOutOfStock ? 2 : 4 // 2: Active (Mở bán), 4: OutOfStock (Hết hàng)
+  const actionName = isOutOfStock ? 'MỞ BÁN' : 'HẾT HÀNG'
 
   const isConfirmed = await modalStore.confirmAction(
     `Bạn muốn chuyển mục "${product.name}" sang trạng thái ${actionName}?`,
-    'Xác nhận trạng thái'
-  );
+    'Xác nhận trạng thái',
+  )
 
-  if (!isConfirmed) return;
+  if (!isConfirmed) return
 
   try {
-    const payload = { ...product, status: newStatus };
-    await productStore.updateProduct(product.id, payload);
+    const payload = { ...product, status: newStatus }
+    await productStore.updateProduct(product.id, payload)
   } catch (error) {
-    console.error(error);
+    console.error(error)
   }
 }
 
@@ -152,7 +158,10 @@ const handleConfirmAddToCart = async (itemData) => {
   const newQty = currentQty + itemData.quantity
 
   if (newQty > 99) {
-    toastStore.show({ type: 'warning', message: `Số lượng tối đa cho phép là 99 món. Bạn chỉ có thể thêm tối đa ${99 - currentQty} món nữa.` })
+    toastStore.show({
+      type: 'warning',
+      message: `Số lượng tối đa cho phép là 99 món. Bạn chỉ có thể thêm tối đa ${99 - currentQty} món nữa.`,
+    })
     // Không đóng modal để khách chỉnh lại sl
     return
   }
@@ -160,7 +169,7 @@ const handleConfirmAddToCart = async (itemData) => {
   if (newQty > 50 && currentQty <= 50) {
     const isConfirmed = await modalStore.confirmAction(
       `Bạn chuẩn bị thêm số lượng lớn (${newQty} sản phẩm) cho món ${itemData.product.name}. Bạn có chắc chắn?`,
-      'Cảnh báo số lượng'
+      'Cảnh báo số lượng',
     )
     if (!isConfirmed) return
   }
@@ -178,7 +187,7 @@ const handleIncreaseCartQuantity = async (index, item) => {
   if (item.quantity === 50) {
     const isConfirmed = await modalStore.confirmAction(
       'Bạn đang tăng số lượng lên rất lớn (trên 50 sản phẩm). Bạn có tiếp tục?',
-      'Cảnh báo số lượng'
+      'Cảnh báo số lượng',
     )
     if (!isConfirmed) return
   }
@@ -292,29 +301,80 @@ const handlePrintBill = (order) => {
             class="w-full py-2.5 pl-4 pr-4 bg-gray-100 border border-transparent hover:bg-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm font-medium transition-colors cursor-pointer flex justify-between items-center text-gray-700"
           >
             <span class="truncate">{{ selectedCategoryName }}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 transition-transform duration-200 text-gray-500" :class="{'rotate-180': isCategoryDropdownOpen}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 shrink-0 transition-transform duration-200 text-gray-500"
+              :class="{ 'rotate-180': isCategoryDropdownOpen }"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </button>
 
-          <div v-show="isCategoryDropdownOpen" class="absolute z-50 w-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-xl max-h-72 overflow-y-auto custom-scrollbar ring-1 ring-black/5">
+          <div
+            v-show="isCategoryDropdownOpen"
+            class="absolute z-50 w-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-xl max-h-72 overflow-y-auto custom-scrollbar ring-1 ring-black/5"
+          >
             <button
               @click="selectCategory(null)"
               class="w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-gray-50 flex items-center justify-between transition-colors border-b border-gray-50"
-              :class="posStore.selectedCategory === null ? 'text-green-600 bg-green-50/50' : 'text-gray-700'"
+              :class="
+                posStore.selectedCategory === null
+                  ? 'text-green-600 bg-green-50/50'
+                  : 'text-gray-700'
+              "
             >
               Tất cả danh mục
-              <svg v-if="posStore.selectedCategory === null" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <svg
+                v-if="posStore.selectedCategory === null"
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 text-green-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
             </button>
             <button
               v-for="cat in categoryStore.flatCategories"
               :key="cat.id"
               @click="selectCategory(cat.id)"
               class="w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-gray-50 flex items-center justify-between transition-colors border-b border-gray-50 last:border-0"
-              :class="posStore.selectedCategory === cat.id ? 'text-green-600 bg-green-50/50' : 'text-gray-700'"
+              :class="
+                posStore.selectedCategory === cat.id
+                  ? 'text-green-600 bg-green-50/50'
+                  : 'text-gray-700'
+              "
             >
               <span class="truncate block whitespace-pre">{{ cat.displayName || cat.name }}</span>
-              <svg v-if="posStore.selectedCategory === cat.id" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <svg
+                v-if="posStore.selectedCategory === cat.id"
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 text-green-500 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
             </button>
           </div>
         </div>
@@ -334,17 +394,57 @@ const handlePrintBill = (order) => {
             :key="product.id"
             @click="handleProductClick(product)"
             class="bg-white p-3 rounded-2xl shadow-sm hover:shadow-md cursor-pointer border border-transparent transition-all flex flex-col h-full active:scale-95 duration-150 group relative"
-            :class="(product.status === 'OutOfStock') ? 'opacity-90 grayscale-[20%] border-red-100/50' : 'hover:border-green-500'"
+            :class="
+              product.status === 'OutOfStock'
+                ? 'opacity-90 grayscale-[20%] border-red-100/50'
+                : 'hover:border-green-500'
+            "
           >
             <!-- Nút Cập nhật Hết hàng/Mở bán -->
             <button
               @click.stop="toggleProductStatus(product)"
               class="absolute top-4 right-4 p-1.5 rounded-lg text-white shadow hover:scale-110 transition-transform flex items-center justify-center z-10"
-              :class="(product.status === 'OutOfStock') ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'"
-              :title="(product.status === 'OutOfStock') ? 'Đang Hết hàng (Bấm để Mở bán)' : 'Đang Bán (Bấm để báo Hết hàng)'"
+              :class="
+                product.status === 'OutOfStock'
+                  ? 'bg-red-500 hover:bg-red-600'
+                  : 'bg-green-500 hover:bg-green-600'
+              "
+              :title="
+                product.status === 'OutOfStock'
+                  ? 'Đang Hết hàng (Bấm để Mở bán)'
+                  : 'Đang Bán (Bấm để báo Hết hàng)'
+              "
             >
-              <svg v-if="(product.status === 'OutOfStock')" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <svg
+                v-if="product.status === 'OutOfStock'"
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <svg
+                v-else
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
             </button>
 
             <div class="aspect-square rounded-xl overflow-hidden mb-3 bg-gray-100 relative">
@@ -361,17 +461,30 @@ const handlePrintBill = (order) => {
               </span>
 
               <!-- Nhãn Hết hàng mờ đè lên ảnh -->
-              <div v-if="(product.status === 'OutOfStock')" class="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none z-10">
-                <span class="bg-red-600 text-white font-extrabold text-sm px-4 py-1.5 rounded-lg rotate-[-15deg] uppercase border-2 border-red-300 shadow-xl tracking-widest leading-none">Hết hàng</span>
+              <div
+                v-if="product.status === 'OutOfStock'"
+                class="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none z-10"
+              >
+                <span
+                  class="bg-red-600 text-white font-extrabold text-sm px-4 py-1.5 rounded-lg rotate-[-15deg] uppercase border-2 border-red-300 shadow-xl tracking-widest leading-none"
+                  >Hết hàng</span
+                >
               </div>
             </div>
 
             <div class="flex-1 flex flex-col justify-between">
-              <h3 class="text-sm font-bold text-gray-800 line-clamp-2 mb-1 leading-snug"
-                  :class="{ 'text-gray-500 italic line-through decoration-red-400': product.status === 'OutOfStock'}">
+              <h3
+                class="text-sm font-bold text-gray-800 line-clamp-2 mb-1 leading-snug"
+                :class="{
+                  'text-gray-500 italic line-through decoration-red-400':
+                    product.status === 'OutOfStock',
+                }"
+              >
                 {{ product.name }}
               </h3>
-              <span class="text-xs text-gray-400 font-medium">{{ product.code || 'SP' + product.id }}</span>
+              <span class="text-xs text-gray-400 font-medium">{{
+                product.code || 'SP' + product.id
+              }}</span>
             </div>
           </div>
         </div>

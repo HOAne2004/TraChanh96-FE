@@ -20,7 +20,7 @@ const rankProgress = computed(() => {
 const handleAdjustPoints = async () => {
   toast.show({ type: 'warn', message: 'Tính năng đang phát triển' })
 }
-const showHistory = () =>{
+const showHistory = () => {
   toast.show({ type: 'warn', message: 'Tính năng đang phát triển' })
 }
 </script>
@@ -85,7 +85,7 @@ const showHistory = () =>{
           Điều chỉnh điểm
         </button>
         <button
-        @click="showHistory"
+          @click="showHistory"
           class="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 text-gray-700 opacity-50 cursor-not-allowed"
         >
           Lịch sử hạng

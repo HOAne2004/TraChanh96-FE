@@ -44,9 +44,9 @@ const addressStore = useAddressStore()
 const { cartItems: allCartItems } = storeToRefs(cartStore)
 const { isLoggedIn } = storeToRefs(userStore)
 const { addresses } = storeToRefs(addressStore)
-const { currentDiscountAmount, appliedVoucher  } = storeToRefs(voucherStore)
+const { currentDiscountAmount, appliedVoucher } = storeToRefs(voucherStore)
 const { shippingFee, isCalculatingShip } = storeToRefs(orderStore)
-const {calculateShippingFeeAction} = orderStore
+const { calculateShippingFeeAction } = orderStore
 
 // --- STATE ---
 const orderType = ref(ORDER_TYPE.DELIVERY) // Mặc định là Giao hàng
@@ -94,8 +94,6 @@ const subtotal = computed(() => {
 //   const rawFee = distanceKm.value * feePerKm
 //   return Math.ceil(rawFee / 1000) * 1000
 // })
-
-
 
 // --- COMPUTED: CAN SUBMIT ---
 const canSubmit = computed(() => {
@@ -146,31 +144,39 @@ watch(
 // 2. Tính khoảng cách khi đổi Địa chỉ hoặc Store
 const selectedAddress = computed(() => {
   if (!selectedAddressId.value || !addresses.value) return null
-  return addresses.value.find(a => a.id === selectedAddressId.value)
+  return addresses.value.find((a) => a.id === selectedAddressId.value)
 })
 
-watch([selectedAddress, currentStore], ([addr, store]) => {
-  if (!addr || !store || !store.latitude || !addr.latitude) {
-    distanceKm.value = 0
-    return
-  }
-  const dist = calculateDistance(
-    Number(store.latitude),
-    Number(store.longitude),
-    Number(addr.latitude),
-    Number(addr.longitude)
-  )
-  distanceKm.value = dist
-}, { immediate: true })
+watch(
+  [selectedAddress, currentStore],
+  ([addr, store]) => {
+    if (!addr || !store || !store.latitude || !addr.latitude) {
+      distanceKm.value = 0
+      return
+    }
+    const dist = calculateDistance(
+      Number(store.latitude),
+      Number(store.longitude),
+      Number(addr.latitude),
+      Number(addr.longitude),
+    )
+    distanceKm.value = dist
+  },
+  { immediate: true },
+)
 
-watch([selectedAddress, currentStore, orderType], async ([addr, store, type]) => {
-  if (type !== ORDER_TYPE.DELIVERY || !addr || !store) {
-    shippingFee.value = 0
-    return
-  }
+watch(
+  [selectedAddress, currentStore, orderType],
+  async ([addr, store, type]) => {
+    if (type !== ORDER_TYPE.DELIVERY || !addr || !store) {
+      shippingFee.value = 0
+      return
+    }
 
-  await calculateShippingFeeAction(store.id, addr.id)
-}, { immediate: true })
+    await calculateShippingFeeAction(store.id, addr.id)
+  },
+  { immediate: true },
+)
 
 const total = computed(() => {
   const t = subtotal.value + shippingFee.value - (currentDiscountAmount.value || 0)

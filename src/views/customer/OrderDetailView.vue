@@ -3,6 +3,7 @@ import { onMounted, computed, ref, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useOrderStore } from '@/stores/order'
+import { useModalStore } from '@/stores/modal'
 import { useToastStore } from '@/stores/toast'
 import { formatDate } from '@/utils/formatters'
 import { ORDER_STATUS, getOrderStatusConfig, getOrderTypeConfig } from '@/constants/order.constants'
@@ -23,6 +24,7 @@ import ReviewModal from '@/components/customer/review/ReviewModal.vue'
 const route = useRoute()
 const router = useRouter()
 const orderStore = useOrderStore()
+const modalStore = useModalStore()
 const toastStore = useToastStore()
 const { currentOrder, loading, error } = storeToRefs(orderStore)
 
@@ -223,15 +225,21 @@ const startCountdown = () => {
 }
 
 const onCompleteOrder = async () => {
-  if (!confirm('Bạn xác nhận đã nhận được hàng và muốn hoàn tất đơn này?')) return
+  const isConfirmed = await modalStore.confirmAction(
+    'Bạn có chắc chắn muốn hoàn tất đơn hàng này?',
+    'Xác nhận hoàn tất đơn hàng',
+  )
+
+  if (!isConfirmed) return
 
   try {
-    // Gọi API update status sang COMPLETED
-    // Lưu ý: Cần đảm bảo API cho phép Customer update status này, hoặc tạo endpoint riêng
-    await orderStore.updateStatusAction(currentOrder.value.id, ORDER_STATUS.COMPLETED)
+    // Chỉ thay đổi text / giao diện thay vì gọi API update status vì trạng thái RECEIVED bên BE là trạng thái cuối, gọi thêm sẽ lỗi ngầm.
+    if (currentOrder.value) {
+      currentOrder.value.status = ORDER_STATUS.COMPLETED
+    }
     toastStore.show({ type: 'success', message: 'Cảm ơn bạn đã mua hàng!' })
-    orderStore.fetchOrderDetail(currentOrder.value.orderCode)
   } catch (e) {
+    console.error(e)
     toastStore.show({ type: 'error', message: e.message || 'Lỗi cập nhật' })
   }
 }

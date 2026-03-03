@@ -16,5 +16,5 @@ export default {
    */
   getHistoryByOrder(orderId) {
     return api.get(`${ENDPOINT}/history/${orderId}`)
-  }
+  },
 }

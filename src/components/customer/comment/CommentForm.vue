@@ -14,7 +14,7 @@ const props = defineProps({
   placeholder: { type: String, default: 'Viết bình luận của bạn...' },
   loading: { type: Boolean, default: false },
   // Nút hủy dùng cho form Reply
-  showCancel: { type: Boolean, default: false }
+  showCancel: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['submit', 'cancel'])
@@ -43,8 +43,17 @@ const handleLogin = () => {
         class="w-full h-full object-cover"
       />
       <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-          <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          class="w-6 h-6"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z"
+            clip-rule="evenodd"
+          />
         </svg>
       </div>
     </div>
@@ -78,11 +87,14 @@ const handleLogin = () => {
         </div>
       </div>
 
-      <div v-else class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 text-center">
+      <div
+        v-else
+        class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 text-center"
+      >
         <p class="text-sm text-gray-500 mb-2">Vui lòng đăng nhập để tham gia bình luận</p>
         <div class="flex justify-center gap-3">
-            <Button label="Đăng nhập" size="sm" variant="outline" @click="handleLogin" />
-            <Button label="Đăng ký" size="sm" @click="router.push('/register')" />
+          <Button label="Đăng nhập" size="sm" variant="outline" @click="handleLogin" />
+          <Button label="Đăng ký" size="sm" @click="router.push('/register')" />
         </div>
       </div>
     </div>
@@ -90,6 +102,17 @@ const handleLogin = () => {
 </template>
 
 <style scoped>
-.animate-fade-in { animation: fadeIn 0.3s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>

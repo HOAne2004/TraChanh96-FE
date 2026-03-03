@@ -38,6 +38,6 @@ export const useUploadStore = defineStore('upload', () => {
   return {
     loading,
     error,
-    uploadFileAction
+    uploadFileAction,
   }
 })

@@ -16,7 +16,7 @@ const props = defineProps({
   message: { type: String, default: '' },
   actionLabel: { type: String, default: '' },
   // Route để điều hướng (VD: '/menu')
-  actionRoute: { type: String, default: '' }
+  actionRoute: { type: String, default: '' },
 })
 
 // Sự kiện custom click (nếu không dùng route)
@@ -25,10 +25,14 @@ const router = useRouter()
 
 const imageSrc = computed(() => {
   switch (props.type) {
-    case 'cart': return imgCart
-    case 'search': return imgSearch
-    case 'order': return imgOrder
-    default: return imgDefault
+    case 'cart':
+      return imgCart
+    case 'search':
+      return imgSearch
+    case 'order':
+      return imgOrder
+    default:
+      return imgDefault
   }
 })
 
@@ -44,9 +48,13 @@ const handleAction = () => {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center py-16 px-6 text-center w-full animate-fade-in">
+  <div
+    class="flex flex-col items-center justify-center py-16 px-6 text-center w-full animate-fade-in"
+  >
     <div class="w-64 h-64 mb-6 relative group">
-      <div class="absolute inset-0 bg-green-100 dark:bg-green-900/20 rounded-full blur-2xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
+      <div
+        class="absolute inset-0 bg-green-100 dark:bg-green-900/20 rounded-full blur-2xl opacity-50 group-hover:opacity-70 transition-opacity"
+      ></div>
       <img
         :src="imageSrc"
         :alt="title"
@@ -58,7 +66,10 @@ const handleAction = () => {
       {{ title }}
     </h3>
 
-    <p v-if="message" class="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-8 text-base leading-relaxed">
+    <p
+      v-if="message"
+      class="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-8 text-base leading-relaxed"
+    >
       {{ message }}
     </p>
 
@@ -80,7 +91,13 @@ const handleAction = () => {
   animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

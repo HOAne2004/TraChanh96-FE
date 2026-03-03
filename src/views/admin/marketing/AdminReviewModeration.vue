@@ -73,7 +73,7 @@ const fetchData = async () => {
 
 // Xử lý sự kiện từ PageHeader (FilterBar)
 const handleFilterChange = (newFilters) => {
-Object.assign(filters, newFilters)
+  Object.assign(filters, newFilters)
 
   filters.pageIndex = 1
   fetchData()
@@ -83,10 +83,13 @@ const handleReset = () => {
   filters.rating = '' // Reset biến rating
   // Không cần gọi fetchData() ở đây vì AdminFilterBar sẽ emit 'change' ngay sau khi reset core -> kích hoạt handleCoreFilterChange
 }
-watch(() => filters.rating, () => {
-  filters.pageIndex = 1
-  fetchData()
-})
+watch(
+  () => filters.rating,
+  () => {
+    filters.pageIndex = 1
+    fetchData()
+  },
+)
 // Xử lý phân trang
 const handlePageChange = (page) => {
   filters.pageIndex = page
@@ -121,7 +124,6 @@ onMounted(() => {
       @reset="handleReset"
     >
       <template #filter-ext>
-
         <div>
           <label class="block text-xs font-medium text-gray-500 mb-1">Đánh giá</label>
           <div class="relative">
@@ -141,11 +143,19 @@ onMounted(() => {
               @click="filters.rating = ''"
               class="absolute right-6 top-2.5 text-gray-400 hover:text-red-500 bg-white dark:bg-gray-700"
             >
-               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-4 h-4"
+              >
+                <path
+                  d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
+                />
+              </svg>
             </button>
           </div>
         </div>
-
       </template>
     </PageHeader>
 

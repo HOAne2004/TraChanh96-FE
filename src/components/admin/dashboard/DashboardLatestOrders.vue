@@ -6,7 +6,7 @@ import { formatPrice, formatDate } from '@/utils/formatters' // Các hàm format
 
 const props = defineProps({
   orders: { type: Array, default: () => [] },
-  isLoading: Boolean
+  isLoading: Boolean,
 })
 
 const router = useRouter()
@@ -25,7 +25,9 @@ const getStatusBadge = (status) => {
   <div class="overflow-x-auto">
     <table class="w-full text-left border-collapse">
       <thead>
-        <tr class="text-xs text-gray-500 border-b border-gray-100 dark:border-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50">
+        <tr
+          class="text-xs text-gray-500 border-b border-gray-100 dark:border-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50"
+        >
           <th class="px-4 py-3 font-medium">Mã đơn</th>
           <th class="px-4 py-3 font-medium">Khách hàng</th>
           <th class="px-4 py-3 font-medium">Tổng tiền</th>
@@ -36,12 +38,17 @@ const getStatusBadge = (status) => {
       </thead>
       <tbody class="text-sm divide-y divide-gray-100 dark:divide-gray-700">
         <tr v-if="isLoading">
-           <td colspan="6" class="px-4 py-8 text-center text-gray-500">Đang tải dữ liệu...</td>
+          <td colspan="6" class="px-4 py-8 text-center text-gray-500">Đang tải dữ liệu...</td>
         </tr>
         <tr v-else-if="latestOrders.length === 0">
-           <td colspan="6" class="px-4 py-8 text-center text-gray-500">Chưa có đơn hàng nào.</td>
+          <td colspan="6" class="px-4 py-8 text-center text-gray-500">Chưa có đơn hàng nào.</td>
         </tr>
-        <tr v-else v-for="order in latestOrders" :key="order.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+        <tr
+          v-else
+          v-for="order in latestOrders"
+          :key="order.id"
+          class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+        >
           <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
             #{{ order.orderCode }}
           </td>
@@ -53,7 +60,12 @@ const getStatusBadge = (status) => {
             {{ formatPrice(order.grandTotal) }}
           </td>
           <td class="px-4 py-3">
-            <span :class="['px-2.5 py-0.5 rounded-full text-xs font-bold border', getStatusBadge(order.status).color]">
+            <span
+              :class="[
+                'px-2.5 py-0.5 rounded-full text-xs font-bold border',
+                getStatusBadge(order.status).color,
+              ]"
+            >
               {{ getStatusBadge(order.status).label }}
             </span>
           </td>

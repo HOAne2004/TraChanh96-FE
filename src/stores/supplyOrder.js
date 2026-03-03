@@ -5,10 +5,10 @@ import supplyOrderService from '@/services/supplyOrder.service'
 
 // Giả định Enum trạng thái (Cần khớp với Backend SupplyOrderStatusEnum)
 export const SupplyOrderStatus = {
-  Pending: 0,   // Chờ duyệt
-  Approved: 1,  // Đã duyệt (Chờ hàng về)
-  Received: 2,  // Đã nhập kho (Hoàn thành)
-  Cancelled: 3  // Đã hủy
+  Pending: 0, // Chờ duyệt
+  Approved: 1, // Đã duyệt (Chờ hàng về)
+  Received: 2, // Đã nhập kho (Hoàn thành)
+  Cancelled: 3, // Đã hủy
 }
 
 export const useSupplyOrderStore = defineStore('supplyOrder', () => {
@@ -115,7 +115,7 @@ export const useSupplyOrderStore = defineStore('supplyOrder', () => {
     if (!confirm('Xác nhận đã nhận đủ hàng? Kho sẽ được cập nhật ngay lập tức.')) return
     return await updateOrderAction(id, {
       status: SupplyOrderStatus.Received,
-      receivedAt: new Date().toISOString()
+      receivedAt: new Date().toISOString(),
     })
   }
 
@@ -138,6 +138,6 @@ export const useSupplyOrderStore = defineStore('supplyOrder', () => {
     updateOrderAction,
     approveOrder,
     confirmReceived,
-    cancelOrder
+    cancelOrder,
   }
 })

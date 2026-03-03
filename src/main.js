@@ -16,7 +16,7 @@ app.config.devtools = false
 
 const userStore = useUserStore()
 if (userStore.token) {
-    userStore.fetchUserProfile()
+  userStore.fetchUserProfile()
 }
 
 app.mount('#app')

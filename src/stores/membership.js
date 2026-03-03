@@ -65,6 +65,6 @@ export const useMembershipStore = defineStore('membership', () => {
     currentPoints,
     loading,
     error,
-    fetchMyMembership
+    fetchMyMembership,
   }
 })

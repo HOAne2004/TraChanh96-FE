@@ -6,11 +6,11 @@ import { ORDER_STATUS } from '@/constants/order.constants' // 1. Import Constant
 const props = defineProps({
   items: { type: Array, required: true },
   allowReview: { type: Boolean, default: false },
-  orderStatus: { type: Number, default: 0 },
+  orderStatus: { type: [Number, String], default: 0 },
   reviewedIds: { type: Array, default: () => [] },
 })
 
-const emit = defineEmits(['review'])
+defineEmits(['review'])
 
 const isReviewed = (item) => {
   return props.reviewedIds.includes(item.productId)

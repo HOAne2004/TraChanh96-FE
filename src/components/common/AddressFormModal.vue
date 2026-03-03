@@ -78,7 +78,7 @@ const fetchCommunes = async (districtId) => {
  * CASCADING WATCHERS
  * ===================================================== */
 watch(selectedProvinceId, async (id) => {
-  const p = provinces.value.find(x => x.id === id)
+  const p = provinces.value.find((x) => x.id === id)
   form.value.province = p?.full_name || ''
 
   selectedDistrictId.value = ''
@@ -90,7 +90,7 @@ watch(selectedProvinceId, async (id) => {
 })
 
 watch(selectedDistrictId, async (id) => {
-  const d = districts.value.find(x => x.id === id)
+  const d = districts.value.find((x) => x.id === id)
   form.value.district = d?.full_name || ''
   selectedCommuneId.value = ''
   form.value.commune = ''
@@ -98,7 +98,7 @@ watch(selectedDistrictId, async (id) => {
 })
 
 watch(selectedCommuneId, async (id) => {
-  const c = communes.value.find(x => x.id === id)
+  const c = communes.value.find((x) => x.id === id)
   form.value.commune = c?.full_name || ''
 })
 
@@ -132,21 +132,21 @@ watch(
       await nextTick()
 
       selectedProvinceId.value =
-        provinces.value.find(p => p.full_name === form.value.province)?.id || ''
+        provinces.value.find((p) => p.full_name === form.value.province)?.id || ''
 
       await fetchDistricts(selectedProvinceId.value)
 
       selectedDistrictId.value =
-        districts.value.find(d => d.full_name === form.value.district)?.id || ''
+        districts.value.find((d) => d.full_name === form.value.district)?.id || ''
 
       await fetchCommunes(selectedDistrictId.value)
 
       selectedCommuneId.value =
-        communes.value.find(c => c.full_name === form.value.commune)?.id || ''
+        communes.value.find((c) => c.full_name === form.value.commune)?.id || ''
     } else {
       resetForm()
     }
-  }
+  },
 )
 /* =====================================================
  * HELPERS
@@ -219,12 +219,9 @@ const validate = () => {
 const buildPayload = () => {
   const addressDetail = form.value.addressDetail.trim()
 
-  const fullAddress = [
-    addressDetail,
-    form.value.commune,
-    form.value.district,
-    form.value.province,
-  ].filter(Boolean).join(', ')
+  const fullAddress = [addressDetail, form.value.commune, form.value.district, form.value.province]
+    .filter(Boolean)
+    .join(', ')
 
   const payload = {
     addressDetail,

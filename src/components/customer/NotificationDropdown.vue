@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router'
 import NotificationModal from '@/components/common/NotificationModal.vue'
 
 const props = defineProps({
-  isAdmin: { type: Boolean, default: false }
+  isAdmin: { type: Boolean, default: false },
 })
 
 const notificationStore = useNotificationStore()
@@ -31,13 +31,13 @@ const handleNotificationClick = async (noti) => {
     await notificationStore.markAsReadAction(noti.id)
   }
 
- // 2. Điều hướng
+  // 2. Điều hướng
   if (noti.type === 'Order' && noti.referenceId) {
-     if (props.isAdmin) {
-        router.push({ path: `/admin/orders/${noti.referenceId}` })
-     } else {
-        router.push({ name: 'order-detail', params: { code: noti.referenceId } })
-     }
+    if (props.isAdmin) {
+      router.push({ path: `/admin/orders/${noti.referenceId}` })
+    } else {
+      router.push({ name: 'order-detail', params: { code: noti.referenceId } })
+    }
   }
 
   isOpen.value = false
@@ -57,20 +57,47 @@ const closeDropdown = () => {
 
 <template>
   <div class="relative">
-    <button @click="toggleDropdown" class="relative p-2 text-gray-600 hover:text-green-600 transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    <button
+      @click="toggleDropdown"
+      class="relative p-2 text-gray-600 hover:text-green-600 transition-colors"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+        />
       </svg>
 
-      <span v-if="unreadCount > 0" class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
+      <span
+        v-if="unreadCount > 0"
+        class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full"
+      >
         {{ unreadCount > 99 ? '99+' : unreadCount }}
       </span>
     </button>
 
-    <div v-if="isOpen" class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-50 border border-gray-100 dark:border-gray-700 overflow-hidden animate-fade-in-up">
-      <div class="p-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+    <div
+      v-if="isOpen"
+      class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-50 border border-gray-100 dark:border-gray-700 overflow-hidden animate-fade-in-up"
+    >
+      <div
+        class="p-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center"
+      >
         <h3 class="font-bold text-gray-800 dark:text-white">Thông báo</h3>
-        <button @click="notificationStore.markAllAsReadAction" class="text-xs text-blue-500 hover:underline">Đọc tất cả</button>
+        <button
+          @click="notificationStore.markAllAsReadAction"
+          class="text-xs text-blue-500 hover:underline"
+        >
+          Đọc tất cả
+        </button>
       </div>
 
       <div class="max-h-80 overflow-y-auto">
@@ -86,11 +113,18 @@ const closeDropdown = () => {
             class="p-3 border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors relative"
             :class="{ 'bg-blue-50/50': !item.isRead }"
           >
-            <div v-if="!item.isRead" class="absolute top-4 right-3 w-2 h-2 bg-blue-500 rounded-full"></div>
+            <div
+              v-if="!item.isRead"
+              class="absolute top-4 right-3 w-2 h-2 bg-blue-500 rounded-full"
+            ></div>
 
-            <p class="text-sm font-semibold text-gray-800 dark:text-white mb-0.5 pr-4">{{ item.title }}</p>
+            <p class="text-sm font-semibold text-gray-800 dark:text-white mb-0.5 pr-4">
+              {{ item.title }}
+            </p>
             <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{{ item.content }}</p>
-            <p class="text-[10px] text-gray-400 mt-1 text-right">{{ new Date(item.createdAt).toLocaleString('vi-VN') }}</p>
+            <p class="text-[10px] text-gray-400 mt-1 text-right">
+              {{ new Date(item.createdAt).toLocaleString('vi-VN') }}
+            </p>
           </div>
         </div>
       </div>
@@ -102,13 +136,13 @@ const closeDropdown = () => {
       </div>
     </div>
 
-    <div v-if="isOpen" @click="closeDropdown" class="fixed inset-0 z-40 bg-transparent cursor-default"></div>
+    <div
+      v-if="isOpen"
+      @click="closeDropdown"
+      class="fixed inset-0 z-40 bg-transparent cursor-default"
+    ></div>
 
-    <NotificationModal
-      :is-visible="isModalOpen"
-      :is-admin="isAdmin"
-      @close="isModalOpen = false"
-    />
+    <NotificationModal :is-visible="isModalOpen" :is-admin="isAdmin" @close="isModalOpen = false" />
   </div>
 </template>
 
@@ -117,7 +151,13 @@ const closeDropdown = () => {
   animation: fadeInUp 0.2s ease-out;
 }
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

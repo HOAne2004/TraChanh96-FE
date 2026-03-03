@@ -20,7 +20,6 @@ onMounted(() => {
 
 <template>
   <div class="p-4 grid grid-cols-1 sm:grid-cols-3 w-full bg-white dark:bg-dark dark:text-white">
-
     <!-- Loading state -->
     <div v-if="brandLoading || socialLoading" class="col-span-3 text-center py-4">
       Đang tải thông tin...
@@ -57,11 +56,7 @@ onMounted(() => {
         <div v-if="socials.length > 0">
           <p class="mb-2">Theo dõi chúng tôi trên</p>
           <ul class="flex flex-wrap gap-4 text-primary">
-            <li
-              v-for="social in socials"
-              :key="social.id"
-              class="hover:opacity-80 transition"
-            >
+            <li v-for="social in socials" :key="social.id" class="hover:opacity-80 transition">
               <a
                 :href="social.url"
                 target="_blank"
@@ -84,15 +79,17 @@ onMounted(() => {
         <div>
           <p>Vui lòng để lại email để nhận voucher mới nhất</p>
           <div class="flex gap-2 mt-2">
-            <input type="email" placeholder="Nhập email của bạn" class="border p-1 rounded flex-1" />
+            <input
+              type="email"
+              placeholder="Nhập email của bạn"
+              class="border p-1 rounded flex-1"
+            />
             <button class="p-2 bg-primary text-white rounded">Gửi</button>
           </div>
 
           <hr class="my-3" />
           <!-- Hiển thị tên brand nếu có -->
-          <p class="text-sm">
-            @2025 Bản quyền thuộc {{ brand?.name || 'HOAn' }}
-          </p>
+          <p class="text-sm">@2025 Bản quyền thuộc {{ brand?.name || 'HOAn' }}</p>
         </div>
       </div>
     </template>

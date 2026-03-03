@@ -141,12 +141,12 @@ export const useReviewStore = defineStore('review', () => {
       const res = await reviewService.getReviewsForAdmin(filterParams)
       //console.log("🔥 API Response:", res.data)
       if (Array.isArray(res.data)) {
-          adminReviews.value = res.data
-          adminTotalItems.value = res.data.length // Tạm thời lấy length làm total
+        adminReviews.value = res.data
+        adminTotalItems.value = res.data.length // Tạm thời lấy length làm total
       } else {
-          // Trường hợp 2: API trả về PagedResult { items: [], totalItems: 100 }
-          adminReviews.value = res.data.items || []
-          adminTotalItems.value = res.data.totalItems || 0
+        // Trường hợp 2: API trả về PagedResult { items: [], totalItems: 100 }
+        adminReviews.value = res.data.items || []
+        adminTotalItems.value = res.data.totalItems || 0
       }
     } catch (err) {
       console.error('Admin fetch error:', err)

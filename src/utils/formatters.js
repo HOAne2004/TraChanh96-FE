@@ -47,7 +47,7 @@ export const formatCurrencyCompact = (value) => {
 
   // 3. Nghìn (>= 1.000) - Tùy chọn, nếu muốn hiện 500k thay vì 500.000
   if (number >= 1_000) {
-     return (number / 1_000).toFixed(1).replace(/\.0$/, '') + ' k'
+    return (number / 1_000).toFixed(1).replace(/\.0$/, '') + ' k'
   }
 
   // Nhỏ hơn 1 nghìn thì hiển thị bình thường
@@ -66,8 +66,8 @@ export const parsePrice = (value) => {
 export const formatSold = (num) => {
   if (!num) return '0'
   return new Intl.NumberFormat('en-US', {
-    notation: "compact",
-    compactDisplay: "short",
-    maximumFractionDigits: 1
+    notation: 'compact',
+    compactDisplay: 'short',
+    maximumFractionDigits: 1,
   }).format(num)
 }

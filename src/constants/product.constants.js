@@ -1,10 +1,9 @@
 export const PRODUCT_STATUS = {
-DRAFT: 'Draft',
-ACTIVE: 'Active',
-INACTIVE: 'Inactive',
-OUT_OF_STOCK: 'OutOfStock',
-DELETED: 'Deleted',
-
+  DRAFT: 'Draft',
+  ACTIVE: 'Active',
+  INACTIVE: 'Inactive',
+  OUT_OF_STOCK: 'OutOfStock',
+  DELETED: 'Deleted',
 }
 export const PRODUCT_TYPE = {
   DRINK: 'Drink',
@@ -90,13 +89,7 @@ export const getProductTypeConfig = (type) => {
 }
 
 // Danh sách Slug (hoặc Tên) các danh mục ĐƯỢC PHÉP có topping
-export const NO_TOPPING_CATEGORIES = [
-  'ca-phe',
-  'topping',
-  'banh-ngot',
-  'do-an-nhanh',
-  'combo'
-]
+export const NO_TOPPING_CATEGORIES = ['ca-phe', 'topping', 'banh-ngot', 'do-an-nhanh', 'combo']
 
 // Hàm helper kiểm tra
 export const canHaveTopping = (categorySlug) => {

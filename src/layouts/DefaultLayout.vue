@@ -3,9 +3,9 @@ import CustomerFooter from '@/components/customer/CustomerFooter.vue'
 import CustomerHeader from '@/components/customer/CustomerHeader.vue'
 import MobileMenuModal from '@/components/customer/MobileMenuModal.vue'
 import LoginModal from '@/components/auth/LoginModal.vue'
-import {useBrandStore} from '@/stores/brand'
-import {useCartStore} from '@/stores/cart'
-import {useUserStore} from '@/stores/user'
+import { useBrandStore } from '@/stores/brand'
+import { useCartStore } from '@/stores/cart'
+import { useUserStore } from '@/stores/user'
 import { onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 
@@ -54,7 +54,7 @@ watch(isLoggedIn, () => {
     </main>
 
     <!-- Footer -->
-    <CustomerFooter class="mt-auto" :brand="brandStore.brand"/>
+    <CustomerFooter class="mt-auto" :brand="brandStore.brand" />
     <MobileMenuModal></MobileMenuModal>
     <LoginModal></LoginModal>
   </div>

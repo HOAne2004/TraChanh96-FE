@@ -11,5 +11,5 @@ export default {
    */
   getMyMembership() {
     return api.get(`${ENDPOINT}/me`)
-  }
+  },
 }

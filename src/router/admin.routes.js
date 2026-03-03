@@ -8,7 +8,7 @@ export const adminRoutes = [
     component: () => import('@/layouts/AdminLayout.vue'),
     meta: {
       requiresAuth: true,
-      role: USER_ROLE.ADMIN
+      role: USER_ROLE.ADMIN,
     },
     children: [
       // --- DASHBOARD ---

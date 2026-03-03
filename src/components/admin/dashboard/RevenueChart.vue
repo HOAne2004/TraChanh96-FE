@@ -9,7 +9,7 @@ import {
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
 // 🟢 1. IMPORT CONSTANT ĐỂ SO SÁNH ĐÚNG ENUM
@@ -23,14 +23,14 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 )
 
 const props = defineProps({
   orders: {
     type: Array,
-    default: () => []
-  }
+    default: () => [],
+  },
 })
 
 // --- LOGIC XỬ LÝ DỮ LIỆU ---
@@ -52,7 +52,7 @@ const chartData = computed(() => {
 
     // Tính tổng tiền
     const dailyTotal = props.orders
-      .filter(o => {
+      .filter((o) => {
         // 🟢 2. SỬA LOGIC LỌC STATUS
         // Nếu status không nằm trong danh sách hợp lệ -> Bỏ qua
         if (!validStatuses.includes(o.status)) return false
@@ -61,9 +61,11 @@ const chartData = computed(() => {
         if (!o.createdAt) return false
         const orderDate = new Date(o.createdAt)
 
-        return orderDate.getDate() === d.getDate() &&
-               orderDate.getMonth() === d.getMonth() &&
-               orderDate.getFullYear() === d.getFullYear() // Thêm check năm cho chắc chắn
+        return (
+          orderDate.getDate() === d.getDate() &&
+          orderDate.getMonth() === d.getMonth() &&
+          orderDate.getFullYear() === d.getFullYear()
+        ) // Thêm check năm cho chắc chắn
       })
       .reduce((sum, o) => sum + (o.grandTotal || 0), 0)
 
@@ -87,9 +89,9 @@ const chartData = computed(() => {
         borderWidth: 2,
         fill: true,
         data: revenueData,
-        tension: 0.4
-      }
-    ]
+        tension: 0.4,
+      },
+    ],
   }
 })
 
@@ -105,10 +107,12 @@ const chartOptions = {
       bodyFont: { size: 14, weight: 'bold' },
       callbacks: {
         label: (context) => {
-          return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(context.raw)
-        }
-      }
-    }
+          return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+            context.raw,
+          )
+        },
+      },
+    },
   },
   scales: {
     y: {
@@ -116,17 +120,17 @@ const chartOptions = {
       grid: { color: '#f3f4f6' },
       ticks: {
         callback: (value) => {
-            // Rút gọn số liệu trục Y (VD: 1.000.000 -> 1M hoặc để nguyên tùy bạn)
-            if (value >= 1000000) return (value / 1000000) + 'Tr'
-            if (value >= 1000) return (value / 1000) + 'k'
-            return value
-        }
-      }
+          // Rút gọn số liệu trục Y (VD: 1.000.000 -> 1M hoặc để nguyên tùy bạn)
+          if (value >= 1000000) return value / 1000000 + 'Tr'
+          if (value >= 1000) return value / 1000 + 'k'
+          return value
+        },
+      },
     },
     x: {
-      grid: { display: false }
-    }
-  }
+      grid: { display: false },
+    },
+  },
 }
 </script>
 

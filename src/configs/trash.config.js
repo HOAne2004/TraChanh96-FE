@@ -8,10 +8,10 @@ export const TRASH_MODULES = {
   products: {
     label: 'Sản phẩm',
     icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', // SVG path
-    
+
     // Hàm lấy Store tương ứng
-    useStore: useProductStore, 
-    
+    useStore: useProductStore,
+
     // Cấu hình cột hiển thị
     columns: [
       { key: 'id', label: 'ID', width: '80px' },
@@ -23,9 +23,9 @@ export const TRASH_MODULES = {
 
     // Action API (Tên hàm trong Store phải chuẩn hóa)
     // Giả sử các store đều có hàm: fetchDeleted({ pageSize }) và restore(id)
-    fetchAction: 'fetchProducts', 
+    fetchAction: 'fetchProducts',
     fetchParams: { status: 99, pageSize: 100 }, // Tham số riêng của module này
-    restoreAction: 'restoreProduct'
+    restoreAction: 'restoreProduct',
   },
 
   // 2. Cấu hình cho Đơn hàng
@@ -38,11 +38,11 @@ export const TRASH_MODULES = {
       { key: 'recipientName', label: 'Khách hàng' },
       { key: 'deletedAt', label: 'Ngày xóa', type: 'date', cellClass: 'text-red-500' },
       { key: 'grandTotal', label: 'Tổng tiền', type: 'price' },
-      { key: 'status', label: 'Trạng thái', type: 'status' } // Type status cần xử lý riêng
+      { key: 'status', label: 'Trạng thái', type: 'status' }, // Type status cần xử lý riêng
     ],
     fetchAction: 'fetchOrders',
     fetchParams: { isDeleted: true, pageSize: 100 },
-    restoreAction: 'restoreOrderAction'
+    restoreAction: 'restoreOrderAction',
   },
 
   // 3. Sau này thêm User thì chỉ cần viết thêm vào đây, không sửa View

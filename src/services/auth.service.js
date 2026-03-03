@@ -22,7 +22,7 @@ export default {
   verifyEmail(payload) {
     return api.post(`${URL}/verify-email`, payload)
   },
-  resendVerification(payload){
+  resendVerification(payload) {
     return api.post(`${URL}/resend-verification`, payload)
   },
   /**

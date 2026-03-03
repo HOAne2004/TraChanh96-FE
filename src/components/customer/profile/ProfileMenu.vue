@@ -109,15 +109,11 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
         leave-to-class="transform opacity-0 scale-95"
       >
         <div
-        v-if="isMenuOpen"
-        class="absolute right-0 mt-2 w-72 origin-top-right bg-white dark:bg-gray-800 rounded-xl shadow-xl ring-1 ring-black ring-opacity-5 border border-gray-100 dark:border-gray-700 overflow-hidden"
-      >
-        <ProfileSidebar
-            :user="user"
-            :is-dropdown="true"
-            @close="closeMenu"
-        />
-      </div>
+          v-if="isMenuOpen"
+          class="absolute right-0 mt-2 w-72 origin-top-right bg-white dark:bg-gray-800 rounded-xl shadow-xl ring-1 ring-black ring-opacity-5 border border-gray-100 dark:border-gray-700 overflow-hidden"
+        >
+          <ProfileSidebar :user="user" :is-dropdown="true" @close="closeMenu" />
+        </div>
       </Transition>
     </div>
   </div>

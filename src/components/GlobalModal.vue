@@ -1,6 +1,6 @@
 <template>
   <AppModal
-    :is-visible="modal.isVisible && modal.modalConfig"
+    :is-visible="modal.isVisible"
     :type="modal.modalConfig?.type"
     :title="modal.modalConfig?.title"
     :message="modal.modalConfig?.message"

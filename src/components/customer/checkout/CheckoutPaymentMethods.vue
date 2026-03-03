@@ -5,7 +5,7 @@ import { storeToRefs } from 'pinia'
 
 // 1. Nhận Props cấu hình (Mặc định cho phép COD)
 const props = defineProps({
-  allowCod: { type: Boolean, default: true }
+  allowCod: { type: Boolean, default: true },
 })
 
 // 2. Model 2 chiều (Vue 3.4+)
@@ -24,11 +24,11 @@ onMounted(async () => {
 // 4. Computed: Lọc danh sách hiển thị
 const displayMethods = computed(() => {
   if (!props.allowCod) {
-    return activeMethods.value.filter(m => {
-       const type = String(m.paymentType).toLowerCase();
-       const code = String(m.code || '').toLowerCase();
-       // Giữ lại nếu KHÔNG phải là cod/cash
-       return type !== 'cod' && code !== 'cod';
+    return activeMethods.value.filter((m) => {
+      const type = String(m.paymentType).toLowerCase()
+      const code = String(m.code || '').toLowerCase()
+      // Giữ lại nếu KHÔNG phải là cod/cash
+      return type !== 'cod' && code !== 'cod'
     })
   }
   return activeMethods.value
@@ -40,17 +40,26 @@ const select = (method) => {
 </script>
 
 <template>
-  <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+  <div
+    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700"
+  >
     <div class="text-xl font-semibold mb-4 border-b dark:border-gray-700 pb-2">
-      <h2 class="border-l-4 border-green-500 pl-2 text-gray-800 dark:text-white">Phương thức thanh toán</h2>
+      <h2 class="border-l-4 border-green-500 pl-2 text-gray-800 dark:text-white">
+        Phương thức thanh toán
+      </h2>
     </div>
 
     <div v-if="loading" class="flex items-center justify-center py-6 text-gray-500 gap-2">
-      <div class="animate-spin h-5 w-5 border-2 border-green-500 border-t-transparent rounded-full"></div>
+      <div
+        class="animate-spin h-5 w-5 border-2 border-green-500 border-t-transparent rounded-full"
+      ></div>
       <span class="text-sm">Đang tải phương thức...</span>
     </div>
 
-    <div v-else-if="displayMethods.length === 0" class="py-4 text-center bg-amber-50 rounded-lg border border-amber-200 text-amber-700 text-sm">
+    <div
+      v-else-if="displayMethods.length === 0"
+      class="py-4 text-center bg-amber-50 rounded-lg border border-amber-200 text-amber-700 text-sm"
+    >
       <p>⚠️ Không tìm thấy phương thức thanh toán phù hợp.</p>
       <p v-if="!allowCod" class="text-xs mt-1">(Đơn hàng "Đến lấy" chỉ hỗ trợ thanh toán Online)</p>
     </div>
@@ -68,14 +77,17 @@ const select = (method) => {
         "
       >
         <div class="shrink-0">
-           <img
+          <img
             v-if="method.imageUrl"
             :src="method.imageUrl"
             class="w-10 h-10 object-contain bg-white rounded border border-gray-100 p-0.5"
             alt="Icon"
           />
-          <div v-else class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-xl">
-             {{ method.paymentType === 1 ? '💵' : '💳' }}
+          <div
+            v-else
+            class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-xl"
+          >
+            {{ method.paymentType === 1 ? '💵' : '💳' }}
           </div>
         </div>
 
@@ -84,8 +96,11 @@ const select = (method) => {
             <p class="font-bold text-gray-800 dark:text-white text-sm">
               {{ method.name }}
             </p>
-            <span v-if="method.processingFee > 0" class="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-bold">
-               +{{ method.processingFee.toLocaleString() }}đ phí
+            <span
+              v-if="method.processingFee > 0"
+              class="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-bold"
+            >
+              +{{ method.processingFee.toLocaleString() }}đ phí
             </span>
           </div>
 
@@ -95,7 +110,7 @@ const select = (method) => {
         </div>
 
         <div class="ml-3">
-           <div v-if="selectedMethod?.id === method.id" class="text-green-600">
+          <div v-if="selectedMethod?.id === method.id" class="text-green-600">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               class="h-6 w-6"
@@ -108,9 +123,8 @@ const select = (method) => {
                 clip-rule="evenodd"
               />
             </svg>
-           </div>
+          </div>
         </div>
-
       </div>
     </div>
   </div>

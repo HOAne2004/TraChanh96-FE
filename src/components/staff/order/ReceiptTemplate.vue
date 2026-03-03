@@ -7,7 +7,6 @@ const props = defineProps({
   storeAddress: String,
   storePhone: String,
 })
-
 </script>
 <template>
   <div id="invoice-pos" class="hidden-print">

@@ -183,19 +183,14 @@ const displayItems = computed(() => {
       </thead>
 
       <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-        <tr
-          v-if="isEmpty"
-          class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
+        <tr v-if="isEmpty" class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
           <td
             :colspan="columns.length + 1"
             class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
           >
             <div class="flex flex-col items-center justify-center gap-4">
               <img :src="EmptySearch" alt="Empty" class="w-48 opacity-80" />
-              <p class="text-gray-500 dark:text-gray-400 text-sm">
-                Không có dữ liệu
-              </p>
+              <p class="text-gray-500 dark:text-gray-400 text-sm">Không có dữ liệu</p>
             </div>
           </td>
         </tr>

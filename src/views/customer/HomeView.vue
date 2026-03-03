@@ -22,9 +22,9 @@ const storeStore = useStoreStore()
 // Lấy thêm state 'isLoading' nếu store có hỗ trợ (để tránh hiện Empty khi đang tải)
 // Giả định store bạn có biến loading tương ứng
 const {
-    loading: productLoading,
-    bestSellingProducts, // Top 10 Bán chạy
-    newestProducts       // Top 10 Mới nhất
+  loading: productLoading,
+  bestSellingProducts, // Top 10 Bán chạy
+  newestProducts, // Top 10 Mới nhất
 } = storeToRefs(productStore)
 const { publishedNews } = storeToRefs(newsStore)
 const { stores } = storeToRefs(storeStore)
@@ -64,7 +64,9 @@ const latestStores = computed(() =>
     >
       <template #default="{ items }">
         <div v-if="productLoading" class="w-full text-center py-10 text-gray-500">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
+          <div
+            class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"
+          ></div>
           Đang tải sản phẩm...
         </div>
 
@@ -87,14 +89,12 @@ const latestStores = computed(() =>
       </template>
     </TitledContainer>
 
-    <TitledContainer
-      title="Sản phẩm mới"
-      linkTo="/products?sort=newest"
-      :items="newestProducts"
-    >
+    <TitledContainer title="Sản phẩm mới" linkTo="/products?sort=newest" :items="newestProducts">
       <template #default="{ items }">
         <div v-if="productLoading" class="w-full text-center py-10 text-gray-500">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
+          <div
+            class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"
+          ></div>
           Đang tải sản phẩm...
         </div>
 
@@ -117,11 +117,7 @@ const latestStores = computed(() =>
       </template>
     </TitledContainer>
 
-    <TitledContainer
-      title="Tin tức nổi bật"
-      linkTo="/news"
-      :items="latestNews"
-    >
+    <TitledContainer title="Tin tức nổi bật" linkTo="/news" :items="latestNews">
       <template #default="{ items }">
         <template v-if="items && items.length > 0">
           <NewsCard
@@ -142,11 +138,7 @@ const latestStores = computed(() =>
       </template>
     </TitledContainer>
 
-    <TitledContainer
-      title="Hệ thống cửa hàng"
-      linkTo="/aboutUs"
-      :items="latestStores"
-    >
+    <TitledContainer title="Hệ thống cửa hàng" linkTo="/aboutUs" :items="latestStores">
       <template #default="{ items }">
         <template v-if="items && items.length > 0">
           <StoreCard

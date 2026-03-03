@@ -20,7 +20,7 @@ export const useMembershipLevelStore = defineStore('membershipLevel', () => {
     // Ta tìm cấp độ cao nhất mà point >= minCoinsRequired
     // Dùng cú pháp [...levels.value] để copy mảng rồi reverse để tìm từ cao xuống thấp
     const sortedDesc = [...levels.value].sort((a, b) => b.minCoinsRequired - a.minCoinsRequired)
-    return sortedDesc.find(l => point >= l.minCoinsRequired) || null
+    return sortedDesc.find((l) => point >= l.minCoinsRequired) || null
   }
 
   // --- ACTIONS ---
@@ -107,6 +107,6 @@ export const useMembershipLevelStore = defineStore('membershipLevel', () => {
     createLevelAction,
     updateLevelAction,
     deleteLevelAction,
-    getLevelByPoint // Expose helper này để dùng trong Component
+    getLevelByPoint, // Expose helper này để dùng trong Component
   }
 })

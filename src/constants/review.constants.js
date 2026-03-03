@@ -35,7 +35,7 @@ export const getReviewStatusOptions = (excludeDeleted = false) => {
   return Object.entries(REVIEW_STATUS_UI)
     .filter(([key]) => !excludeDeleted || String(key) !== REVIEW_STATUS.DELETED)
     .map(([key, config]) => ({
-      value: String(key), 
+      value: String(key),
       label: config.label,
     }))
 }

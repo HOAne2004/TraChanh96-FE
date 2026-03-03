@@ -34,5 +34,5 @@ export default {
    */
   toggleLike(id) {
     return api.post(`${ENDPOINT}/${id}/like`)
-  }
+  },
 }

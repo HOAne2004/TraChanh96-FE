@@ -24,7 +24,7 @@ export const useOrderPaymentStore = defineStore('orderPayment', () => {
     try {
       const response = await orderPaymentService.createCharge({
         orderId,
-        paymentMethodId
+        paymentMethodId,
       })
       currentPayment.value = response.data
       // Thêm vào đầu danh sách payments nếu đang xem đơn đó
@@ -75,6 +75,6 @@ export const useOrderPaymentStore = defineStore('orderPayment', () => {
     error,
     createCharge,
     fetchPaymentHistory,
-    clearPaymentState
+    clearPaymentState,
   }
 })

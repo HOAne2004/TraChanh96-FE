@@ -43,12 +43,12 @@ export const useNotificationStore = defineStore('notification', () => {
 
       // Lọc bỏ những thông báo đã xóa khỏi local, và cập nhật trạng thái isRead dựa vào local cache cho broadcast
       notifications.value = response.data
-        .filter(n => !deletedIds.includes(n.id))
-        .map(n => {
-           if (readIds.includes(n.id)) {
-              n.isRead = true
-           }
-           return n
+        .filter((n) => !deletedIds.includes(n.id))
+        .map((n) => {
+          if (readIds.includes(n.id)) {
+            n.isRead = true
+          }
+          return n
         })
     } catch (err) {
       console.error(err)
@@ -109,27 +109,27 @@ export const useNotificationStore = defineStore('notification', () => {
     if (unreadItems.length === 0) return
 
     // Cập nhật UI ngay lập tức
-    unreadItems.forEach((n) => { n.isRead = true })
+    unreadItems.forEach((n) => {
+      n.isRead = true
+    })
 
     const userStore = useUserStore()
     const userId = userStore.user?.id || 'guest'
     const readKey = `readNotis_${userId}`
     let readIds = JSON.parse(localStorage.getItem(readKey) || '[]')
 
-    unreadItems.forEach(n => {
+    unreadItems.forEach((n) => {
       if (!readIds.includes(n.id)) readIds.push(n.id)
     })
     localStorage.setItem(readKey, JSON.stringify(readIds))
 
     // Gọi API song song cho tất cả để không bị chậm
-    await Promise.allSettled(
-      unreadItems.map(item => notificationService.markAsRead(item.id))
-    )
+    await Promise.allSettled(unreadItems.map((item) => notificationService.markAsRead(item.id)))
   }
 
   async function deleteNotificationAction(id) {
     // Ẩn phía UI
-    notifications.value = notifications.value.filter(n => n.id !== id)
+    notifications.value = notifications.value.filter((n) => n.id !== id)
 
     // Lưu cache
     const userStore = useUserStore()

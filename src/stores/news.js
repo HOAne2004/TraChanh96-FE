@@ -4,9 +4,9 @@ import newsService from '@/services/news.service'
 
 export const useNewsStore = defineStore('news', () => {
   // --- STATE ---
-  const newsList = ref([])            // Admin list
-  const publishedNews = ref([])       // Public list
-  const currentNews = ref(null)       // Chi tiết bài
+  const newsList = ref([]) // Admin list
+  const publishedNews = ref([]) // Public list
+  const currentNews = ref(null) // Chi tiết bài
   const carousel = ref([])
 
   const loading = ref(false)

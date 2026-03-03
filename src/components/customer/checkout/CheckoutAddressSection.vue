@@ -91,9 +91,13 @@ const handleAddressSubmit = async (formData) => {
   <div
     class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700"
   >
-    <div class="text-xl flex justify-between items-center mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
-      <h2 class="font-bold text-gray-800 dark:text-white flex items-center gap-2 border-l-4 border-green-500 pl-2">
-         Địa chỉ nhận hàng
+    <div
+      class="text-xl flex justify-between items-center mb-4 border-b border-gray-200 dark:border-gray-700 pb-2"
+    >
+      <h2
+        class="font-bold text-gray-800 dark:text-white flex items-center gap-2 border-l-4 border-green-500 pl-2"
+      >
+        Địa chỉ nhận hàng
       </h2>
       <button
         @click="showModal = true"

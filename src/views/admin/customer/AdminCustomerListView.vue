@@ -73,7 +73,7 @@ function handleCreate() {
 }
 
 async function handleAction({ type, item }) {
-  if ( type === 'edit') {
+  if (type === 'edit') {
     // Dùng PublicId để bảo mật và đúng chuẩn BE
     router.push({ name: 'admin.customer.detail', params: { id: item.publicId } })
   }

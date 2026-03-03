@@ -31,7 +31,7 @@ const { isLoggedIn } = storeToRefs(userStore)
 const initNotificationSystem = async () => {
   if (isLoggedIn.value) {
     await notificationStore.fetchNotifications() // Lấy danh sách cũ
-    await notificationStore.initSignalR()        // Kết nối realtime
+    await notificationStore.initSignalR() // Kết nối realtime
   }
 }
 
@@ -76,7 +76,6 @@ watch(isLoggedIn, (newVal) => {
       </div>
 
       <div class="flex justify-end items-center w-full sm:w-auto gap-1 sm:gap-3">
-
         <NavLink to="/cart" variant="outline" :badge="Number(totalItems)">
           <template #icon>
             <svg
@@ -104,7 +103,7 @@ watch(isLoggedIn, (newVal) => {
         </NavLink>
 
         <div v-if="isLoggedIn" class="relative">
-           <NotificationDropdown />
+          <NotificationDropdown />
         </div>
 
         <ProfileMenu />

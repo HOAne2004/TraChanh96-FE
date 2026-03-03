@@ -7,8 +7,8 @@ import defaultDrinkImage from '@/assets/images/others/default-drink.png'
 import {
   getProductStatusOptions,
   getProductStatusConfig,
-  getProductTypeOptions,   // 🟢 Import mới
-  getProductTypeConfig     // 🟢 Import mới (để tô màu cột Type nếu cần)
+  getProductTypeOptions, // 🟢 Import mới
+  getProductTypeConfig, // 🟢 Import mới (để tô màu cột Type nếu cần)
 } from '@/constants/product.constants'
 
 import PageHeader from '@/components/admin/common/PageHeader.vue'
@@ -29,14 +29,14 @@ const queryParams = reactive({
   pageSize: 10,
   search: '',
   status: '',
-  type: '',      // 🟢 Custom Filter
+  type: '', // 🟢 Custom Filter
   fromDate: '',
   toDate: '',
 })
 
 // Options
 const filterStatusOptions = getProductStatusOptions(true) // Ẩn "Deleted"
-const filterTypeOptions = getProductTypeOptions()         // 🟢 Lấy option Loại
+const filterTypeOptions = getProductTypeOptions() // 🟢 Lấy option Loại
 
 // Fetch Data
 async function fetchData() {
@@ -81,10 +81,13 @@ function handlePageChange(page) {
 }
 
 // 4. Watch Custom Filter (Type) để tự động reload
-watch(() => queryParams.type, () => {
-  queryParams.page = 1
-  fetchData()
-})
+watch(
+  () => queryParams.type,
+  () => {
+    queryParams.page = 1
+    fetchData()
+  },
+)
 
 function handleCreate() {
   router.push({ name: 'admin.products.create' })
@@ -146,13 +149,30 @@ onMounted(() => {
               @click="queryParams.type = ''"
               class="absolute right-8 top-2.5 text-gray-400 hover:text-red-500 bg-white dark:bg-gray-700"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-                 <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-4 h-4"
+              >
+                <path
+                  d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
+                />
               </svg>
             </button>
 
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
-               <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+            <div
+              class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300"
+            >
+              <svg
+                class="fill-current h-4 w-4"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"
+                />
+              </svg>
             </div>
           </div>
         </div>
@@ -168,11 +188,13 @@ onMounted(() => {
     >
       <template #cell-name="{ item }">
         <div class="flex items-center gap-3">
-          <div class="w-16 h-16 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden shrink-0">
+          <div
+            class="w-16 h-16 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden shrink-0"
+          >
             <img
-               :src="item.imageUrl || defaultDrinkImage"
-               class="w-full h-full object-contain"
-               alt="Product"
+              :src="item.imageUrl || defaultDrinkImage"
+              class="w-full h-full object-contain"
+              alt="Product"
             />
           </div>
           <div>
@@ -183,21 +205,22 @@ onMounted(() => {
       </template>
 
       <template #cell-productType="{ item }">
-         <span :class="`px-2 py-0.5 rounded text-[11px] border ${getProductTypeConfig(item.productType).color}`">
-            {{ getProductTypeConfig(item.productType).label }}
-         </span>
+        <span
+          :class="`px-2 py-0.5 rounded text-[11px] border ${getProductTypeConfig(item.productType).color}`"
+        >
+          {{ getProductTypeConfig(item.productType).label }}
+        </span>
       </template>
 
-      <template #cell-basePrice="{ item }">
-        {{ formatPrice(item.basePrice) }} đ
-      </template>
+      <template #cell-basePrice="{ item }"> {{ formatPrice(item.basePrice) }} đ </template>
 
       <template #cell-status="{ item }">
-        <span :class="`px-2.5 py-1 rounded-full text-xs font-bold border ${getProductStatusConfig(item.status).color}`">
+        <span
+          :class="`px-2.5 py-1 rounded-full text-xs font-bold border ${getProductStatusConfig(item.status).color}`"
+        >
           {{ getProductStatusConfig(item.status).label }}
         </span>
       </template>
-      
     </AdminDataTable>
 
     <AdminPagination

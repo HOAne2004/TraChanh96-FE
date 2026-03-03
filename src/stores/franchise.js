@@ -72,7 +72,7 @@ export const useFranchiseStore = defineStore('franchise', () => {
       const res = await franchiseService.update(id, payload)
 
       // Update list
-      const index = requests.value.findIndex(r => r.id === id)
+      const index = requests.value.findIndex((r) => r.id === id)
       if (index !== -1) {
         requests.value[index] = res.data
       }
@@ -101,7 +101,7 @@ export const useFranchiseStore = defineStore('franchise', () => {
     error.value = null
     try {
       await franchiseService.delete(id)
-      requests.value = requests.value.filter(r => r.id !== id)
+      requests.value = requests.value.filter((r) => r.id !== id)
     } catch (err) {
       error.value = 'Xóa yêu cầu thất bại'
       throw err

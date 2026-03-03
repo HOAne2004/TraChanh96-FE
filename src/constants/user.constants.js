@@ -10,7 +10,10 @@ export const USER_ROLE = {
 
 export const USER_ROLE_UI = {
   [USER_ROLE.CUSTOMER]: { label: 'Khách hàng', color: 'bg-gray-100 text-gray-800 border-gray-200' },
-  [USER_ROLE.ADMIN]: { label: 'Quản trị viên', color: 'bg-purple-100 text-purple-800 border-purple-200' },
+  [USER_ROLE.ADMIN]: {
+    label: 'Quản trị viên',
+    color: 'bg-purple-100 text-purple-800 border-purple-200',
+  },
   [USER_ROLE.MANAGER]: { label: 'Quản lý', color: 'bg-blue-100 text-blue-800 border-blue-200' },
   [USER_ROLE.STAFF]: { label: 'Nhân viên', color: 'bg-green-100 text-green-800 border-green-200' },
 }
@@ -26,7 +29,7 @@ export const USER_STATUS_UI = {
   [USER_STATUS.ACTIVE]: {
     label: 'Hoạt động',
     color: 'text-green-700 bg-green-50 border-green-200',
-    icon: 'CheckCircleIcon'
+    icon: 'CheckCircleIcon',
   },
   [USER_STATUS.LOCKED]: {
     label: 'Đã khóa',
@@ -35,7 +38,7 @@ export const USER_STATUS_UI = {
   [USER_STATUS.DELETED]: {
     label: 'Đã xóa',
     color: 'text-gray-400 bg-gray-100 border-gray-200 line-through',
-  }
+  },
 }
 
 // --- 3. HELPERS ---
@@ -70,8 +73,8 @@ export const getUserStatusOptions = (excludeDeleted = false) => {
 
 // Helper cho Role Options (nếu cần filter theo Role hoặc tạo User mới)
 export const getUserRoleOptions = () => {
-    return Object.values(USER_ROLE).map(role => ({
-        value: role,
-        label: USER_ROLE_UI[role]?.label || role
-    }))
+  return Object.values(USER_ROLE).map((role) => ({
+    value: role,
+    label: USER_ROLE_UI[role]?.label || role,
+  }))
 }

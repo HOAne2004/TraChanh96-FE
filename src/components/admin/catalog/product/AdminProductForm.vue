@@ -44,9 +44,7 @@ const onUrlInput = () => emit('url-input')
       <h3 class="text-base font-bold text-gray-800 mb-4 border-b pb-2">Thông tin cơ bản</h3>
       <div class="space-y-4">
         <div>
-          <label class="form-label"
-            >Tên sản phẩm <span class="text-red-500">*</span></label
-          >
+          <label class="form-label">Tên sản phẩm <span class="text-red-500">*</span></label>
           <input
             v-model="formData.name"
             @blur="$emit('blur-name')"
@@ -65,9 +63,7 @@ const onUrlInput = () => emit('url-input')
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="form-label"
-              >Danh mục <span class="text-red-500">*</span></label
-            >
+            <label class="form-label">Danh mục <span class="text-red-500">*</span></label>
             <select
               v-model="formData.categoryId"
               class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 outline-none"
@@ -105,9 +101,7 @@ const onUrlInput = () => emit('url-input')
     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
       <h3 class="text-base font-bold text-gray-800 mb-4 border-b pb-2">Giá & Kích thước</h3>
       <div class="mb-4">
-        <label class="form-label"
-          >Giá cơ bản (VNĐ) <span class="text-red-500">*</span></label
-        >
+        <label class="form-label">Giá cơ bản (VNĐ) <span class="text-red-500">*</span></label>
         <input
           v-model="formData.basePrice"
           type="number"
@@ -273,10 +267,10 @@ const onUrlInput = () => emit('url-input')
 </template>
 
 <style scoped>
-.form_label{
+.form_label {
   @apply block text-xs font-medium text-gray-700 mb-1;
 }
-.form_textarea{
+.form_textarea {
   @apply bg-white rounded-lg border border-gray-300;
 }
 :deep(.ql-toolbar) {

@@ -70,7 +70,7 @@ export const usePayslipStore = defineStore('payslip', () => {
       await fetchPayslips({
         storeId: createDto.storeId, // Lưu ý: DTO cần có storeId hoặc lấy từ context
         month: createDto.month,
-        year: createDto.year
+        year: createDto.year,
       })
       return true
     } catch (err) {
@@ -131,6 +131,6 @@ export const usePayslipStore = defineStore('payslip', () => {
     fetchPayslipDetail,
     generatePayslipAction,
     updatePayslipAction,
-    deletePayslipAction
+    deletePayslipAction,
   }
 })

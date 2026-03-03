@@ -19,7 +19,7 @@ export const useShopTableStore = defineStore('shopTable', () => {
    */
   const tablesGroupedByRoom = computed(() => {
     const groups = {}
-    tables.value.forEach(table => {
+    tables.value.forEach((table) => {
       const roomName = table.room?.name || 'Khác'
       if (!groups[roomName]) {
         groups[roomName] = []
@@ -141,6 +141,6 @@ export const useShopTableStore = defineStore('shopTable', () => {
     fetchTableDetail,
     createTableAction,
     updateTableAction,
-    deleteTableAction
+    deleteTableAction,
   }
 })

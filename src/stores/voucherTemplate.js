@@ -114,6 +114,6 @@ export const useVoucherTemplateStore = defineStore('voucherTemplate', () => {
     fetchTemplateDetail,
     createTemplateAction,
     updateTemplateAction,
-    deleteTemplateAction
+    deleteTemplateAction,
   }
 })

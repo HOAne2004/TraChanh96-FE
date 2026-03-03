@@ -9,7 +9,13 @@ const props = defineProps({
   isProcessing: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['update-status', 'assign-shipper', 'cancel', 'confirm-payment', 'verify-pickup'])
+const emit = defineEmits([
+  'update-status',
+  'assign-shipper',
+  'cancel',
+  'confirm-payment',
+  'verify-pickup',
+])
 const selectedShipperId = ref('')
 const pickupCodeInput = ref('')
 
@@ -117,7 +123,7 @@ const onVerifyPickup = () => {
             <div
               class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600"
             >
-            <h2 class="text-green-600 font-semibold">Giao hàng</h2>
+              <h2 class="text-green-600 font-semibold">Giao hàng</h2>
               <label class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block"
                 >Chọn Shipper</label
               >
@@ -146,7 +152,9 @@ const onVerifyPickup = () => {
             v-else-if="order.orderType === 'pickup'"
             class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
           >
-            <label class="text-xs font-bold text-green-700 dark:text-green-300 mb-2 block uppercase">
+            <label
+              class="text-xs font-bold text-green-700 dark:text-green-300 mb-2 block uppercase"
+            >
               Xác thực khách nhận
             </label>
             <div class="flex gap-2">

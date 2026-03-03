@@ -122,13 +122,13 @@ function handleSubmit() {
           <div>
             <div class="flex justify-between items-center gap-2">
               <label class="form-label">Địa chỉ hiển thị</label>
-            <button
-              type="button"
-              @click="emit('address-modal')"
-              class="text-gray-400 text-sm hover:text-green-600"
-            >
-              Sửa địa chỉ
-            </button>
+              <button
+                type="button"
+                @click="emit('address-modal')"
+                class="text-gray-400 text-sm hover:text-green-600"
+              >
+                Sửa địa chỉ
+              </button>
             </div>
             <div
               v-if="hasAddress"

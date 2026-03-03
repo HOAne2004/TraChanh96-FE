@@ -1,6 +1,5 @@
 <script setup>
-import { ref, reactive, watch, onMounted, computed } from 'vue'
-import { storeToRefs } from 'pinia'
+import { reactive, watch, onMounted, computed } from 'vue'
 import { useCategoryStore } from '@/stores/category'
 import CategorySelectInput from './CategorySelectInput.vue' // Input chọn ParentId
 

@@ -291,8 +291,8 @@ const goToLogin = () => {
     transform: translateY(0);
   }
 }
-input[type="password"]::-ms-reveal,
-input[type="password"]::-ms-clear {
-    display: none;
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
+  display: none;
 }
 </style>

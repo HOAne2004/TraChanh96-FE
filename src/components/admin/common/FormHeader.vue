@@ -27,7 +27,10 @@ const handleBack = () => {
 <template>
   <div class="flex items-center justify-between mb-4">
     <div class="flex gap-2 items-center">
-      <button @click="handleBack" class="p-2 rounded-full border border-green-300 bg-white dark:bg-gray-800 text-green-600 dark:text-green-400 hover:bg-gray-100 transition-colors">
+      <button
+        @click="handleBack"
+        class="p-2 rounded-full border border-green-300 bg-white dark:bg-gray-800 text-green-600 dark:text-green-400 hover:bg-gray-100 transition-colors"
+      >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -63,9 +66,12 @@ const handleBack = () => {
           v-if="!hideSubmit"
           @click="$emit('submit')"
           :disabled="loading"
-          class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm  disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          <span v-if="loading" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+          <span
+            v-if="loading"
+            class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"
+          ></span>
           {{ loading ? 'Đang lưu...' : submitLabel }}
         </button>
       </slot>

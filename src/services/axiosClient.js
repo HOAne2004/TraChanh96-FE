@@ -47,7 +47,7 @@ api.interceptors.response.use(
       // ⭐️ FIX: Nếu lỗi 401 xảy ra khi đang gọi API Login (do sai pass)
       // thì TRẢ LỖI VỀ cho LoginForm xử lý, KHÔNG hiện popup hết hạn.
       if (originalRequest.url && originalRequest.url.includes('/Auth/login')) {
-         return Promise.reject(error)
+        return Promise.reject(error)
       }
 
       // Các trường hợp khác (đang lướt web thì hết hạn token)

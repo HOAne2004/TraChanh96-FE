@@ -84,7 +84,7 @@ const handleSubmit = async () => {
       name: formData.name,
       parentId: formData.parentId,
       sortOrder: formData.sortOrder,
-      status: formData.status === 'Active' ? 1 : 0, // Giả sử Backend dùng Enum 1=Active
+      status: formData.status === 'Active',
     }
 
     if (isEditMode.value) {
@@ -143,22 +143,16 @@ const statusOptions = getPublicStatusOptions()
 
 // Xử lý thay đổi nhanh trạng thái
 const handleQuickStatusUpdate = async (item, event) => {
-  const newValue = Number(event.target.value) // Lấy value int từ option
+  const newValue = event.target.value
   const oldLabel = item.status
 
   // Gọi API cập nhật
   try {
-    // Chỉ gửi status, các trường khác giữ nguyên hoặc null (tùy BE cấu hình Patch)
-    // Trong file CategoryService.cs bạn dùng AutoMapper, nên nếu chỉ gửi Status thì Name sẽ null?
-    // 👉 Nếu BE dùng Patch chuẩn (chỉ update field có value), thì gửi object chỉ có Status là được.
-    // 👉 Nếu BE map đè (Replace), bạn cần gửi full data cũ kèm status mới.
-
-    // AN TOÀN NHẤT: Gửi full data của row đó nhưng đổi status
     const payload = {
       name: item.name,
       parentId: item.parentId,
       sortOrder: item.sortOrder,
-      status: newValue, // Gửi số (Enum)
+      status: newValue,
     }
 
     await categoryStore.updateCategoryAction(item.id, payload)
@@ -169,7 +163,6 @@ const handleQuickStatusUpdate = async (item, event) => {
       type: 'success',
     })
   } catch (err) {
-    // Nếu lỗi, rollback UI về giá trị cũ (trick: reload table)
     event.target.value = mapLabelToValue(oldLabel)
     console.error(err)
   }
@@ -255,7 +248,6 @@ onMounted(() => {
           </div>
         </div>
       </template>
-
     </AdminDataTable>
 
     <div

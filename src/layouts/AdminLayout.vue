@@ -23,10 +23,7 @@ onUnmounted(() => {
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
     <!-- Sidebar -->
-    <AdminSidebar
-      :is-open="isSidebarOpen"
-      @close="isSidebarOpen = false"
-    />
+    <AdminSidebar :is-open="isSidebarOpen" @close="isSidebarOpen = false" />
 
     <!-- Overlay mobile -->
     <div

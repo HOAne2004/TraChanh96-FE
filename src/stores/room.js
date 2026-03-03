@@ -5,8 +5,8 @@ import roomService from '@/services/room.service'
 
 export const useRoomStore = defineStore('room', () => {
   // --- STATE ---
-  const rooms = ref([])       // Danh sách Public (Active only) - Dùng cho POS/Booking
-  const adminRooms = ref([])  // Danh sách Admin (Full) - Dùng cho trang Quản lý
+  const rooms = ref([]) // Danh sách Public (Active only) - Dùng cho POS/Booking
+  const adminRooms = ref([]) // Danh sách Admin (Full) - Dùng cho trang Quản lý
   const loading = ref(false)
   const error = ref(null)
 
@@ -92,7 +92,8 @@ export const useRoomStore = defineStore('room', () => {
    * Xóa phòng
    */
   async function deleteRoomAction(id, currentStoreId = null) {
-    if (!confirm('Bạn có chắc chắn muốn xóa khu vực này? Các bàn bên trong cũng sẽ bị ảnh hưởng.')) return
+    if (!confirm('Bạn có chắc chắn muốn xóa khu vực này? Các bàn bên trong cũng sẽ bị ảnh hưởng.'))
+      return
 
     loading.value = true
     error.value = null
@@ -119,6 +120,6 @@ export const useRoomStore = defineStore('room', () => {
     fetchAdminRooms,
     createRoomAction,
     updateRoomAction,
-    deleteRoomAction
+    deleteRoomAction,
   }
 })

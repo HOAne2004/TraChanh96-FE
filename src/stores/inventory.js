@@ -20,7 +20,7 @@ export const useInventoryStore = defineStore('inventory', () => {
     // return inventories.value.filter(item => item.isLowStock)
 
     // Hoặc nếu muốn tự tính ở FE (ví dụ < 10):
-    return inventories.value.filter(item => item.quantity < 10)
+    return inventories.value.filter((item) => item.quantity < 10)
   })
 
   // --- ACTIONS ---
@@ -110,6 +110,6 @@ export const useInventoryStore = defineStore('inventory', () => {
     fetchInventories,
     createInventoryAction,
     updateInventoryAction,
-    deleteInventoryAction
+    deleteInventoryAction,
   }
 })

@@ -23,7 +23,9 @@ onMounted(async () => {
 const sortedNews = computed(() => {
   if (!publishedNews.value) return []
   // Sắp xếp tất cả tin tức theo ngày (từ mới nhất)
-  return [...publishedNews.value].sort((a, b) => new Date(b.publishedDate) - new Date(a.publishedDate))
+  return [...publishedNews.value].sort(
+    (a, b) => new Date(b.publishedDate) - new Date(a.publishedDate),
+  )
 })
 
 // 1. Bài viết nổi bật (Bài mới nhất)
@@ -66,19 +68,19 @@ const showLess = () => {
 // 4. Xử lý nội dung mô tả cho bài nổi bật (Loại bỏ HTML tag)
 const plainDescription = computed(() => {
   const article = featuredArticle.value
-  if (!article) return ""
+  if (!article) return ''
 
   // Nếu có SEO Description thì dùng luôn
   if (article.seoDescription) return article.seoDescription
 
   // Nếu không, lấy Content và strip HTML tags
   if (article.content) {
-    const tmp = document.createElement("DIV")
+    const tmp = document.createElement('DIV')
     tmp.innerHTML = article.content
-    const text = tmp.textContent || tmp.innerText || ""
+    const text = tmp.textContent || tmp.innerText || ''
     return text
   }
-  return "Đang cập nhật..."
+  return 'Đang cập nhật...'
 })
 </script>
 
@@ -147,7 +149,6 @@ const plainDescription = computed(() => {
 
       <Button v-if="hasMore" @click="loadMore" label="Xem thêm" variant="primary" />
     </div>
-
   </main>
 </template>
 
