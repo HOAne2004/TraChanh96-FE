@@ -1,10 +1,10 @@
 <script setup>
 import { onMounted, computed, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useOrderStore } from '@/stores/order'
+import { useOrderStore } from '@/stores/sales/order.store'
 import { ORDER_STATUS, ORDER_TYPE } from '@/constants/order.constants'
 import { formatPrice } from '@/utils/formatters'
-import { useToastStore } from '@/stores/toast'
+import { useToastStore } from '@/stores/system/toast.store'
 
 const orderStore = useOrderStore()
 const toastStore = useToastStore()

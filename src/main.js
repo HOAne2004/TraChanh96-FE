@@ -2,7 +2,7 @@ import './assets/styles/main.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import { useUserStore } from '@/stores/user'
+import { useUserStore } from '@/stores/identity/user.store'
 
 import App from './App.vue'
 import router from './router'

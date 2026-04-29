@@ -1,12 +1,12 @@
 <script setup>
 import { computed, onMounted, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { useNewsStore } from '@/stores/news'
+import { useNewsStore } from '@/stores/marketing/news.store'
 import { storeToRefs } from 'pinia'
 import { resolveImage } from '@/utils/image'
 
 // Components
-import NavLink from '@/components/common/NavLink.vue'
+import NavLink from '@/components/ui/NavLink.vue'
 import defaultNewsImage from '@/assets/images/others/default-drink.png' // Hoặc ảnh default tin tức khác
 import CommentSection from '@/components/customer/comment/CommentSection.vue'
 

@@ -1,10 +1,10 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { useCartStore } from '@/stores/cart'
-import { useUserStore } from '@/stores/user'
+import { useCartStore } from '@/stores/sales/cart.store'
+import { useUserStore } from '@/stores/identity/user.store'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
-import { useToastStore } from '@/stores/toast'
+import { useToastStore } from '@/stores/system/toast.store'
 
 import CartItemList from '@/components/customer/cart/CartItemList.vue'
 import CartSummaryPanel from '@/components/customer/cart/CartSummaryPanel.vue'

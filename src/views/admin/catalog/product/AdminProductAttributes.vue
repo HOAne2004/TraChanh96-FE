@@ -1,5 +1,5 @@
 <script setup>
-import SizeManager from '@/components/admin/catalog/product/SizeManager.vue'
+import SizeManager from '@/components/admin/catalog/options/SizeManager.vue'
 // Sau này thêm: import ToppingManager from ...
 </script>
 

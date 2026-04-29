@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, reactive, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useReviewStore } from '@/stores/review'
+import { useReviewStore } from '@/stores/catalog/review.store'
 import { formatDate } from '@/utils/formatters'
 import { getReviewStatusConfig, getReviewStatusOptions } from '@/constants/review.constants'
 

@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 
 import AdminDataTable from '@/components/admin/common/AdminDataTable.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
-import FeatureUnderConstruction from '@/components/common/FeatureUnderConstruction.vue'
+import FeatureUnderConstruction from '@/components/ui/FeatureUnderConstruction.vue'
 </script>
 <template>
   <div>

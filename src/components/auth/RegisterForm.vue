@@ -1,8 +1,8 @@
 <script setup>
 import { ref, reactive } from 'vue'
-import { useUserStore } from '@/stores/user'
+import { useUserStore } from '@/stores/identity/user.store'
 import { useRouter, useRoute } from 'vue-router'
-import { useToastStore } from '@/stores/toast'
+import { useToastStore } from '@/stores/system/toast.store'
 
 const router = useRouter()
 const route = useRoute()

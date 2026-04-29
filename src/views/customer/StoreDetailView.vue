@@ -1,10 +1,10 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { useStoreStore } from '@/stores/store'
+import { useStoreStore } from '@/stores/store-operations/store.store'
 import { storeToRefs } from 'pinia'
-import NavLink from '@/components/common/NavLink.vue'
-import ProductCard from '@/components/customer/card/ProductCard.vue'
+import NavLink from '@/components/ui/NavLink.vue'
+import ProductCard from '@/components/customer/catalog/ProductCard.vue'
 import defaultStoreImg from '@/assets/images/others/default-store.png'
 
 // 👇 1. KHÔI PHỤC PROPS (Cho Admin Preview)

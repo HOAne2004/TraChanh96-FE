@@ -1,5 +1,5 @@
 <script setup>
-import { useModalStore } from '@/stores/modal'
+import { useModalStore } from '@/stores/system/modal.store'
 import { useRouter, useRoute } from 'vue-router'
 import LoginForm from './LoginForm.vue'
 

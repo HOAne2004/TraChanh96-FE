@@ -1,10 +1,10 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useStoreStore } from '@/stores/store'
-import { useBrandStore } from '@/stores/brand'
-import { useToastStore } from '@/stores/toast'
-import { useUploadStore } from '@/stores/upload'
+import { useStoreStore } from '@/stores/store-operations/store.store'
+import { useBrandStore } from '@/stores/catalog/brand.store'
+import { useToastStore } from '@/stores/system/toast.store'
+import { useUploadStore } from '@/stores/system/upload.store'
 import addressService from '@/services/address.service'
 import { getStoreStatusOptions } from '@/constants/store.constant'
 

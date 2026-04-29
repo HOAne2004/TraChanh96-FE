@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
-import { useToastStore } from '@/stores/toast'
-import { useModalStore } from '@/stores/modal'
+import { useUserStore } from '@/stores/identity/user.store'
+import { useToastStore } from '@/stores/system/toast.store'
+import { useModalStore } from '@/stores/system/modal.store'
 import authService from '@/services/auth.service'
 import FormHeader from '@/components/admin/common/FormHeader.vue'
 import { USER_STATUS } from '@/constants/user.constants'

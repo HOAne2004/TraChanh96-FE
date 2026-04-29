@@ -1,9 +1,9 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useModalStore } from '@/stores/modal'
-import { useUserStore } from '@/stores/user'
-import { useCartStore } from '@/stores/cart'
+import { useModalStore } from '@/stores/system/modal.store'
+import { useUserStore } from '@/stores/identity/user.store'
+import { useCartStore } from '@/stores/sales/cart.store'
 import authService from '@/services/auth.service'
 
 const email = ref('')

@@ -1,11 +1,11 @@
 <script setup>
-import CustomerFooter from '@/components/customer/CustomerFooter.vue'
-import CustomerHeader from '@/components/customer/CustomerHeader.vue'
-import MobileMenuModal from '@/components/customer/MobileMenuModal.vue'
+import CustomerFooter from '@/components/layouts/customer/CustomerFooter.vue'
+import CustomerHeader from '@/components/layouts/customer/CustomerHeader.vue'
+import MobileMenuModal from '@/components/layouts/customer/MobileMenuModal.vue'
 import LoginModal from '@/components/auth/LoginModal.vue'
-import { useBrandStore } from '@/stores/brand'
-import { useCartStore } from '@/stores/cart'
-import { useUserStore } from '@/stores/user'
+import { useBrandStore } from '@/stores/catalog/brand.store'
+import { useCartStore } from '@/stores/sales/cart.store'
+import { useUserStore } from '@/stores/identity/user.store'
 import { onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 

@@ -1,12 +1,12 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useStoreStore } from '@/stores/store'
-import { useBrandStore } from '@/stores/brand'
+import { useStoreStore } from '@/stores/store-operations/store.store'
+import { useBrandStore } from '@/stores/catalog/brand.store'
 import { storeToRefs } from 'pinia'
 
 // Components
 import StoreCard from '@/components/customer/card/StoreCard.vue'
-import Button from '@/components/common/Button.vue'
+import Button from '@/components/ui/Button.vue'
 import CustomerEmptyState from '@/components/common/CustomerEmptyState.vue' // Import Empty State
 
 const storeStore = useStoreStore()

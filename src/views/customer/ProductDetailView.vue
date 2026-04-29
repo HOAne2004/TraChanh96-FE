@@ -4,24 +4,24 @@ import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 
 // Stores
-import { useProductStore } from '@/stores/product'
-import { useCartStore } from '@/stores/cart'
-import { useStoreStore } from '@/stores/store'
-import { useUserStore } from '@/stores/user'
-import { usePolicyStore } from '@/stores/policy'
-import { useToastStore } from '@/stores/toast'
-import { useSizeStore } from '@/stores/size'
-import { useReviewStore } from '@/stores/review'
+import { useProductStore } from '@/stores/catalog/product.store'
+import { useCartStore } from '@/stores/sales/cart.store'
+import { useStoreStore } from '@/stores/store-operations/store.store'
+import { useUserStore } from '@/stores/identity/user.store'
+import { usePolicyStore } from '@/stores/system/policy.store'
+import { useToastStore } from '@/stores/system/toast.store'
+import { useSizeStore } from '@/stores/catalog/size.store'
+import { useReviewStore } from '@/stores/catalog/review.store'
 // Constants
 import { SugarLevel, IceLevel } from '@/constants/enums'
 import { formatPrice } from '@/utils/formatters'
 
 // Components
-import NavLink from '@/components/common/NavLink.vue'
-import TitledContainer from '@/components/customer/TitledContainer.vue'
+import NavLink from '@/components/ui/NavLink.vue'
+import TitledContainer from '@/components/ui/TitledContainer.vue'
 import DeliveryInfor from '@/components/customer/DeliveryInfor.vue'
 import ReviewList from '@/components/customer/review/ReviewList.vue'
-import Button from '@/components/common/Button.vue'
+import Button from '@/components/ui/Button.vue'
 
 // Refactored Components
 import ProductGallery from '@/components/customer/product-detail/ProductGallery.vue'

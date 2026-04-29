@@ -1,8 +1,8 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
-import { useToastStore } from '@/stores/toast'
+import { useUserStore } from '@/stores/identity/user.store'
+import { useToastStore } from '@/stores/system/toast.store'
 import FormHeader from '@/components/admin/common/FormHeader.vue'
 
 const router = useRouter()

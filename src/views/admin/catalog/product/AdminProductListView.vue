@@ -15,8 +15,8 @@ import PageHeader from '@/components/admin/common/PageHeader.vue'
 import AdminPagination from '@/components/admin/common/AdminPagination.vue'
 import AdminDataTable from '@/components/admin/common/AdminDataTable.vue'
 
-import { useProductStore } from '@/stores/product'
-import { useModalStore } from '@/stores/modal'
+import { useProductStore } from '@/stores/catalog/product.store'
+import { useModalStore } from '@/stores/system/modal.store'
 import { formatPrice } from '@/utils/formatters'
 
 const router = useRouter()

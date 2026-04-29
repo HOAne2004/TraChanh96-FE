@@ -2,18 +2,18 @@
 import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useOrderStore } from '@/stores/order'
-import { useAdminStore } from '@/stores/admin'
+import { useOrderStore } from '@/stores/sales/order.store'
+import { useAdminStore } from '@/stores/identity/userManager.store'
 import { formatDate } from '@/utils/formatters'
 import { getOrderStatusConfig } from '@/constants/order.constants'
 import { USER_ROLE } from '@/constants/user.constants'
-import { useToastStore } from '@/stores/toast'
+import { useToastStore } from '@/stores/system/toast.store'
 
 import OrderCancelModal from '@/components/common/order/OrderCancelModal.vue'
 import OrderDetailItems from '@/components/common/order/OrderDetailItems.vue'
 import OrderSummaryCard from '@/components/common/order/OrderSummaryCard.vue'
 import OrderContactInfo from '@/components/common/order/OrderContactInfo.vue'
-import AdminOrderActions from '@/components/admin/sales/order/AdminOrderActions.vue'
+import AdminOrderActions from '@/components/admin/sales/AdminOrderActions.vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -3,17 +3,17 @@ import { computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 
 // Components
-import HeroCarousel from '@/components/customer/HeroCarousel.vue'
-import TitledContainer from '@/components/customer/TitledContainer.vue'
-import ProductCard from '@/components/customer/card/ProductCard.vue'
+import HeroCarousel from '@/components/customer/shared/HeroCarousel.vue'
+import TitledContainer from '@/components/ui/TitledContainer.vue'
+import ProductCard from '@/components/customer/catalog/ProductCard.vue'
 import NewsCard from '@/components/customer/card/NewsCard.vue'
 import StoreCard from '@/components/customer/card/StoreCard.vue'
 import CustomerEmptyState from '@/components/common/CustomerEmptyState.vue' // Import Empty State
 
 // Stores
-import { useProductStore } from '@/stores/product'
-import { useNewsStore } from '@/stores/news'
-import { useStoreStore } from '@/stores/store'
+import { useProductStore } from '@/stores/catalog/product.store'
+import { useNewsStore } from '@/stores/marketing/news.store'
+import { useStoreStore } from '@/stores/store-operations/store.store'
 
 const productStore = useProductStore()
 const newsStore = useNewsStore()

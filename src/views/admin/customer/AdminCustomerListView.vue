@@ -9,9 +9,9 @@ import AdminPagination from '@/components/admin/common/AdminPagination.vue'
 import AdminDataTable from '@/components/admin/common/AdminDataTable.vue'
 
 // Stores
-import { useUserStore } from '@/stores/user'
-import { useModalStore } from '@/stores/modal'
-import { useMembershipLevelStore } from '@/stores/membershipLevel' // 🟢 Import Store Hạng thành viên
+import { useUserStore } from '@/stores/identity/user.store'
+import { useModalStore } from '@/stores/system/modal.store'
+import { useMembershipLevelStore } from '@/stores/marketing/membershipLevel.store' // 🟢 Import Store Hạng thành viên
 
 // Utils & Constants
 import { formatDate } from '@/utils/formatters'

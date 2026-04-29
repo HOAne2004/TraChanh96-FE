@@ -2,9 +2,9 @@
 import { onMounted, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import { useOrderStore } from '@/stores/order'
-import { useAdminStore } from '@/stores/admin'
-import { useProductStore } from '@/stores/product'
+import { useOrderStore } from '@/stores/sales/order.store'
+import { useAdminStore } from '@/stores/identity/userManager.store'
+import { useProductStore } from '@/stores/catalog/product.store'
 import { formatPrice, formatCurrencyCompact, formatDate } from '@/utils/formatters' // Thêm formatDate
 
 // Constants

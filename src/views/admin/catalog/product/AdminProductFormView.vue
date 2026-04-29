@@ -2,13 +2,13 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useToastStore } from '@/stores/toast'
+import { useToastStore } from '@/stores/system/toast.store'
 
 // Stores
-import { useProductStore } from '@/stores/product'
-import { useCategoryStore } from '@/stores/category'
-import { useSizeStore } from '@/stores/size'
-import { useUploadStore } from '@/stores/upload'
+import { useProductStore } from '@/stores/catalog/product.store'
+import { useCategoryStore } from '@/stores/catalog/category.store'
+import { useSizeStore } from '@/stores/catalog/size.store'
+import { useUploadStore } from '@/stores/system/upload.store'
 
 // Utils
 import {

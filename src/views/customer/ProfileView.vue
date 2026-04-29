@@ -1,14 +1,14 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useUserStore } from '@/stores/user'
-import { useOrderStore } from '@/stores/order'
+import { useUserStore } from '@/stores/identity/user.store'
+import { useOrderStore } from '@/stores/sales/order.store'
 import { useRouter, useRoute } from 'vue-router'
 
 // Components
 import ProfileInfoForm from '@/components/customer/profile/ProfileInfoForm.vue'
 import ProfileOrdersHistory from '@/components/customer/profile/ProfileOrdersHistory.vue'
-import FeatureUnderConstruction from '@/components/common/FeatureUnderConstruction.vue'
+import FeatureUnderConstruction from '@/components/ui/FeatureUnderConstruction.vue'
 import ProfileSidebar from '@/components/customer/profile/ProfileSidebar.vue'
 const userStore = useUserStore()
 const orderStore = useOrderStore()

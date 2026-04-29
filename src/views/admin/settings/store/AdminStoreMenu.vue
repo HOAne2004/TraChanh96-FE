@@ -1,10 +1,10 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useBrandStore } from '@/stores/brand'
-import { useToastStore } from '@/stores/toast'
+import { useBrandStore } from '@/stores/catalog/brand.store'
+import { useToastStore } from '@/stores/system/toast.store'
 import { formatPrice } from '@/utils/formatters'
-import NavLink from '@/components/common/NavLink.vue'
+import NavLink from '@/components/ui/NavLink.vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useNotificationStore } from '@/stores/notification'
+import { useNotificationStore } from '@/stores/marketing/notification.store'
 
-import AdminSidebar from '@/components/admin/common/AdminSidebar.vue'
-import AdminHeader from '@/components/admin/common/AdminHeader.vue'
+import AdminSidebar from '@/components/layouts/admin/AdminSidebar.vue'
+import AdminHeader from '@/components/layouts/admin/AdminHeader.vue'
 
 const notificationStore = useNotificationStore()
 

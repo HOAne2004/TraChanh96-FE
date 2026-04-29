@@ -1,12 +1,12 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useNewsStore } from '@/stores/news'
+import { useNewsStore } from '@/stores/marketing/news.store'
 import { storeToRefs } from 'pinia'
 import { RouterLink } from 'vue-router'
 
 // Components
 import NewsCard from '@/components/customer/card/NewsCard.vue'
-import Button from '@/components/common/Button.vue'
+import Button from '@/components/ui/Button.vue'
 
 const newsStore = useNewsStore()
 const { publishedNews } = storeToRefs(newsStore)

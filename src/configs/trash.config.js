@@ -1,6 +1,6 @@
 // src/configs/trash.config.js
-import { useProductStore } from '@/stores/product'
-import { useOrderStore } from '@/stores/order'
+import { useProductStore } from '@/stores/catalog/product.store'
+import { useOrderStore } from '@/stores/sales/order.store'
 // Sau này import thêm: import { useUserStore } from '@/stores/user'
 
 export const TRASH_MODULES = {

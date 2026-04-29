@@ -2,10 +2,10 @@
 import { onMounted, reactive, watch } from 'vue' // Thêm reactive, watch
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useOrderStore } from '@/stores/order'
-import { useStoreStore } from '@/stores/store'
+import { useOrderStore } from '@/stores/sales/order.store'
+import { useStoreStore } from '@/stores/store-operations/store.store'
 import { formatDate, formatPrice } from '@/utils/formatters'
-import { useToastStore } from '@/stores/toast'
+import { useToastStore } from '@/stores/system/toast.store'
 import {
   getOrderStatusOptions,
   getOrderStatusConfig,

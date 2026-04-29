@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted, reactive, watch } from 'vue'
-import { useNotificationStore } from '@/stores/notification'
+import { useNotificationStore } from '@/stores/marketing/notification.store'
 import { storeToRefs } from 'pinia'
-import { useModalStore } from '@/stores/modal' // Giả sử dùng để show toast
+import { useModalStore } from '@/stores/system/modal.store' // Giả sử dùng để show toast
 
 // Enum mapping (Frontend)
 const NOTIFICATION_TYPES = [

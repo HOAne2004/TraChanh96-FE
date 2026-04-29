@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, onUnmounted } from 'vue'
-import { useNotificationStore } from '@/stores/notification'
-import { useUserStore } from '@/stores/user'
+import { useNotificationStore } from '@/stores/marketing/notification.store'
+import { useUserStore } from '@/stores/identity/user.store'
 
 // Import các component đã tách
 import StaffSidebar from '@/components/staff/common/StaffSidebar.vue'

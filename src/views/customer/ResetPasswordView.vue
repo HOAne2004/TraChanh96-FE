@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useModalStore } from '@/stores/modal'
+import { useModalStore } from '@/stores/system/modal.store'
 import authService from '@/services/auth.service'
 
 const route = useRoute()

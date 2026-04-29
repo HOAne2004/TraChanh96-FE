@@ -1,12 +1,12 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { usePosStore } from '@/stores/pos'
-import { useProductStore } from '@/stores/product'
-import { useCategoryStore } from '@/stores/category'
-import { useStoreStore } from '@/stores/store'
-import { useUserStore } from '@/stores/user'
-import { useToastStore } from '@/stores/toast'
-import { useModalStore } from '@/stores/modal'
+import { usePosStore } from '@/stores/sales/pos.store'
+import { useProductStore } from '@/stores/catalog/product.store'
+import { useCategoryStore } from '@/stores/catalog/category.store'
+import { useStoreStore } from '@/stores/store-operations/store.store'
+import { useUserStore } from '@/stores/identity/user.store'
+import { useToastStore } from '@/stores/system/toast.store'
+import { useModalStore } from '@/stores/system/modal.store'
 import { formatPrice } from '@/utils/formatters'
 import { resolveImage } from '@/utils/image'
 import { ORDER_TYPE } from '@/constants/order.constants'
@@ -14,10 +14,10 @@ import { SUGAR_LEVEL_UI, ICE_LEVEL_UI } from '@/constants/option.constants'
 import defaultDrink from '@/assets/images/others/default-drink.png'
 
 // Components
-import ProductOptionModal from '@/components/staff/pos/ProductOptionModal.vue'
+import ProductOptionModal from '@/components/staff/sales/ProductOptionModal.vue'
 import CustomerEmptyState from '@/components/common/CustomerEmptyState.vue'
-import PosPaymentModal from '@/components/staff/pos/PosPaymentModal.vue'
-import ReceiptTemplate from '@/components/staff/order/ReceiptTemplate.vue'
+import PosPaymentModal from '@/components/staff/sales/PosPaymentModal.vue'
+import ReceiptTemplate from '@/components/staff/sales/ReceiptTemplate.vue'
 // Stores
 const posStore = usePosStore()
 const productStore = useProductStore()

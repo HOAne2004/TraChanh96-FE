@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { useStoreStore } from '@/stores/store'
+import { useStoreStore } from '@/stores/store-operations/store.store'
 import { getStoreStatusOptions } from '@/constants/store.constant'
 
 // Components
@@ -11,8 +11,8 @@ import AdminPagination from '@/components/admin/common/AdminPagination.vue'
 
 // Icons & Utils
 //import { formatDate } from '@/utils/formatters' // Helper format giờ (nếu có)
-import { useToastStore } from '@/stores/toast'
-import { useModalStore } from '@/stores/modal'
+import { useToastStore } from '@/stores/system/toast.store'
+import { useModalStore } from '@/stores/system/modal.store'
 const router = useRouter()
 const storeStore = useStoreStore()
 const toastStore = useToastStore()

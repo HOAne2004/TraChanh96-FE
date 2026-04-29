@@ -1,8 +1,8 @@
 <script setup>
 import { onMounted } from 'vue'
-import { useUIStore } from '@/stores/uiStore'
-import { useUserStore } from '@/stores/user'
-import { useModalStore } from '@/stores/modal'
+import { useUIStore } from '@/stores/system/uiStore.store'
+import { useUserStore } from '@/stores/identity/user.store'
+import { useModalStore } from '@/stores/system/modal.store'
 import AppToast from '@/components/AppToast.vue'
 import GlobalModal from '@/components/GlobalModal.vue'
 

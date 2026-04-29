@@ -1,9 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 //import { useUIStore } from '@/stores/uiStore'
-import { useUserStore } from '@/stores/user'
-import { USER_ROLE } from '@/constants/user.constants'
-
-import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import { useUserStore } from '@/stores/identity/user.store'
 
 // User
 import { clientRoutes } from './client.routes'
