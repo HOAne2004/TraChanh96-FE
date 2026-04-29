@@ -6,10 +6,10 @@ import { useOrderStore } from '@/stores/sales/order.store'
 import { useRouter, useRoute } from 'vue-router'
 
 // Components
-import ProfileInfoForm from '@/components/customer/profile/ProfileInfoForm.vue'
-import ProfileOrdersHistory from '@/components/customer/profile/ProfileOrdersHistory.vue'
-import FeatureUnderConstruction from '@/components/ui/FeatureUnderConstruction.vue'
-import ProfileSidebar from '@/components/customer/profile/ProfileSidebar.vue'
+import ProfileInfoForm from '@/components/customer/users/ProfileInfoForm.vue'
+import ProfileOrdersHistory from '@/components/customer/users/ProfileOrdersHistory.vue'
+import FeatureUnderConstruction from '@/components/ui/FeaturePending.vue'
+import ProfileSidebar from '@/components/customer/users/ProfileSidebar.vue'
 const userStore = useUserStore()
 const orderStore = useOrderStore()
 const router = useRouter()

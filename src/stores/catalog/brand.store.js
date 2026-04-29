@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import brandService from '@/services/brand.service'
+import brandService from '@/services/catalog/brand.service'
 
 export const useBrandStore = defineStore('brand', () => {
   // --- STATE ---

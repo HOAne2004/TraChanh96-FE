@@ -5,8 +5,8 @@ import { storeToRefs } from 'pinia'
 import { RouterLink } from 'vue-router'
 
 // Components
-import NewsCard from '@/components/customer/card/NewsCard.vue'
-import Button from '@/components/ui/Button.vue'
+import NewsCard from '@/components/customer/marketing/NewsCard.vue'
+import Button from '@/components/ui/AppButton.vue'
 
 const newsStore = useNewsStore()
 const { publishedNews } = storeToRefs(newsStore)

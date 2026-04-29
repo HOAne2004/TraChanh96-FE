@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { resolveImage } from '@/utils/image'
 import defaultImage from '@/assets/images/others/default-drink.png'
-import StoreFilter from '@/components/customer/StoreFilter.vue'
+import StoreFilter from '@/components/customer/store-operations/StoreFilter.vue'
 
 const props = defineProps({
   product: { type: Object, required: true },

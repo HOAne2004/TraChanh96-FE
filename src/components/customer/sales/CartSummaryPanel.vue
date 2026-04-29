@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import Button from '@/components/ui/Button.vue'
+import Button from '@/components/ui/AppButton.vue'
 
 const props = defineProps({
   total: { type: Number, required: true },

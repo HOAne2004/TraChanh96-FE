@@ -1,7 +1,7 @@
 <script setup>
 import CustomerFooter from '@/components/layouts/customer/CustomerFooter.vue'
 import CustomerHeader from '@/components/layouts/customer/CustomerHeader.vue'
-import MobileMenuModal from '@/components/layouts/customer/MobileMenuModal.vue'
+import CustomerMobileMenu from '@/components/layouts/customer/CustomerMobileMenu.vue'
 import LoginModal from '@/components/auth/LoginModal.vue'
 import { useBrandStore } from '@/stores/catalog/brand.store'
 import { useCartStore } from '@/stores/sales/cart.store'
@@ -55,7 +55,7 @@ watch(isLoggedIn, () => {
 
     <!-- Footer -->
     <CustomerFooter class="mt-auto" :brand="brandStore.brand" />
-    <MobileMenuModal></MobileMenuModal>
+    <CustomerMobileMenu></CustomerMobileMenu>
     <LoginModal></LoginModal>
   </div>
 </template>

@@ -1,5 +1,5 @@
 // src/services/auth.service.js
-import api from './api/axiosClient'
+import api from '@/services/api/axiosClient'
 
 const URL = '/Auth'
 

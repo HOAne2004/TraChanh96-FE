@@ -3,7 +3,7 @@ import { ref, onMounted, reactive, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCategoryStore } from '@/stores/catalog/category.store'
 import { useToastStore } from '@/stores/system/toast.store'
-import AdminDataTable from '@/components/admin/common/AdminDataTable.vue'
+import AdminDataTable from '@/components/admin/shared/AdminDataTable.vue'
 import {
   PUBLIC_STATUS_UI,
   getPublicStatusOptions,

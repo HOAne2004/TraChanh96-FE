@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import { useReviewStore } from '@/stores/catalog/review.store'
 import { getReviewStatusOptions } from '@/constants/review.constants'
-import Button from '@/components/ui/Button.vue'
+import AppButton from '@/components/ui/AppButton.vue'
 
 const props = defineProps({
   isOpen: Boolean,
@@ -95,8 +95,8 @@ const handleSubmit = async () => {
       </div>
 
       <div class="mt-8 flex gap-3 justify-end">
-        <Button label="Hủy" variant="secondary" @click="$emit('close')" />
-        <Button
+        <AppButton label="Hủy" variant="secondary" @click="$emit('close')" />
+        <AppButton
           :label="reviewStore.submitting ? 'Đang lưu...' : 'Lưu thay đổi'"
           :disabled="reviewStore.submitting"
           @click="handleSubmit"

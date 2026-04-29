@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useModalStore } from '@/stores/system/modal.store'
-import authService from '@/services/auth.service'
+import authService from '@/services/identity/auth.service.js'
 
 const route = useRoute()
 const router = useRouter()

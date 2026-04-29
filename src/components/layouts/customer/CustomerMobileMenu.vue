@@ -4,7 +4,7 @@ import { useModalStore } from '@/stores/system/modal.store'
 import { useUserStore } from '@/stores/identity/user.store'
 import { useCartStore } from '@/stores/sales/cart.store'
 import { storeToRefs } from 'pinia'
-import NavLink from '@common/NavLink.vue'
+import NavLink from '@/components/ui/NavLink.vue'
 
 const modalStore = useModalStore()
 const userStore = useUserStore()

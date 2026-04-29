@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { formatDate, formatPrice } from '@/utils/formatters'
-import Button from '@/components/ui/Button.vue'
+import Button from '@/components/ui/AppButton.vue'
 import { ORDER_STATUS_UI } from '@/constants/order.constants'
 
 const props = defineProps({

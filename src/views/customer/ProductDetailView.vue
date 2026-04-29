@@ -19,14 +19,14 @@ import { formatPrice } from '@/utils/formatters'
 // Components
 import NavLink from '@/components/ui/NavLink.vue'
 import TitledContainer from '@/components/ui/TitledContainer.vue'
-import DeliveryInfor from '@/components/customer/DeliveryInfor.vue'
-import ReviewList from '@/components/customer/review/ReviewList.vue'
-import Button from '@/components/ui/Button.vue'
+import DeliveryInfor from '@/components/customer/users/DeliveryInfor.vue'
+import ReviewList from '@/components/customer/catalog/ReviewList.vue'
+import Button from '@/components/ui/AppButton.vue'
 
 // Refactored Components
-import ProductGallery from '@/components/customer/product-detail/ProductGallery.vue'
-import ProductSelectors from '@/components/customer/product-detail/ProductSelectors.vue'
-import ProductActions from '@/components/customer/product-detail/ProductActions.vue'
+import ProductGallery from '@/components/customer/catalog/ProductGallery.vue'
+import ProductSelectors from '@/components/customer/catalog/ProductSelectors.vue'
+import ProductActions from '@/components/customer/catalog/ProductActions.vue'
 
 const route = useRoute()
 const router = useRouter()

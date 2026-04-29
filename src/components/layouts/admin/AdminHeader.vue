@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/identity/user.store'
 import { storeToRefs } from 'pinia'
 
-import DarkMode from '@/components/ui/DarkMode.vue'
+import DarkMode from '@/components/ui/DarkModeToggle.vue'
 import NotificationDropdown from '@/components/customer/shared/NotificationDropdown.vue'
 
 defineEmits(['toggle-sidebar'])

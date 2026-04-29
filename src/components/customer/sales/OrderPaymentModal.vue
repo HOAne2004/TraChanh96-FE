@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { formatPrice } from '@/utils/formatters'
 import { useToastStore } from '@/stores/system/toast.store'
-import Button from '@/components/ui/Button.vue'
+import Button from '@/components/ui/AppButton.vue'
 
 const props = defineProps({
   show: Boolean,

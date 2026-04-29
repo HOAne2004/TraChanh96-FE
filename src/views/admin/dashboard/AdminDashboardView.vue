@@ -12,10 +12,10 @@ import { ORDER_STATUS, ORDER_STATUS_UI } from '@/constants/order.constants'
 import { USER_ROLE } from '@/constants/user.constants'
 
 // Components
-import StatCard from '@/components/admin/dashboard/StatCard.vue'
-import RevenueChart from '@/components/admin/dashboard/RevenueChart.vue'
-import TopProductsChart from '@/components/admin/dashboard/TopProductsChart.vue'
-import AdminDataTable from '@/components/admin/common/AdminDataTable.vue' // 👈 Dùng bảng Generic
+import StatCard from '@/components/admin/sales/AdminStatCard.vue'
+import RevenueChart from '@/components/admin/sales/AdminRevenueChart.vue'
+import TopProductsChart from '@/components/admin/sales/AdminTopProducts.vue'
+import AdminDataTable from '@/components/admin/shared/AdminDataTable.vue' // 👈 Dùng bảng Generic
 
 const router = useRouter()
 const orderStore = useOrderStore()

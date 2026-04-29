@@ -8,7 +8,7 @@ import { formatPrice, formatDate } from '@/utils/formatters'
 import { getOrderStatusConfig } from '@/constants/order.constants'
 import { getReviewStatusConfig } from '@/constants/review.constants'
 
-import AdminDataTable from '@/components/admin/common/AdminDataTable.vue'
+import AdminDataTable from '@/components/admin/shared/AdminDataTable.vue'
 
 const props = defineProps({
   userId: { type: Number, required: true },

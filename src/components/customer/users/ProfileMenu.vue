@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useModalStore } from '@/stores/system/modal.store'
 import { useUserStore } from '@/stores/identity/user.store'
-import ProfileSidebar from '@/components/customer/profile/ProfileSidebar.vue'
+import ProfileSidebar from '@/components/customer/users/ProfileSidebar.vue'
 
 const modalStore = useModalStore()
 const userStore = useUserStore()

@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useModalStore } from '@/stores/system/modal.store'
 import { useUserStore } from '@/stores/identity/user.store'
 import { useCartStore } from '@/stores/sales/cart.store'
-import authService from '@/services/auth.service'
+import authService from '@/services/identity/auth.service'
 
 const email = ref('')
 const password = ref('')

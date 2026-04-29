@@ -1,7 +1,7 @@
 // src/stores/address.js
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import addressService from '@/services/address.service'
+import addressService from '@/services/identity/address.service.js'
 import { useUserStore } from '@/stores/identity/user.store'
 
 export const useAddressStore = defineStore('address', () => {

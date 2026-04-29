@@ -5,9 +5,9 @@ import { useStoreStore } from '@/stores/store-operations/store.store'
 import { getStoreStatusOptions } from '@/constants/store.constant'
 
 // Components
-import PageHeader from '@/components/admin/common/PageHeader.vue'
-import AdminDataTable from '@/components/admin/common/AdminDataTable.vue'
-import AdminPagination from '@/components/admin/common/AdminPagination.vue'
+import PageHeader from '@/components/admin/shared/AdminPageHeader.vue'
+import AdminDataTable from '@/components/admin/shared/AdminDataTable.vue'
+import AdminPagination from '@/components/admin/shared/AdminPagination.vue'
 
 // Icons & Utils
 //import { formatDate } from '@/utils/formatters' // Helper format giờ (nếu có)

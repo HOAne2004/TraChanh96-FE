@@ -8,7 +8,7 @@ import { resolveImage } from '@/utils/image'
 // Components
 import NavLink from '@/components/ui/NavLink.vue'
 import defaultNewsImage from '@/assets/images/others/default-drink.png' // Hoặc ảnh default tin tức khác
-import CommentSection from '@/components/customer/comment/CommentSection.vue'
+import CommentSection from '@/components/customer/marketing/CommentSection.vue'
 
 const route = useRoute()
 const newsStore = useNewsStore()

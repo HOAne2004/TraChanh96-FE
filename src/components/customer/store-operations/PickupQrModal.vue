@@ -1,6 +1,6 @@
 <script setup>
 import QrcodeVue from 'qrcode.vue'
-import Button from '@/components/ui/Button.vue'
+import Button from '@/components/ui/AppButton.vue'
 
 defineProps({
   show: Boolean,

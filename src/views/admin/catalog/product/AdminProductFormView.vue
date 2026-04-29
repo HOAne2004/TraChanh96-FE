@@ -19,9 +19,9 @@ import {
 } from '@/constants/product.constants'
 
 // Components
-import AdminProductPreview from '@/components/admin/catalog/product/AdminProductPreview.vue'
-import AdminProductForm from '@/components/admin/catalog/product/AdminProductForm.vue'
-import FormHeader from '@/components/admin/common/FormHeader.vue'
+import AdminProductPreview from '@/components/admin/catalog/AdminProductPreview.vue'
+import AdminProductForm from '@/components/admin/catalog/AdminProductForm.vue'
+import FormHeader from '@/components/admin/shared/AdminFormHeader.vue'
 const route = useRoute()
 const router = useRouter()
 const toastStore = useToastStore()

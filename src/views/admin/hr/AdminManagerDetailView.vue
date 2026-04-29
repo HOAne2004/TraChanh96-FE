@@ -1,5 +1,5 @@
 <script setup>
-import FeatureUnderConstruction from '@/components/ui/FeatureUnderConstruction.vue'
+import FeatureUnderConstruction from '@/components/ui/FeaturePending.vue'
 </script>
 <template>
   <FeatureUnderConstruction

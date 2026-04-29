@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useModalStore } from '@/stores/system/modal.store'
-import authService from '@/services/auth.service'
+import authService from '@/services/identity/auth.service.js'
 import { CheckCircleIcon, XCircleIcon, ArrowRightIcon } from '@heroicons/vue/24/solid'
 
 const route = useRoute()

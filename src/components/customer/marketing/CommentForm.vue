@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useUserStore } from '@/stores/identity/user.store'
 import { useRouter } from 'vue-router'
-import Button from '@/components/ui/Button.vue'
+import Button from '@/components/ui/AppButton.vue'
 import { useModalStore } from '@/stores/system/modal.store'
 
 const modalStore = useModalStore()

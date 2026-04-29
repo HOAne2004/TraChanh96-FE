@@ -12,14 +12,14 @@ import api from '@/services/api/axiosClient'
 // Components
 import OrderTimeline from '@/components/customer/sales/OrderTimeline.vue'
 import OrderActionButtons from '@/components/customer/sales/OrderActionButtons.vue'
-import Button from '@/components/ui/Button.vue'
-import OrderCancelModal from '@/components/common/order/OrderCancelModal.vue'
-import OrderDetailItems from '@/components/common/order/OrderDetailItems.vue'
-import OrderSummaryCard from '@/components/common/order/OrderSummaryCard.vue'
-import OrderContactInfo from '@/components/common/order/OrderContactInfo.vue'
-import OrderPaymentModal from '@/components/common/order/OrderPaymentModal.vue'
+import Button from '@/components/ui/AppButton.vue'
+import OrderCancelModal from '@/components/customer/sales/OrderCancelModal.vue'
+import OrderDetailItems from '@/components/customer/sales/OrderDetailItems.vue'
+import OrderSummaryCard from '@/components/customer/sales/OrderSummaryCard.vue'
+import OrderContactInfo from '@/components/customer/sales/OrderContactInfo.vue'
+import OrderPaymentModal from '@/components/customer/sales/OrderPaymentModal.vue'
 import NavLink from '@/components/ui/NavLink.vue'
-import ReviewModal from '@/components/customer/review/ReviewModal.vue'
+import ReviewModal from '@/components/customer/catalog/ReviewModal.vue'
 
 const route = useRoute()
 const router = useRouter()

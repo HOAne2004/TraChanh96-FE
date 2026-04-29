@@ -1,7 +1,7 @@
 // src/stores/user.js
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import authService from '@/services/auth.service'
+import authService from '@/services/identity/auth.service'
 import userService from '@/services/identity/user.service'
 import router from '@/router'
 

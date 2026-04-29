@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import Button from '@/components/ui/Button.vue'
+import Button from '@/components/ui/AppButton.vue'
 import { formatPrice } from '@/utils/formatters'
 import { useModalStore } from '@/stores/system/modal.store'
 import { useToastStore } from '@/stores/system/toast.store'

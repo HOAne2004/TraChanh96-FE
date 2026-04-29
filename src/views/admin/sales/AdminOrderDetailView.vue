@@ -9,10 +9,10 @@ import { getOrderStatusConfig } from '@/constants/order.constants'
 import { USER_ROLE } from '@/constants/user.constants'
 import { useToastStore } from '@/stores/system/toast.store'
 
-import OrderCancelModal from '@/components/common/order/OrderCancelModal.vue'
-import OrderDetailItems from '@/components/common/order/OrderDetailItems.vue'
-import OrderSummaryCard from '@/components/common/order/OrderSummaryCard.vue'
-import OrderContactInfo from '@/components/common/order/OrderContactInfo.vue'
+import OrderCancelModal from '@/components/customer/sales/OrderCancelModal.vue'
+import OrderDetailItems from '@/components/customer/sales/OrderDetailItems.vue'
+import OrderSummaryCard from '@/components/customer/sales/OrderSummaryCard.vue'
+import OrderContactInfo from '@/components/customer/sales/OrderContactInfo.vue'
 import AdminOrderActions from '@/components/admin/sales/AdminOrderActions.vue'
 
 const route = useRoute()

@@ -2,7 +2,7 @@
 import { ref, watch, computed } from 'vue'
 import { useUserStore } from '@/stores/identity/user.store'
 import { useModalStore } from '@/stores/system/modal.store'
-import Button from '@/components/ui/Button.vue'
+import Button from '@/components/ui/AppButton.vue'
 import { formatPrice } from '@/utils/formatters'
 
 const userStore = useUserStore()

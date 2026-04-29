@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { CANCEL_REASON_UI } from '@/constants/order.constants' //
-import Button from '@/components/ui/Button.vue'
+import Button from '@/components/ui/AppButton.vue'
 
 const props = defineProps({
   show: { type: Boolean, default: false },

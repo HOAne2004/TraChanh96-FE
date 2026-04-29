@@ -1,8 +1,8 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { ORDER_STATUS } from '@/constants/order.constants'
-import Button from '@/components/ui/Button.vue'
-import PickupQrModal from '@/components/common/order/PickupQrModal.vue'
+import Button from '@/components/ui/AppButton.vue'
+import PickupQrModal from '@/components/customer/store-operations/PickupQrModal.vue'
 
 const props = defineProps({
   order: { type: Object, required: true },

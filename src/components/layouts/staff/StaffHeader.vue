@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/identity/user.store'
-import DarkMode from '@/components/ui/DarkMode.vue'
+import DarkMode from '@/components/ui/DarkModeToggle.vue'
 import NotificationDropdown from '@/components/customer/shared/NotificationDropdown.vue'
 
 const route = useRoute()

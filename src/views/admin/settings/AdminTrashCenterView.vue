@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { TRASH_MODULES } from '@/configs/trash.config' // 🟢 Import Config
 import { formatDate, formatPrice } from '@/utils/formatters'
-import AdminDataTable from '@/components/admin/common/AdminDataTable.vue'
+import AdminDataTable from '@/components/admin/shared/AdminDataTable.vue'
 import { useToastStore } from '@/stores/system/toast.store'
 
 // --- STATE ---

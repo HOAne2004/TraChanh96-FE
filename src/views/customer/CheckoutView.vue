@@ -19,14 +19,14 @@ import { useToastStore } from '@/stores/system/toast.store'
 import { useAddressStore } from '@/stores/identity/address.store'
 
 // --- COMPONENTS ---
-import OrderTypeSelector from '@/components/customer/checkout/OrderTypeSelector.vue'
-import CheckoutAddressSection from '@/components/customer/checkout/CheckoutAddressSection.vue'
-import StoreDistanceCard from '@/components/customer/checkout/StoreDistanceCard.vue'
+import OrderTypeSelector from '@/components/customer/sales/OrderTypeSelector.vue'
+import CheckoutAddressSection from '@/components/customer/sales/CheckoutAddressSection.vue'
+import StoreDistanceCard from '@/components/customer/store-operations/StoreDistanceCard.vue'
 import PickupTimeSelector from '@/components/customer/sales/PickupTimeSelector.vue'
-import CheckoutPaymentMethods from '@/components/customer/checkout/CheckoutPaymentMethods.vue'
-import CheckoutItemList from '@/components/customer/checkout/CheckoutItemList.vue'
-import OrderSummary from '@/components/customer/checkout/OrderSummary.vue'
-import CheckoutSubmitBar from '@/components/customer/checkout/CheckoutSubmitBar.vue'
+import CheckoutPaymentMethods from '@/components/customer/sales/CheckoutPaymentMethods.vue'
+import CheckoutItemList from '@/components/customer/sales/CheckoutItemList.vue'
+import OrderSummary from '@/components/customer/sales/OrderSummary.vue'
+import CheckoutSubmitBar from '@/components/customer/sales/CheckoutSubmitBar.vue'
 
 // --- INIT ---
 const router = useRouter()

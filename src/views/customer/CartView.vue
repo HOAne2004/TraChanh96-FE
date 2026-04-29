@@ -6,9 +6,9 @@ import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/system/toast.store'
 
-import CartItemList from '@/components/customer/cart/CartItemList.vue'
-import CartSummaryPanel from '@/components/customer/cart/CartSummaryPanel.vue'
-import CustomerEmptyState from '@/components/common/CustomerEmptyState.vue'
+import CartItemList from '@/components/customer/sales/CartItemList.vue'
+import CartSummaryPanel from '@/components/customer/sales/CartSummaryPanel.vue'
+import CustomerEmptyState from '@/components/ui/EmptyState.vue'
 
 const cartStore = useCartStore()
 const userStore = useUserStore()

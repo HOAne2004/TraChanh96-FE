@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import Button from '@/components/ui/Button.vue'
+import Button from '@/components/ui/AppButton.vue'
 
 // Import ảnh (Đảm bảo bạn đã tạo folder và thêm ảnh như bài trước)
 import imgCart from '@/assets/images/empty-states/empty-cart.png'

@@ -1,5 +1,5 @@
 // src/services/address.service.js
-import api from './api/axiosClient'
+import api from '@/services/api/axiosClient.js'
 const ENDPOINT = '/users/addresses'
 
 export default {

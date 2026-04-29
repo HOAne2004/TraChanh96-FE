@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import sizeService from '@/services/catalog/size.service'
-import { SUGAR_LEVELS, ICE_LEVELS } from '@/constants/productOptions'
+import { SUGAR_LEVELS, ICE_LEVELS } from '@/constants/option.constants.js'
 
 export const useOptionStore = defineStore('option', () => {
   // --- STATE ---

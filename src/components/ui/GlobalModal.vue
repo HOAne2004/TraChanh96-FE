@@ -17,9 +17,8 @@
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
 import { useModalStore } from '@/stores/system/modal.store'
-import AppModal from '@/components/AppModal.vue'
+import AppModal from '@/components/ui/AppModal.vue'
 
 const modal = useModalStore()
 </script>

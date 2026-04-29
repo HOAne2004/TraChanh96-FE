@@ -1,5 +1,5 @@
 <script setup>
-import AdminFilterBar from '@/components/admin/common/AdminFilterBar.vue'
+import AdminFilterBar from '@/components/admin/shared/AdminFilterBar.vue'
 const props = defineProps({
   title: { type: String, default: '' },
   description: { type: String, default: '' },

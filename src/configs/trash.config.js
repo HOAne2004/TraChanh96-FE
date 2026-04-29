@@ -1,7 +1,7 @@
 // src/configs/trash.config.js
 import { useProductStore } from '@/stores/catalog/product.store'
 import { useOrderStore } from '@/stores/sales/order.store'
-// Sau này import thêm: import { useUserStore } from '@/stores/user'
+// Sau này import thêm: import { useUserStore } from '@/stores/identity/user.store.js'
 
 export const TRASH_MODULES = {
   // 1. Cấu hình cho Sản phẩm

@@ -1,7 +1,7 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/identity/user.store'
-import DarkMode from '@/components/ui/DarkMode.vue'
+import DarkMode from '@/components/ui/DarkModeToggle.vue'
 import { USER_ROLE } from '@/constants/user.constants'
 
 const props = defineProps({

@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import authService from '@/services/auth.service'
+import authService from '@/services/identity/auth.service.js'
 
 const email = ref('')
 const isLoading = ref(false)

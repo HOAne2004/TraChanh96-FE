@@ -4,14 +4,14 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/identity/user.store'
 import { useToastStore } from '@/stores/system/toast.store'
 import { useModalStore } from '@/stores/system/modal.store'
-import authService from '@/services/auth.service'
-import FormHeader from '@/components/admin/common/FormHeader.vue'
+import authService from '@/services/identity/auth.service.js'
+import FormHeader from '@/components/admin/shared/AdminFormHeader.vue'
 import { USER_STATUS } from '@/constants/user.constants'
 
 // 🟢 Đảm bảo đường dẫn này đúng với cấu trúc folder của bạn
-import CustomerProfileCard from '@/components/admin/users/CustomerProfileCard.vue'
-import CustomerMembershipCard from '@/components/admin/users/CustomerMembershipCard.vue'
-import CustomerActivityTabs from '@/components/admin/users/CustomerActivityTabs.vue'
+import CustomerProfileCard from '@/components/admin/users/AdminCustomerProfile.vue'
+import CustomerMembershipCard from '@/components/admin/users/AdminCustomerMembership.vue'
+import CustomerActivityTabs from '@/components/admin/users/AdminCustomerActivity.vue'
 
 const route = useRoute()
 const router = useRouter()

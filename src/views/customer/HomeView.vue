@@ -6,9 +6,9 @@ import { storeToRefs } from 'pinia'
 import HeroCarousel from '@/components/customer/shared/HeroCarousel.vue'
 import TitledContainer from '@/components/ui/TitledContainer.vue'
 import ProductCard from '@/components/customer/catalog/ProductCard.vue'
-import NewsCard from '@/components/customer/card/NewsCard.vue'
-import StoreCard from '@/components/customer/card/StoreCard.vue'
-import CustomerEmptyState from '@/components/common/CustomerEmptyState.vue' // Import Empty State
+import NewsCard from '@/components/customer/marketing/NewsCard.vue'
+import StoreCard from '@/components/customer/store-operations/StoreCard.vue'
+import CustomerEmptyState from '@/components/ui/EmptyState.vue' // Import Empty State
 
 // Stores
 import { useProductStore } from '@/stores/catalog/product.store'

@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import { useReviewStore } from '@/stores/catalog/review.store'
 import { useUploadStore } from '@/stores/system/upload.store'
-import Button from '@/components/ui/Button.vue'
+import Button from '@/components/ui/AppButton.vue'
 
 // Props nhận vào từ trang Order
 const props = defineProps({

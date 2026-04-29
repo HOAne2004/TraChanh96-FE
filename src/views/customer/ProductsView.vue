@@ -4,11 +4,11 @@ import { storeToRefs } from 'pinia'
 import { useProductStore } from '@/stores/catalog/product.store'
 import { useStoreStore } from '@/stores/store-operations/store.store'
 
-import ProductFilter from '@/components/customer/ProductFilter.vue'
+import ProductFilter from '@/components/customer/catalog/ProductFilter.vue'
 import TitledContainer from '@/components/ui/TitledContainer.vue'
 import ProductCard from '@/components/customer/catalog/ProductCard.vue'
-import CustomerEmptyState from '@/components/common/CustomerEmptyState.vue'
-import StoreFilter from '@/components/customer/StoreFilter.vue'
+import CustomerEmptyState from '@/components/ui/EmptyState.vue'
+import StoreFilter from '@/components/customer/store-operations/StoreFilter.vue'
 
 const productStore = useProductStore()
 const storeStore = useStoreStore() // 3. Init

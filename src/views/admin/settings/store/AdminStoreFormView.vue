@@ -5,13 +5,13 @@ import { useStoreStore } from '@/stores/store-operations/store.store'
 import { useBrandStore } from '@/stores/catalog/brand.store'
 import { useToastStore } from '@/stores/system/toast.store'
 import { useUploadStore } from '@/stores/system/upload.store'
-import addressService from '@/services/address.service'
+import addressService from '@/services/identity/address.service.js'
 import { getStoreStatusOptions } from '@/constants/store.constant'
 
 // Components
-import AdminStoreForm from '@/components/admin/settings/store/AdminStoreForm.vue'
-import StorePreviewPanel from '@/components/admin/settings/store/StorePreviewPanel.vue'
-import AddressFormModal from '@/components/common/AddressFormModal.vue'
+import AdminStoreForm from '@/components/admin/store-operations/AdminStoreForm.vue'
+import StorePreviewPanel from '@/components/admin/store-operations/AdminStorePreview.vue'
+import AddressFormModal from '@/components/customer/users/AddressFormModal.vue'
 
 const route = useRoute()
 const router = useRouter()

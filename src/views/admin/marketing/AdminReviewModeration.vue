@@ -6,10 +6,10 @@ import { formatDate } from '@/utils/formatters'
 import { getReviewStatusConfig, getReviewStatusOptions } from '@/constants/review.constants'
 
 // Import Shared Components
-import PageHeader from '@/components/admin/common/PageHeader.vue'
-import AdminDataTable from '@/components/admin/common/AdminDataTable.vue'
-import AdminPagination from '@/components/admin/common/AdminPagination.vue'
-import AdminReviewModal from '@/components/admin/marketing/AdminReviewModal.vue'
+import PageHeader from '@/components/admin/shared/AdminPageHeader.vue'
+import AdminDataTable from '@/components/admin/shared/AdminDataTable.vue'
+import AdminPagination from '@/components/admin/shared/AdminPagination.vue'
+import AdminReviewModal from '@/components/admin/marketing/AdminReviewModerationModal.vue'
 
 // Init Store
 const reviewStore = useReviewStore()

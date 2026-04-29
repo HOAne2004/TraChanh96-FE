@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-//import { useUIStore } from '@/stores/uiStore'
+//import { useUIStore } from '@/stores/system/uiStore.store.js'
 import { useUserStore } from '@/stores/identity/user.store'
 
 // User

@@ -5,7 +5,7 @@ import { useUserStore } from '@/stores/identity/user.store'
 import { useModalStore } from '@/stores/system/modal.store'
 import { useAddressStore } from '@/stores/identity/address.store'
 import { calculateDistance, formatDistance } from '@/utils/distance'
-import AddressFormModal from '@/components/common/AddressFormModal.vue'
+import AddressFormModal from '@/components/customer/users/AddressFormModal.vue'
 
 // 🟢 1. KHAI BÁO PROPS & EMIT TƯỜNG MINH
 const props = defineProps({

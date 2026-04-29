@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useProductStore } from '@/stores/catalog/product.store'
-//import Button from '../common/Button.vue'
+//import Button from '@/components/ui/AppButton.vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()

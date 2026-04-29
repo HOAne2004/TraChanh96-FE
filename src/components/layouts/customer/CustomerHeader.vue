@@ -10,12 +10,12 @@ import { useUserStore } from '@/stores/identity/user.store'
 import { useNotificationStore } from '@/stores/marketing/notification.store'
 
 // Components
-import SearchBar from '@customer/SearchBar.vue'
-import NavLink from '@common/NavLink.vue'
+import SearchBar from '@/components/customer/shared/SearchBar.vue'
+import NavLink from '@/components/ui/NavLink.vue'
 import LoginModal from '@/components/auth/LoginModal.vue'
 import logoHeader from '@logo/favicon.png'
-import Button from '@common/Button.vue'
-import ProfileMenu from '@customer/profile/ProfileMenu.vue'
+import Button from '@/components/ui/AppButton.vue'
+import ProfileMenu from '@/components/customer/users/ProfileMenu.vue'
 // 👇 Import component chuông thông báo (Đường dẫn tùy nơi bạn lưu file)
 import NotificationDropdown from '@/components/customer/shared/NotificationDropdown.vue'
 

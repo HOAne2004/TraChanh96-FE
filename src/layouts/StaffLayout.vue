@@ -4,8 +4,8 @@ import { useNotificationStore } from '@/stores/marketing/notification.store'
 import { useUserStore } from '@/stores/identity/user.store'
 
 // Import các component đã tách
-import StaffSidebar from '@/components/staff/common/StaffSidebar.vue'
-import StaffHeader from '@/components/staff/common/StaffHeader.vue'
+import StaffSidebar from '@/components/layouts/staff/StaffSidebar.vue'
+import StaffHeader from '@/components/layouts/staff/StaffHeader.vue'
 
 const userStore = useUserStore()
 const notificationStore = useNotificationStore()

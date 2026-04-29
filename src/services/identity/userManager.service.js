@@ -1,7 +1,7 @@
 // src/services/admin.service.js
 import api from '../api/axiosClient'
 
-const ENDPOINT = '/admin'
+const ENDPOINT = '/userManager'
 export default {
   /**
    * Lấy danh sách tất cả người dùng

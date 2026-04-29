@@ -11,9 +11,9 @@ import {
   getProductTypeConfig, // 🟢 Import mới (để tô màu cột Type nếu cần)
 } from '@/constants/product.constants'
 
-import PageHeader from '@/components/admin/common/PageHeader.vue'
-import AdminPagination from '@/components/admin/common/AdminPagination.vue'
-import AdminDataTable from '@/components/admin/common/AdminDataTable.vue'
+import PageHeader from '@/components/admin/shared/AdminPageHeader.vue'
+import AdminPagination from '@/components/admin/shared/AdminPagination.vue'
+import AdminDataTable from '@/components/admin/shared/AdminDataTable.vue'
 
 import { useProductStore } from '@/stores/catalog/product.store'
 import { useModalStore } from '@/stores/system/modal.store'

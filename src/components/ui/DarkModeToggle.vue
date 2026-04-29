@@ -1,6 +1,6 @@
 <script setup>
 import { useUIStore } from '@/stores/system/uiStore.store'
-import Button from '@/components/ui/Button.vue'
+import Button from '@/components/ui/AppButton.vue'
 import { ref, onMounted } from 'vue'
 
 const ui = useUIStore()

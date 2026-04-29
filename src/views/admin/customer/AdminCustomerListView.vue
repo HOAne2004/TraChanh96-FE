@@ -4,9 +4,9 @@ import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 
 // Components
-import PageHeader from '@/components/admin/common/PageHeader.vue'
-import AdminPagination from '@/components/admin/common/AdminPagination.vue'
-import AdminDataTable from '@/components/admin/common/AdminDataTable.vue'
+import PageHeader from '@/components/admin/shared/AdminPageHeader.vue'
+import AdminPagination from '@/components/admin/shared/AdminPagination.vue'
+import AdminDataTable from '@/components/admin/shared/AdminDataTable.vue'
 
 // Stores
 import { useUserStore } from '@/stores/identity/user.store'

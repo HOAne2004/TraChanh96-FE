@@ -14,8 +14,8 @@ import { SUGAR_LEVEL_UI, ICE_LEVEL_UI } from '@/constants/option.constants'
 import defaultDrink from '@/assets/images/others/default-drink.png'
 
 // Components
-import ProductOptionModal from '@/components/staff/sales/ProductOptionModal.vue'
-import CustomerEmptyState from '@/components/common/CustomerEmptyState.vue'
+import ProductOptionModal from '@/components/staff/sales/PosProductOption.vue'
+import CustomerEmptyState from '@/components/ui/EmptyState.vue'
 import PosPaymentModal from '@/components/staff/sales/PosPaymentModal.vue'
 import ReceiptTemplate from '@/components/staff/sales/ReceiptTemplate.vue'
 // Stores
