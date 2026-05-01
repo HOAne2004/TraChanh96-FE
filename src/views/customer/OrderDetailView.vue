@@ -27,13 +27,12 @@ const orderStore = useOrderStore()
 const modalStore = useModalStore()
 const toastStore = useToastStore()
 const notificationStore = useNotificationStore()
-const { currentOrder, loading, error, isProcessingPayment } = storeToRefs(orderStore)
+const { currentOrder, loading, error } = storeToRefs(orderStore)
 
 // State xử lý
 const showCancelModal = ref(false)
 const isCancelling = ref(false)
 const showPaymentModal = ref(false)
-const isPaymentPendingLocal = ref(false)
 
 // State mới cho Review
 const showReviewModal = ref(false)
@@ -63,13 +62,6 @@ const onReviewSuccess = async () => {
 }
 
 // --- COMPUTED ---
-
-const isBankingUnpaid = computed(() => {
-  const order = currentOrder.value
-  if (!order) return false
-  const isBanking = order.paymentMethod?.bankAccountNumber && order.paymentMethod?.bankName
-  return !order.isPaid && order.status !== ORDER_STATUS.CANCELLED && isBanking
-})
 
 const statusMeta = computed(() => {
   if (!currentOrder.value) return {}
@@ -148,11 +140,6 @@ const handlePayment = async () => {
   }
 }
 
-const onPaymentConfirm = () => {
-  showPaymentModal.value = false
-  isPaymentPendingLocal.value = true
-  toastStore.show({ type: 'info', message: 'Đã gửi yêu cầu. Vui lòng chờ nhân viên xác nhận.' })
-}
 
 // --- LOGIC BỘ ĐẾM NGƯỢC (AUTO CANCEL) ---
 const timeLeft = ref('')
@@ -432,7 +419,6 @@ onUnmounted(() => {
       :show="showPaymentModal"
       :order="currentOrder"
       @close="showPaymentModal = false"
-      @confirm="onPaymentConfirm"
     />
     <ReviewModal
       v-if="currentOrder"

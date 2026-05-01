@@ -3,6 +3,8 @@ import CustomerFooter from '@/components/layouts/customer/CustomerFooter.vue'
 import CustomerHeader from '@/components/layouts/customer/CustomerHeader.vue'
 import CustomerMobileMenu from '@/components/layouts/customer/CustomerMobileMenu.vue'
 import LoginModal from '@/components/auth/LoginModal.vue'
+import AIChatBox from '@/components/assistant/AIChatBox.vue'
+
 import { useBrandStore } from '@/stores/catalog/brand.store'
 import { useCartStore } from '@/stores/sales/cart.store'
 import { useUserStore } from '@/stores/identity/user.store'
@@ -57,5 +59,6 @@ watch(isLoggedIn, () => {
     <CustomerFooter class="mt-auto" :brand="brandStore.brand" />
     <CustomerMobileMenu></CustomerMobileMenu>
     <LoginModal></LoginModal>
+    <AIChatBox></AIChatBox>
   </div>
 </template>

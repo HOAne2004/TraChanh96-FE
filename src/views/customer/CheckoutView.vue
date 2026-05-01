@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
 
@@ -17,6 +17,7 @@ import { usePaymentMethodStore } from '@/stores/sales/paymentMethod.store'
 import { useUserVoucherStore } from '@/stores/marketing/userVoucher.store'
 import { useToastStore } from '@/stores/system/toast.store'
 import { useAddressStore } from '@/stores/identity/address.store'
+import { useNotificationStore } from '@/stores/marketing/notification.store'
 
 // --- COMPONENTS ---
 import OrderTypeSelector from '@/components/customer/sales/OrderTypeSelector.vue'
@@ -27,6 +28,7 @@ import CheckoutPaymentMethods from '@/components/customer/sales/CheckoutPaymentM
 import CheckoutItemList from '@/components/customer/sales/CheckoutItemList.vue'
 import OrderSummary from '@/components/customer/sales/OrderSummary.vue'
 import CheckoutSubmitBar from '@/components/customer/sales/CheckoutSubmitBar.vue'
+import OrderPaymentModal from '@/components/customer/sales/OrderPaymentModal.vue'
 
 // --- INIT ---
 const router = useRouter()
@@ -40,6 +42,7 @@ const storeStore = useStoreStore()
 const paymentMethodStore = usePaymentMethodStore()
 const voucherStore = useUserVoucherStore()
 const addressStore = useAddressStore()
+const notificationStore = useNotificationStore()
 
 const { cartItems: allCartItems } = storeToRefs(cartStore)
 const { isLoggedIn } = storeToRefs(userStore)
@@ -57,6 +60,8 @@ const userNotes = ref('')
 const isSubmitting = ref(false)
 const currentStore = ref(null) // Chi tiết store (lat, lng, shipping config)
 const distanceKm = ref(0) // Khoảng cách tính toán
+const showPaymentModal = ref(false)
+const createdOrder = ref(null)
 
 // --- COMPUTED: STORE & ITEMS ---
 const targetStoreId = computed(() => {
@@ -308,14 +313,39 @@ const handleSubmitOrder = async () => {
     voucherStore.removeAppliedVoucher()
     await cartStore.clearCartByStore(targetStoreId.value)
 
-    // Kiểm tra phương thức thanh toán
-    if (resultOrder?.paymentUrl) {
-      // Nếu có Link Redirect (VNPAY, Momo) -> Redirect luôn
-      window.location.href = resultOrder.paymentUrl
-    } else {
-      // COD hoặc chuyển khoản -> Chuyển sang trang chi tiết đơn (ở đó có modal QR)
-      router.replace({ name: 'order-detail', params: { code: resultOrder.orderCode } })
+    const pmId = selectedPaymentMethod.value?.id || selectedPaymentMethod.value?.paymentMethodId
+    const type = selectedPaymentMethod.value?.paymentType
+
+    if (type !== 'cash' && pmId) {
+      try {
+        const paymentResult = await orderStore.processOnlinePaymentAction(resultOrder.id, pmId)
+        if (paymentResult?.paymentUrl) {
+          window.location.href = paymentResult.paymentUrl
+          return
+        } else {
+          createdOrder.value = resultOrder
+          toastStore.show({ type: 'info', message: 'Vui lòng quét mã QR để thanh toán.' })
+          showPaymentModal.value = true
+          
+          if (notificationStore.connection) {
+            notificationStore.connection.on("PaymentSuccess", async (receivedOrderId) => {
+              if (createdOrder.value && createdOrder.value.id === receivedOrderId) {
+                toastStore.show({ type: 'success', message: 'Thanh toán thành công! Cảm ơn bạn.' })
+                showPaymentModal.value = false
+                router.replace({ name: 'order-detail', params: { code: createdOrder.value.orderCode } })
+              }
+            })
+          }
+          return
+        }
+      } catch (err) {
+        console.error(err)
+        toastStore.show({ type: 'error', message: 'Không thể khởi tạo thanh toán. Vui lòng thanh toán sau trong chi tiết đơn hàng.' })
+      }
     }
+
+    // COD hoặc lỗi khởi tạo thanh toán -> Chuyển sang trang chi tiết đơn
+    router.replace({ name: 'order-detail', params: { code: resultOrder.orderCode } })
   } catch (err) {
     console.error(err)
     const msg = err.response?.data?.message || 'Lỗi tạo đơn hàng'
@@ -324,6 +354,19 @@ const handleSubmitOrder = async () => {
     isSubmitting.value = false
   }
 }
+
+const handlePaymentModalDone = () => {
+  showPaymentModal.value = false
+  if (createdOrder.value?.orderCode) {
+    router.replace({ name: 'order-detail', params: { code: createdOrder.value.orderCode } })
+  }
+}
+
+onUnmounted(() => {
+  if (notificationStore.connection) {
+    notificationStore.connection.off('PaymentSuccess')
+  }
+})
 
 </script>
 
@@ -407,5 +450,11 @@ const handleSubmitOrder = async () => {
         </div>
       </div>
     </div>
+    <OrderPaymentModal
+      :show="showPaymentModal"
+      :order="createdOrder"
+      @close="handlePaymentModalDone"
+      @confirm="handlePaymentModalDone"
+    />
   </div>
 </template>

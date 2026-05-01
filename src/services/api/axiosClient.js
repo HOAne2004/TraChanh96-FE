@@ -1,4 +1,4 @@
-// src/services/axiosClient.js
+// src/services/api/axiosClient.js
 import axios from 'axios'
 import { useUserStore } from '@/stores/identity/user.store'
 import { useToastStore } from '@/stores/system/toast.store'
