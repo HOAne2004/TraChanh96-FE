@@ -8,83 +8,159 @@ const props = defineProps({
 })
 
 const normalizeStatus = (status) => {
-  let statusId = status
   if (typeof status === 'string') {
     const key = status.toUpperCase()
-    statusId = ORDER_STATUS[key] !== undefined ? ORDER_STATUS[key] : -1
-    if (key === 'PENDINGPAYMENT') statusId = ORDER_STATUS.PENDING_PAYMENT
+    if (key === 'PENDINGPAYMENT') return ORDER_STATUS.PENDING_PAYMENT
+    return ORDER_STATUS[key] !== undefined ? ORDER_STATUS[key] : status
   }
-
-  if (statusId === ORDER_STATUS.PENDING_PAYMENT) {
-    return ORDER_STATUS.NEW
-  }
-
-  return statusId
+  return status
 }
 
-const timelineSteps = computed(() => {
-  const commonSteps = [
-    ORDER_STATUS.NEW, // 0
-    ORDER_STATUS.CONFIRMED, // 1
-    ORDER_STATUS.PREPARING, // 2
-    ORDER_STATUS.READY, // 3
-  ]
-
-  if (props.orderType === 'AtCounter') {
-    return [...commonSteps, ORDER_STATUS.RECEIVED] // 4
-  }
-
-  // Default Delivery
-  return [...commonSteps, ORDER_STATUS.DELIVERING, ORDER_STATUS.COMPLETED] // 5, 6
+// Flatten PendingPayment -> NEW for timeline progress
+const displayStatus = computed(() => {
+  const s = normalizeStatus(props.currentStatus)
+  if (s === ORDER_STATUS.PENDING_PAYMENT) return ORDER_STATUS.NEW
+  return s
 })
 
-const isStepActive = (stepValue) => {
-  const currentId = normalizeStatus(props.currentStatus)
+const isPickup = computed(() => {
+  const t = String(props.orderType).toLowerCase()
+  return t === 'pickup' || t === '2'
+})
 
-  if (currentId === ORDER_STATUS.CANCELLED) return false
+const isAtCounter = computed(() => {
+  const t = String(props.orderType).toLowerCase()
+  return t === 'atcounter' || t === '3'
+})
 
-  const currentIndex = timelineSteps.value.indexOf(currentId)
-  const stepIndex = timelineSteps.value.indexOf(stepValue)
+// Mỗi step: { status, label, icon }
+const timelineSteps = computed(() => {
+  if (isPickup.value) {
+    // Luồng Đến lấy
+    return [
+      { status: ORDER_STATUS.PENDING_PAYMENT, label: 'Chờ TT' },
+      { status: ORDER_STATUS.CONFIRMED, label: 'Xác nhận' },
+      { status: ORDER_STATUS.PREPARING, label: 'Pha chế' },
+      { status: ORDER_STATUS.READY, label: 'Sẵn sàng' },
+      { status: ORDER_STATUS.RECEIVED, label: 'Đã lấy' },
+    ]
+  }
+  if (isAtCounter.value) {
+    // Luồng Tại quầy
+    return [
+      { status: ORDER_STATUS.NEW, label: 'Đặt đơn' },
+      { status: ORDER_STATUS.CONFIRMED, label: 'Xác nhận' },
+      { status: ORDER_STATUS.PREPARING, label: 'Pha chế' },
+      { status: ORDER_STATUS.READY, label: 'Sẵn sàng' },
+      { status: ORDER_STATUS.RECEIVED, label: 'Hoàn tất' },
+    ]
+  }
+  // Luồng Giao hàng (mặc định)
+  return [
+    { status: ORDER_STATUS.NEW, label: 'Đặt đơn' },
+    { status: ORDER_STATUS.CONFIRMED, label: 'Xác nhận' },
+    { status: ORDER_STATUS.PREPARING, label: 'Pha chế' },
+    { status: ORDER_STATUS.DELIVERING, label: 'Đang giao' },
+    { status: ORDER_STATUS.COMPLETED, label: 'Đã nhận' },
+  ]
+})
 
+const isCancelled = computed(() => {
+  const s = normalizeStatus(props.currentStatus)
+  return s === ORDER_STATUS.CANCELLED
+})
+
+const isStepActive = (stepStatus) => {
+  if (isCancelled.value) return false
+
+  const current = displayStatus.value
+  const steps = timelineSteps.value.map((s) => s.status)
+  const currentIndex = steps.indexOf(current)
+  const stepIndex = steps.indexOf(stepStatus)
+
+  // Nếu current không trong danh sách steps, dùng so sánh trực tiếp
   if (currentIndex === -1) {
-    return currentId >= stepValue
+    return current >= stepStatus
   }
 
   return stepIndex <= currentIndex
 }
+
+const isCurrentStep = (stepStatus) => {
+  if (isCancelled.value) return false
+  return displayStatus.value === stepStatus
+}
 </script>
 
 <template>
-  <div class="flex items-center justify-between w-full px-4 py-6">
+  <div class="px-2 py-4">
+    <!-- Cancelled Banner -->
     <div
-      v-for="(step, index) in timelineSteps"
-      :key="step"
-      class="relative flex flex-col items-center flex-1"
+      v-if="isCancelled"
+      class="flex items-center justify-center gap-2 py-3 px-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 font-semibold"
     >
-      <div
-        v-if="index !== 0"
-        class="absolute top-4 right-1/2 w-full h-1 -translate-y-1/2 transition-colors duration-300"
-        :class="isStepActive(step) ? 'bg-green-500' : 'bg-gray-200'"
-      ></div>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Đơn hàng đã bị hủy
+    </div>
 
+    <!-- Normal Timeline -->
+    <div v-else class="flex items-start justify-between w-full">
       <div
-        class="relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-300"
-        :class="
-          isStepActive(step)
-            ? 'bg-green-500 border-green-500 text-white scale-110'
-            : 'bg-white border-gray-300 text-gray-300'
-        "
+        v-for="(step, index) in timelineSteps"
+        :key="step.status"
+        class="relative flex flex-col items-center flex-1"
       >
-        <span v-if="isStepActive(step) && normalizeStatus(currentStatus) > step">✓</span>
-        <span v-else>{{ index + 1 }}</span>
-      </div>
+        <!-- Connector line -->
+        <div
+          v-if="index !== 0"
+          class="absolute top-4 right-1/2 w-full h-0.5 -translate-y-1/2 transition-colors duration-500"
+          :class="isStepActive(step.status) ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-600'"
+        />
 
-      <div
-        class="mt-2 text-xs font-medium text-center transition-colors duration-300"
-        :class="isStepActive(step) ? 'text-green-600 font-bold' : 'text-gray-400'"
-      >
-        {{ ORDER_STATUS_UI[step]?.label }}
+        <!-- Circle -->
+        <div
+          class="relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-300"
+          :class="[
+            isStepActive(step.status)
+              ? 'bg-green-500 border-green-500 text-white'
+              : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-300',
+            isCurrentStep(step.status) ? 'scale-125 shadow-lg shadow-green-200 dark:shadow-green-900/40' : '',
+          ]"
+        >
+          <svg
+            v-if="isStepActive(step.status) && !isCurrentStep(step.status)"
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+          <span v-else class="text-xs font-bold">{{ index + 1 }}</span>
+        </div>
+
+        <!-- Label -->
+        <div
+          class="mt-2 text-xs font-medium text-center leading-tight transition-colors duration-300 px-0.5"
+          :class="[
+            isStepActive(step.status) ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500',
+            isCurrentStep(step.status) ? 'font-bold' : '',
+          ]"
+        >
+          {{ step.label }}
+        </div>
       </div>
     </div>
+
+    <!-- Pickup note -->
+    <p
+      v-if="isPickup && !isCancelled"
+      class="mt-3 text-xs text-center text-blue-500 dark:text-blue-400"
+    >
+      🛍️ Đơn lấy tại cửa hàng — Mang mã QR đến nhận đồ khi trạng thái là "Sẵn sàng"
+    </p>
   </div>
 </template>
+

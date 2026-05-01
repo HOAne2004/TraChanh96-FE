@@ -1,6 +1,6 @@
-import api from '../api/axiosClient'
+import api from '@/services/api/axiosClient'
 
-const ENDPOINT = '/order-payment' // Hoặc endpoint tương ứng trong Controller Payment
+const ENDPOINT = '/order-payments'
 
 export default {
   /**

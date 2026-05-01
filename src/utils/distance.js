@@ -1,7 +1,9 @@
 export const calculateDistance = (lat1, lon1, lat2, lon2) => {
   if (!lat1 || !lat2 || !lon1 || !lon2) return 0
 
-  const R = 6731
+  const R = 6371 // Bán kính trái đất (km)
+  const ROAD_FACTOR = 1.35 // Hệ số đường bộ giống backend
+
   const dLat = (lat2 - lat1) * (Math.PI / 180)
   const dLon = (lon2 - lon1) * (Math.PI / 180)
 
@@ -12,9 +14,9 @@ export const calculateDistance = (lat1, lon1, lat2, lon2) => {
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  const distance = R * c
+  const airlineDistance = R * c
 
-  return distance
+  return airlineDistance * ROAD_FACTOR
 }
 
 export const formatDistance = (km) => {

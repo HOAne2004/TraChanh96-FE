@@ -2,6 +2,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import orderService from '@/services/sales/order.service'
+import orderPaymentService from '@/services/sales/orderPayment.service'
 
 export const useOrderStore = defineStore('order', () => {
   // --- STATE ---
@@ -10,6 +11,7 @@ export const useOrderStore = defineStore('order', () => {
   const stats = ref(null) // Thống kê nhanh (Dashboard)
   const shippingFee = ref(0) // 🟢 Chuyển từ computed sang ref
   const isCalculatingShip = ref(false)
+  const isProcessingPayment = ref(false)
 
   // State phân trang
   const pagination = ref({
@@ -312,6 +314,23 @@ export const useOrderStore = defineStore('order', () => {
       loading.value = false
     }
   }
+
+  /**
+   * Gọi API thanh toán online (VNPAY, Momo...)
+   */
+  async function processOnlinePaymentAction(orderId, paymentMethodId) {
+    isProcessingPayment.value = true
+    try {
+      const response = await orderPaymentService.createCharge({ orderId, paymentMethodId })
+      return response.data
+    } catch (err) {
+      console.error('Lỗi khi gọi API thanh toán online:', err)
+      throw err
+    } finally {
+      isProcessingPayment.value = false
+    }
+  }
+
   return {
     orders,
     currentOrder,
@@ -337,5 +356,7 @@ export const useOrderStore = defineStore('order', () => {
     restoreOrderAction,
     confirmPaymentAction,
     verifyPickupAction,
+    isProcessingPayment,
+    processOnlinePaymentAction,
   }
 })

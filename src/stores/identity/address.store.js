@@ -32,9 +32,14 @@ export const useAddressStore = defineStore('address', () => {
     loading.value = true
     try {
       const res = await addressService.getAll() // Gọi API User
-      addresses.value = res // Service đã .data rồi
+      let addressData = res
+      if (res && typeof res === 'object' && !Array.isArray(res)) {
+        addressData = res.data || res.items || []
+      }
+      addresses.value = addressData
     } catch (err) {
       console.error('Lỗi tải danh sách địa chỉ:', err)
+      addresses.value = []
     } finally {
       loading.value = false
     }
@@ -43,7 +48,11 @@ export const useAddressStore = defineStore('address', () => {
     loading.value = true
     try {
       const res = await addressService.getByUserId(userId)
-      addresses.value = res.data || res
+      let addressData = res
+      if (res && typeof res === 'object' && !Array.isArray(res)) {
+        addressData = res.data || res.items || []
+      }
+      addresses.value = addressData
     } catch (err) {
       console.error('Lỗi tải địa chỉ user:', err)
       addresses.value = []

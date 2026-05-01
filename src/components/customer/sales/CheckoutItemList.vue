@@ -4,6 +4,16 @@ defineProps({
   storeName: { type: String, required: true },
   formatCurrency: { type: Function, required: true },
 })
+
+const getItemUnitPrice = (item) => {
+  // basePrice là giá 1 ly (đơn giá, không nhân qty)
+  return item.basePrice || 0
+}
+
+const getItemTotalPrice = (item) => {
+  // finalPrice đã được backend tính sẵn = baseUnitPrice * qty + toppingPrice * toppingQty
+  return item.finalPrice || 0
+}
 </script>
 
 <template>
@@ -18,12 +28,12 @@ defineProps({
       class="flex justify-between text-sm py-2 border-b dark:border-gray-700"
     >
       <span class="w-2/3 truncate text-gray-700 dark:text-gray-300"
-        >{{ item.productName }} _ {{ formatCurrency(item.basePrice) }} / ly (x{{
+        >{{ item.productName }} _ {{ formatCurrency(getItemUnitPrice(item)) }} / ly (x{{
           item.quantity
         }})</span
       >
       <span class="w-1/3 text-right font-medium text-gray-900 dark:text-white">{{
-        formatCurrency(item.finalPrice)
+        formatCurrency(getItemTotalPrice(item))
       }}</span>
     </div>
     <div v-if="items.length === 0" class="text-center py-4 text-gray-500 dark:text-gray-400">

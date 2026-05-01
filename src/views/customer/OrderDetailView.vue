@@ -5,9 +5,9 @@ import { storeToRefs } from 'pinia'
 import { useOrderStore } from '@/stores/sales/order.store'
 import { useModalStore } from '@/stores/system/modal.store'
 import { useToastStore } from '@/stores/system/toast.store'
+import { useNotificationStore } from '@/stores/marketing/notification.store'
 import { formatDate } from '@/utils/formatters'
 import { ORDER_STATUS, getOrderStatusConfig, getOrderTypeConfig } from '@/constants/order.constants'
-import api from '@/services/api/axiosClient'
 
 // Components
 import OrderTimeline from '@/components/customer/sales/OrderTimeline.vue'
@@ -26,10 +26,10 @@ const router = useRouter()
 const orderStore = useOrderStore()
 const modalStore = useModalStore()
 const toastStore = useToastStore()
-const { currentOrder, loading, error } = storeToRefs(orderStore)
+const notificationStore = useNotificationStore()
+const { currentOrder, loading, error, isProcessingPayment } = storeToRefs(orderStore)
 
 // State xử lý
-const isProcessingPayment = ref(false)
 const showCancelModal = ref(false)
 const isCancelling = ref(false)
 const showPaymentModal = ref(false)
@@ -117,11 +117,8 @@ const handlePayment = async () => {
   // 1. Kiểm tra đơn hàng tồn tại
   if (!currentOrder.value) return
 
-  // 🟢 SỬA LỖI: Lấy PaymentMethodId an toàn
   // Ưu tiên lấy từ object lồng nhau (currentOrder.paymentMethod.id)
-  // Nếu null, thử lấy từ root (currentOrder.paymentMethodId) nếu DTO có trả về
   const pmId = currentOrder.value.paymentMethod?.id || currentOrder.value.paymentMethodId
-  // Nếu không tìm thấy ID phương thức thanh toán -> Báo lỗi và dừng
   if (!pmId) {
     toastStore.show({
       type: 'error',
@@ -130,31 +127,17 @@ const handlePayment = async () => {
     return
   }
 
-  // 2. Logic kiểm tra Banking (Dùng Optional Chaining ?. cho an toàn)
-  const type = currentOrder.value.paymentMethod?.paymentType
-
-  // Logic hiển thị Modal QR chuyển khoản thủ công
-  if (type === 'bankingTransfer' || isBankingUnpaid.value) {
-    showPaymentModal.value = true
-    return
-  }
-
-  // 3. Logic gọi API thanh toán Online (VNPay/Momo...)
-  isProcessingPayment.value = true
+  // Gọi API để báo Backend biết khách đang chuẩn bị thanh toán (tạo record Pending)
   try {
-    const response = await api.post('/order-payments/charge', {
-      orderId: currentOrder.value.id,
-      paymentMethodId: pmId, // 🟢 Sử dụng ID đã lấy an toàn ở trên
-    })
+    const result = await orderStore.processOnlinePaymentAction(currentOrder.value.id, pmId)
 
-    const result = response.data
-
-    if (result.paymentUrl) {
-      // Chuyển hướng sang trang thanh toán
+    if (result?.paymentUrl) {
+      // Có URL redirect (VNPAY, Momo...) → chuyển hướng
       window.location.href = result.paymentUrl
     } else {
-      toastStore.show({ type: 'success', message: 'Đã gửi yêu cầu thanh toán.' })
-      orderStore.fetchOrderDetail(currentOrder.value.orderCode)
+      // Không có URL → luồng VietQR tĩnh → hiển thị Modal QR
+      toastStore.show({ type: 'info', message: 'Vui lòng quét mã QR để thanh toán.' })
+      showPaymentModal.value = true
     }
   } catch (err) {
     console.error(err)
@@ -162,10 +145,9 @@ const handlePayment = async () => {
       type: 'error',
       message: err.response?.data?.message || 'Không thể khởi tạo thanh toán.',
     })
-  } finally {
-    isProcessingPayment.value = false
   }
 }
+
 const onPaymentConfirm = () => {
   showPaymentModal.value = false
   isPaymentPendingLocal.value = true
@@ -180,7 +162,6 @@ let timerInterval = null
 const startCountdown = () => {
   if (!currentOrder.value) return
 
-  // 🛠️ FIX TIMEZONE: Ép kiểu về UTC bằng cách thêm 'Z' nếu thiếu
   let dateStr = currentOrder.value.createdAt
   if (!dateStr.endsWith('Z')) {
     dateStr += 'Z'
@@ -189,17 +170,14 @@ const startCountdown = () => {
   const createdTime = new Date(dateStr).getTime()
   const expireTime = createdTime + 5 * 60 * 1000 // 5 phút
 
-  // Hàm tính toán
   const calculate = () => {
     const now = new Date().getTime()
     const distance = expireTime - now
 
     if (distance < 0) {
-      // Đã hết giờ
       if (timerInterval) clearInterval(timerInterval)
       timeLeft.value = '00:00'
       isExpired.value = true
-      // Không gọi API liên tục, chỉ đánh dấu expired
     } else {
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
       const seconds = Math.floor((distance % (1000 * 60)) / 1000)
@@ -207,21 +185,11 @@ const startCountdown = () => {
     }
   }
 
-  // Gọi ngay lần đầu tiên (không đợi 1s)
   calculate()
 
-  // Nếu chưa hết hạn thì mới chạy interval
   if (!isExpired.value) {
     timerInterval = setInterval(calculate, 1000)
   }
-  // console.log('--- DEBUG COUNTDOWN ---')
-  // console.log('Order Status:', currentOrder.value.status)
-  // console.log('Created At (Gốc):', currentOrder.value.createdAt)
-  // console.log('Created Time (Milisecond):', createdTime)
-  // console.log('Current Time (Milisecond):', now)
-  // console.log('Expire Time  (Milisecond):', expireTime)
-  // console.log('Distance (Còn lại):', expireTime - now)
-  // console.log('-----------------------')
 }
 
 const onCompleteOrder = async () => {
@@ -233,7 +201,6 @@ const onCompleteOrder = async () => {
   if (!isConfirmed) return
 
   try {
-    // Chỉ thay đổi text / giao diện thay vì gọi API update status vì trạng thái RECEIVED bên BE là trạng thái cuối, gọi thêm sẽ lỗi ngầm.
     if (currentOrder.value) {
       currentOrder.value.status = ORDER_STATUS.COMPLETED
     }
@@ -244,11 +211,49 @@ const onCompleteOrder = async () => {
   }
 }
 
-onUnmounted(() => {
-  if (timerInterval) clearInterval(timerInterval)
-})
+const handleSignalRNotification = async (notification) => {
+  if (
+    notification?.referenceId &&
+    currentOrder.value?.orderCode &&
+    notification.referenceId === currentOrder.value.orderCode
+  ) {
+    const updatedOrder = await orderStore.fetchOrderDetail(currentOrder.value.orderCode)
+    if (updatedOrder && updatedOrder.status === ORDER_STATUS.CANCELLED) {
+      if (timerInterval) clearInterval(timerInterval)
+    }
+  }
+}
 
+// --- LIFECYCLE HOOK MỚI ---
 onMounted(async () => {
+  if (notificationStore.connection) {
+    notificationStore.connection.on('ReceiveNotification', handleSignalRNotification)
+  }
+
+  // 1. Đón kết quả trả về từ VNPay (query trên URL)
+  const paymentStatus = route.query.payment
+  if (paymentStatus) {
+    if (paymentStatus === 'success') {
+      toastStore.show({
+        message: 'Thanh toán VNPay thành công! Cảm ơn bạn.',
+        type: 'success'
+      })
+    } else if (paymentStatus === 'failed') {
+      toastStore.show({
+        message: 'Thanh toán thất bại hoặc đã bị hủy.',
+        type: 'error'
+      })
+    }
+
+    // Xóa URL Params đi để user f5 trang không bị hiện Toast lại
+    router.replace({
+      name: route.name,
+      params: route.params,
+      query: {}
+    })
+  }
+
+  // 2. Fetch data đơn hàng
   if (route.params.code) {
     await orderStore.fetchOrderDetail(route.params.code)
 
@@ -256,7 +261,33 @@ onMounted(async () => {
       startCountdown()
     }
   }
+
+  if (notificationStore.connection) {
+    notificationStore.connection.on("PaymentSuccess", async (receivedOrderId) => {
+      // Nếu cái OrderId backend báo về TRÙNG với đơn hàng đang mở trên màn hình
+      if (currentOrder.value && currentOrder.value.id === receivedOrderId) {
+
+        // 1. Bật Toast báo hỷ!
+        toastStore.show({ type: 'success', message: 'Thanh toán thành công! Cảm ơn bạn.' })
+
+        // 2. Gập cái Modal QR lại (nếu đang mở)
+        showPaymentModal.value = false
+
+        // 3. Tải lại dữ liệu đơn hàng (để cờ IsPaid bật xanh và mất nút Thanh toán)
+        await orderStore.fetchOrderDetail(currentOrder.value.orderCode)
+      }
+    });
+  }
 })
+
+onUnmounted(() => {
+  if (timerInterval) clearInterval(timerInterval)
+  if (notificationStore.connection) {
+    notificationStore.connection.off('ReceiveNotification', handleSignalRNotification)
+    notificationStore.connection.off('PaymentSuccess')
+  }
+})
+
 </script>
 
 <template>
@@ -387,6 +418,7 @@ onMounted(async () => {
               <OrderCancelModal
                 :show="showCancelModal"
                 :is-loading="isCancelling"
+                :order-code="currentOrder?.orderCode"
                 @close="showCancelModal = false"
                 @submit="submitCancelOrder"
               />

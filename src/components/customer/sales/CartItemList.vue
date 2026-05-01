@@ -1,6 +1,9 @@
 <script setup>
 import { resolveImage } from '@/utils/image'
 import defaultDrink from '@/assets/images/others/default-drink.png' // Import ảnh default
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const props = defineProps({
   cartItems: {
@@ -21,30 +24,33 @@ const formatCurrency = (val) =>
 // Hàm xử lý ảnh an toàn
 const getItemImage = (url) => resolveImage(url, defaultDrink)
 
-const handleImageError = (e) => {
-  e.target.src = defaultDrink
-  e.target.onerror = null
+// Giá 1 ly (đơn giá, không nhân qty)
+const getUnitPrice = (item) => {
+  // basePrice là giá 1 ly (đã bao gồm size modifier)
+  return item.basePrice || 0
 }
 
-const getItemPrice = (item) => {
-  let price = item.finalPrice || 0
-  if (item.toppings && item.toppings.length > 0) {
-    price += item.toppings.reduce((sum, topping) => sum + (topping.finalPrice || 0), 0)
-  }
-  return price
+// Giá toppings cho 1 ly
+const getToppingUnitPrice = (topping) => {
+  return topping.basePrice || 0
 }
 
+// Tổng tiền cả dòng (đã bao gồm qty) - backend đã tính sẵn trong finalPrice
 const getItemTotalPrice = (item) => {
-  return getItemPrice(item) * item.quantity
+  return item.finalPrice || 0
 }
 
-// Hiển thị toppings (Sửa lại key truy cập cho đúng DTO)
+// Hiển thị toppings kèm đơn giá mỗi cái
 const getToppingsDisplay = (toppings) => {
   if (!toppings || !Array.isArray(toppings) || toppings.length === 0) {
     return ''
   }
-  // Backend trả về CartToppingReadDto có trường productName
-  return toppings.map((t) => t.productName || '').join(', ')
+  return toppings
+    .map((t) => {
+      const priceText = t.basePrice ? ` (${formatCurrency(t.basePrice)})` : ''
+      return `${t.productName || ''}${priceText}`
+    })
+    .join(', ')
 }
 
 // Kiểm tra item có options không
@@ -57,47 +63,62 @@ const hasOptions = (item) => {
   )
 }
 
+const navigateToProduct = (slug) => {
+  if (slug) {
+    router.push(`/products/${slug}`)
+  }
+}
+
 const emit = defineEmits(['update-quantity', 'remove-item', 'clear-cart'])
 </script>
 
 <template>
   <div class="space-y-4">
-    <div class="flex justify-between items-center">
-      <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Các sản phẩm tại cửa hàng</h2>
-      <button v-if="cartItems.length" @click="emit('clear-cart', storeId)">Xóa tất cả</button>
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl md:text-2xl font-bold text-gray-800 dark:text-white">Các sản phẩm tại cửa hàng</h2>
+      <button
+        v-if="cartItems.length"
+        @click.stop="emit('clear-cart', storeId)"
+        class="text-sm font-medium text-red-500 hover:text-red-700 transition-colors"
+      >
+        Xóa tất cả
+      </button>
     </div>
 
     <div
       v-for="item in cartItems"
       :key="item.id"
-      class="flex gap-4 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md"
+      @click="navigateToProduct(item.productSlug)"
+      class="flex flex-col sm:flex-row gap-4 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md cursor-pointer group"
     >
-      <router-link :to="`/products/${item.productId}`" class="flex-shrink-0">
+      <div class="flex-shrink-0 mx-auto sm:mx-0">
         <img
           :src="getItemImage(item.imageUrl)"
           :alt="item.productName"
-          class="w-24 h-24 object-cover rounded-lg border border-gray-100 dark:border-gray-600"
-          @error="handleImageError"
+          class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-lg border border-gray-100 dark:border-gray-600 transition-transform group-hover:scale-105"
+          v-fallback="'drink'"
         />
-      </router-link>
+      </div>
 
       <div class="flex-1 flex flex-col justify-between">
         <div>
-          <div class="flex justify-between items-start">
-            <h3 class="font-bold text-lg text-gray-800 dark:text-white line-clamp-1 mr-2">
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-4">
+            <h3 class="font-bold text-base sm:text-lg text-gray-800 dark:text-white line-clamp-2 flex-1 group-hover:text-green-600 transition-colors">
               {{ item.productName }}
             </h3>
-            <span class="text-sm text-gray-500">
-              {{ formatCurrency(getItemPrice(item)) }} / ly
-            </span>
-            <span class="font-bold text-green-600">
-              {{ formatCurrency(getItemTotalPrice(item)) }}
-            </span>
+            <div class="flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-end mt-1 sm:mt-0 min-w-fit">
+              <span class="text-xs sm:text-sm text-gray-500">
+                {{ formatCurrency(getUnitPrice(item)) }} / ly
+              </span>
+              <span class="font-bold text-green-600 text-sm sm:text-base">
+                {{ formatCurrency(getItemTotalPrice(item)) }}
+              </span>
+            </div>
           </div>
 
           <div
             v-if="hasOptions(item)"
-            class="mt-1 text-sm text-gray-500 dark:text-gray-400 space-y-0.5"
+            class="mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 space-y-1"
           >
             <p v-if="item.sizeLabel">
               Size:
@@ -109,40 +130,46 @@ const emit = defineEmits(['update-quantity', 'remove-item', 'clear-cart'])
             </div>
             <p
               v-if="item.toppings && item.toppings.length > 0"
-              class="text-xs text-gray-500 italic"
+              class="text-xs text-gray-500 italic break-words"
             >
               + Topping: {{ getToppingsDisplay(item.toppings) }}
             </p>
           </div>
         </div>
 
-        <div class="flex items-center justify-between mt-3">
-          <div class="flex items-center border border-gray-200 dark:border-gray-600 rounded-lg h-8">
+        <div class="flex items-center justify-between mt-4">
+          <div class="flex items-center border border-gray-200 dark:border-gray-600 rounded-lg h-8 bg-white dark:bg-gray-800" @click.stop>
             <button
-              @click="emit('update-quantity', item.id, item.quantity - 1)"
-              class="px-2.5 h-full hover:bg-gray-100 dark:hover:bg-gray-700 rounded-l-lg text-gray-500 transition disabled:opacity-50"
+              @click.stop="emit('update-quantity', item.id, item.quantity - 1)"
+              class="px-3 h-full hover:bg-gray-100 dark:hover:bg-gray-700 rounded-l-lg text-gray-500 transition disabled:opacity-50 flex items-center justify-center"
               :disabled="loading || item.quantity <= 1"
+              aria-label="Giảm số lượng"
             >
               -
             </button>
             <span
-              class="px-3 text-sm font-bold text-gray-800 dark:text-white min-w-[1.5rem] text-center"
+              class="px-3 text-sm font-bold text-gray-800 dark:text-white min-w-[2rem] text-center flex items-center justify-center border-x border-gray-100 dark:border-gray-600 h-full"
             >
               {{ item.quantity }}
             </span>
             <button
-              @click="emit('update-quantity', item.id, item.quantity + 1)"
-              class="px-2.5 h-full hover:bg-gray-100 dark:hover:bg-gray-700 rounded-r-lg text-gray-500 transition"
+              @click.stop="emit('update-quantity', item.id, item.quantity + 1)"
+              class="px-3 h-full hover:bg-gray-100 dark:hover:bg-gray-700 rounded-r-lg text-gray-500 transition flex items-center justify-center"
+              aria-label="Tăng số lượng"
             >
               +
             </button>
           </div>
 
           <button
-            @click="emit('remove-item', item.id)"
-            class="text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors"
+            @click.stop="emit('remove-item', item.id)"
+            class="text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-all"
+            title="Xóa sản phẩm"
+            aria-label="Xóa sản phẩm"
           >
-            Xóa
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+            </svg>
           </button>
         </div>
       </div>

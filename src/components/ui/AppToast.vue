@@ -29,6 +29,7 @@ function removeToast(id) {
 </script>
 
 <template>
+  <Teleport to="body">
   <div class="fixed top-4 right-4 z-50 space-y-3">
     <TransitionGroup name="toast">
       <div
@@ -111,6 +112,7 @@ function removeToast(id) {
       </div>
     </TransitionGroup>
   </div>
+  </Teleport>
 </template>
 
 <style scoped>

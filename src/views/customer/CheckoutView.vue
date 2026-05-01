@@ -45,7 +45,7 @@ const { cartItems: allCartItems } = storeToRefs(cartStore)
 const { isLoggedIn } = storeToRefs(userStore)
 const { addresses } = storeToRefs(addressStore)
 const { currentDiscountAmount, appliedVoucher } = storeToRefs(voucherStore)
-const { shippingFee, isCalculatingShip } = storeToRefs(orderStore)
+const { shippingFee } = storeToRefs(orderStore)
 const { calculateShippingFeeAction } = orderStore
 
 // --- STATE ---
@@ -80,7 +80,8 @@ const isOutOfDeliveryRadius = computed(() => {
 
 // --- COMPUTED: FEES & TOTAL ---
 const subtotal = computed(() => {
-  return checkoutItems.value.reduce((sum, item) => sum + item.basePrice * item.quantity, 0)
+  // Backend FinalPrice của item đã bao gồm: basePrice * qty + topping * toppingQty
+  return checkoutItems.value.reduce((sum, item) => sum + (item.finalPrice || 0), 0)
 })
 
 // Preview phí ship (Frontend Only)
@@ -299,19 +300,20 @@ const handleSubmitOrder = async () => {
       // Gọi API Pickup
       resultOrder = await orderStore.createPickupOrderAction({
         ...basePayload,
-        pickupTime: pickupTime.value, // Format ISO string nếu cần
-      })
-    }
-
+        pickupTime: new Date(pickupTime.value).toISOString(),
+    })
+}
     // Success Handling
     toastStore.show({ message: 'Đặt hàng thành công!', type: 'success' })
     voucherStore.removeAppliedVoucher()
     await cartStore.clearCartByStore(targetStoreId.value)
 
-    // Redirect
-    if (resultOrder.paymentUrl) {
+    // Kiểm tra phương thức thanh toán
+    if (resultOrder?.paymentUrl) {
+      // Nếu có Link Redirect (VNPAY, Momo) -> Redirect luôn
       window.location.href = resultOrder.paymentUrl
     } else {
+      // COD hoặc chuyển khoản -> Chuyển sang trang chi tiết đơn (ở đó có modal QR)
       router.replace({ name: 'order-detail', params: { code: resultOrder.orderCode } })
     }
   } catch (err) {
@@ -322,6 +324,7 @@ const handleSubmitOrder = async () => {
     isSubmitting.value = false
   }
 }
+
 </script>
 
 <template>

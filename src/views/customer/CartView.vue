@@ -46,17 +46,10 @@ const activeCart = computed(() => {
 
 const activeItems = computed(() => activeCart.value?.items || [])
 
-//Lấy giá trị tĩnh từ DB nhưng phải load lại trang
-//const activeTotal = computed(() => activeCart.value?.totalAmount || 0)
-
-//Tự động tính tổng tiền dựa trên items hiện có
+// Sử dụng finalPrice trực tiếp từ BE (đã bao gồm quantity và toppings)
 const activeTotal = computed(() => {
   const items = activeItems.value || []
-
-  return items.reduce((sum, item) => {
-    const price = item.finalPrice || item.price || 0
-    return sum + price * item.quantity
-  }, 0)
+  return items.reduce((sum, item) => sum + (item.finalPrice || 0), 0)
 })
 
 const hasAnyItems = computed(() => carts.value.some((c) => c.items && c.items.length > 0))

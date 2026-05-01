@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { formatPrice } from '@/utils/formatters'
 import { useToastStore } from '@/stores/system/toast.store'
-import Button from '@/components/ui/AppButton.vue'
+import AppButton from '@/components/ui/AppButton.vue'
 
 const props = defineProps({
   show: Boolean,
@@ -192,13 +192,33 @@ const handleConfirmClick = () => {
             </div>
           </div>
 
-          <div class="mt-4 flex justify-center">
-            <Button
-              label="Tôi đã chuyển khoản xong"
-              variant="primary"
-              class="w-full py-3 text-base"
-              @click="handleConfirmClick"
-            />
+          <div class="mt-4 flex flex-col items-center">
+            <div class="animate-pulse flex items-center justify-center gap-2 text-green-600 mb-2">
+              <svg
+                class="animate-spin h-5 w-5 text-green-600"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span class="font-semibold text-sm">Hệ thống đang chờ nhận tiền...</span>
+            </div>
+            <p class="text-xs text-gray-500 text-center mb-4">
+              Trang sẽ tự động đóng sau khi thanh toán thành công.
+            </p>
+
+            <button
+              @click="$emit('close')"
+              class="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg font-medium transition-colors text-sm"
+            >
+              Thoát (Tôi sẽ thanh toán sau)
+            </button>
           </div>
         </div>
       </div>

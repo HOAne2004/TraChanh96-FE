@@ -36,15 +36,15 @@ const showPayBtn = computed(() => {
   const isPaid = props.order.isPaid
 
   // Nếu là COD (PaymentType = 1 hoặc tên có chữ COD/Tiền mặt) -> Ẩn
-  const type = props.order.paymentMethod?.paymentType
+  const type = String(props.order.paymentMethod?.paymentType).toLowerCase()
   const name = props.order.paymentMethod?.name?.toLowerCase() || ''
-  const isCOD = type === 1 || name.includes('cod') || name.includes('tiền mặt')
+  const isCOD = type === 'cod' || type === '1' || name.includes('cod') || name.includes('tiền mặt')
 
   if (isCOD) return false // 👈 Chặn COD ở đây luôn cho chắc
 
   return (
     !isPaid &&
-    ![ORDER_STATUS.CANCELLED, ORDER_STATUS.COMPLETED].includes(s) &&
+    s === ORDER_STATUS.PENDING_PAYMENT &&
     props.userRole === 'Customer'
   )
 })

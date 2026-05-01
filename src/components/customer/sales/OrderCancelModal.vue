@@ -1,11 +1,12 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { CANCEL_REASON_UI } from '@/constants/order.constants' //
+import { CANCEL_REASON_UI } from '@/constants/order.constants'
 import Button from '@/components/ui/AppButton.vue'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
   isLoading: { type: Boolean, default: false },
+  orderCode: { type: String, default: '' },
   userRole: { type: String, default: 'Customer' }, // 'Customer' | 'Admin' | 'Staff'
 })
 
@@ -35,23 +36,31 @@ const availableReasons = computed(() => {
     }))
     .filter((r) => {
       if (props.userRole === 'Customer') {
-        // Khách chỉ thấy lý do của khách hoặc 'other'
         return r.type === 'customer' || r.type === 'other'
       } else {
-        // Admin/Staff thấy lý do của cửa hàng, vận chuyển, hoặc 'other'
-        // (Ẩn lý do "Khách đổi ý" vì Admin không nên chọn hộ cái đó, hoặc tùy bạn)
         return ['store', 'delivery', 'system', 'other'].includes(r.type)
       }
     })
 })
 
+// ID của lý do "Khác"
+const otherReasonId = computed(() => {
+  const found = availableReasons.value.find((r) => r.type === 'other')
+  return found?.id ?? null
+})
+
+// Khi user gõ ghi chú -> tự động chọn "Lý do khác"
+watch(otherReasonNote, (val) => {
+  if (val && val.trim() && otherReasonId.value !== null) {
+    selectedReason.value = otherReasonId.value
+  }
+})
+
 const handleSubmit = () => {
   if (!selectedReason.value) return
-
-  // Emit data về cha
   emit('submit', {
-    reason: selectedReason.value, // ID lý do (Enum)
-    note: otherReasonNote.value, // Ghi chú thêm
+    reason: selectedReason.value,
+    note: otherReasonNote.value,
   })
 }
 </script>
@@ -72,7 +81,7 @@ const handleSubmit = () => {
         </h3>
         <button
           @click="$emit('close')"
-          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          class="text-gray-400 hover:text-gray-600 dark:hover:te t-gray-200"
         >
           ✕
         </button>
@@ -81,7 +90,7 @@ const handleSubmit = () => {
       <div class="p-6 space-y-4">
         <p class="text-sm text-gray-500 dark:text-gray-400">
           Vui lòng chọn lý do hủy đơn hàng
-          <span class="font-bold text-gray-900 dark:text-white">#{{ $attrs.orderCode }}</span
+          <span class="font-bold text-gray-900 dark:text-white">#{{ orderCode }}</span
           >:
         </p>
 
@@ -98,13 +107,12 @@ const handleSubmit = () => {
           >
             <input
               type="radio"
+              name="cancel-reason"
               :value="reason.id"
               v-model="selectedReason"
               class="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300"
             />
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-200">{{
-              reason.label
-            }}</span>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ reason.label }}</span>
           </label>
         </div>
 

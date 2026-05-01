@@ -31,9 +31,8 @@ const link = computed(() => `/aboutUs/${props.store.slug}`)
 
 <template>
   <div
-    class="flex-shrink-0 w-80 snap-start bg-white dark:bg-gray-700 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col border border-gray-100 dark:border-gray-600 group"
-  >
-    <router-link :to="link" class="block h-full flex flex-col">
+    class="flex-shrink-0 w-80 snap-start bg-white dark:bg-gray-700 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col border border-gray-100 dark:border-gray-600 group">
+    <router-link :to="link" class="h-full flex flex-col">
 
       <div class="relative h-48 overflow-hidden">
         <img

@@ -22,9 +22,15 @@ const pickupCodeInput = ref('')
 // Helper xác định đơn COD
 const isCOD = computed(() => {
   if (!props.order.paymentMethod) return false
-  const type = props.order.paymentMethod.paymentType.toLowerCase()
+  const type = String(props.order.paymentMethod.paymentType).toLowerCase()
   const name = props.order.paymentMethod.name?.toLowerCase() || ''
   return type === 'cod' || name.includes('cod')
+})
+
+const isVNPay = computed(() => {
+  if (!props.order.paymentMethod) return false
+  const type = String(props.order.paymentMethod.paymentType).toLowerCase()
+  return type === 'vnpay' || type === '5'
 })
 
 const onUpdateStatus = (status) => emit('update-status', status)
@@ -51,7 +57,7 @@ const onVerifyPickup = () => {
 
     <div class="flex flex-col gap-3">
       <button
-        v-if="!order.isPaid && order.status !== ORDER_STATUS.CANCELLED"
+        v-if="!order.isPaid && order.status !== ORDER_STATUS.CANCELLED && !isVNPay"
         @click="onManualConfirmPayment"
         :disabled="isProcessing"
         class="w-full py-2.5 bg-green-100 hover:bg-green-200 text-green-700 border border-green-200 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"

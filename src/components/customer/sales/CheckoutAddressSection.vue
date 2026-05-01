@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '@/stores/identity/user.store'
 import { useModalStore } from '@/stores/system/modal.store'
@@ -23,11 +23,17 @@ const { addresses } = storeToRefs(addressStore)
 
 const showModal = ref(false)
 
-// Load địa chỉ nếu chưa có
-onMounted(async () => {
+const loadAddressesIfNeeded = async () => {
   if (props.isLoggedIn && (!addresses.value || addresses.value.length === 0)) {
     await addressStore.fetchAddresses()
   }
+}
+
+// Load địa chỉ nếu chưa có
+onMounted(loadAddressesIfNeeded)
+
+watch(() => props.isLoggedIn, (newVal) => {
+  if (newVal) loadAddressesIfNeeded()
 })
 
 // 🟢 2. LOGIC TÍNH KHOẢNG CÁCH (AN TOÀN)
@@ -72,9 +78,9 @@ const handleAddressSubmit = async (formData) => {
   try {
     const newAddr = await addressStore.createAddress({
       ...formData,
-      FullAddress: `${formData.addressDetail}, ${formData.commune}, ${formData.district}, ${formData.province}`,
-      Latitude: formData.latitude || 21.0285,
-      Longitude: formData.longitude || 105.8542,
+      fullAddress: `${formData.addressDetail}, ${formData.commune}, ${formData.district}, ${formData.province}`,
+      latitude: formData.latitude || 21.0285,
+      longitude: formData.longitude || 105.8542,
     })
     modalStore.showToast('Thêm địa chỉ thành công', 'success')
 
