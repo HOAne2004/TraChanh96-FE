@@ -3,11 +3,13 @@ import { ref, reactive } from 'vue'
 import { useUserStore } from '@/stores/identity/user.store'
 import { useRouter, useRoute } from 'vue-router'
 import { useToastStore } from '@/stores/system/toast.store'
+import {useModalStore} from '@/stores/system/modal.store'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useUserStore()
 const toast = useToastStore()
+const modal = useModalStore()
 
 const formData = reactive({
   username: '',
@@ -64,6 +66,10 @@ const handleRegister = async () => {
   }
 }
 
+const goToLogin = () => {
+  router.push('/')
+  modal.openLoginModal()
+}
 const clearError = () => {
   auth.error = null
 }
@@ -288,9 +294,9 @@ const clearError = () => {
 
     <div class="mt-4 text-center text-sm">
       Đã có tài khoản?
-      <RouterLink to="/login" class="text-green-600 hover:underline font-medium">
+      <button @click="goToLogin" class="text-green-600 hover:underline font-medium">
         Quay lại trang chủ (Đăng nhập)
-      </RouterLink>
+      </button>
     </div>
   </div>
 </template>

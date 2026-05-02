@@ -1,5 +1,5 @@
 <script setup>
-import RegisterForm from '@auth/RegisterForm.vue'
+import RegisterForm from '@/components/auth/RegisterForm.vue'
 </script>
 <template>
   <div class="max-w-md mx-auto py-10">
