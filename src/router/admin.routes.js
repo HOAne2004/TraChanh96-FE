@@ -181,42 +181,31 @@ export const adminRoutes = [
         meta: { title: 'Đánh giá' },
       },
 
-      // --- 7. SETTINGS (Cấu hình) ---
+      // --- 7. STORE-OPERATIONS ---
       {
         path: 'stores',
         name: 'admin.stores',
-        component: () => import('@/views/admin/settings/store/AdminStoreListView.vue'),
+        component: () => import('@/views/admin/store-operations/AdminStoreListView.vue'),
         meta: { title: 'Cửa hàng' },
+      },
+      {
+        path: 'stores/:id',
+        name: 'admin.store.detail',
+        component: () => import('@/views/admin/store-operations/AdminStoreDetail.vue'),
+        meta: { title: 'Chi tiết cửa hàng' },
       },
       {
         path: 'stores/create',
         name: 'admin-store-create',
-        component: () => import('@/views/admin/settings/store/AdminStoreFormView.vue'),
+        component: () => import('@/views/admin/store-operations/AdminStoreDetail.vue'),
         meta: { title: 'Thêm cửa hàng mới' },
       },
-      {
-        path: 'stores/edit/:id',
-        name: 'admin-store-edit',
-        component: () => import('@/views/admin/settings/store/AdminStoreFormView.vue'),
-        meta: { title: 'Cập nhật cửa hàng' },
-      },
-      {
-        path: 'stores/:id/menu',
-        name: 'admin.store.menu',
-        component: () => import('@/views/admin/settings/store/AdminStoreMenu.vue'),
-        meta: { title: 'Quản lý thực đơn' },
-      },
+      // --- 8. SETTINGS ---
       {
         path: 'settings/general',
         name: 'admin.settings.general',
         component: () => import('@/views/admin/settings/AdminGeneralSettings.vue'),
         meta: { title: 'Cấu hình chung' },
-      },
-      {
-        path: 'settings/map',
-        name: 'admin.settings.map',
-        component: () => import('@/views/admin/settings/AdminTableMapManager.vue'),
-        meta: { title: 'Sơ đồ Bàn/Phòng' },
       },
       {
         path: 'settings/payments',

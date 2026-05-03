@@ -78,4 +78,11 @@ export default {
   getMenu(id) {
     return api.get(`${ENDPOINT}/${id}/menu`)
   },
+
+  async getStoreDashboard(storeId, timeFilter = 'today') {
+    const res = await api.get(`/stores/${storeId}/dashboard`, {
+      params: { timeFilter }
+    })
+    return res.data
+  },
 }

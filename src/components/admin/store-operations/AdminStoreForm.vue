@@ -1,6 +1,7 @@
 <script setup>
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
+import AIGenerateButton from '@/components/assistant/AIGenerateButton.vue' // Import component AI
 
 const props = defineProps({
   form: {
@@ -43,6 +44,16 @@ function handleImageChange(event) {
 
 function handleSubmit() {
   emit('submit')
+}
+
+// Hàm xử lý khi AI trả về kết quả
+function handleAIGeneratedContent(aiContent) {
+  // Update nội dung vào Quill Editor.
+  // Lưu ý: AI trả về Markdown, nếu Quill Editor của bạn chỉ nhận HTML,
+  // bạn có thể cần dùng thư viện 'marked' để parse nó ra HTML trước.
+  // Ví dụ: const htmlContent = marked.parse(aiContent);
+  // Ở đây tôi gán tạm trực tiếp:
+  updateField('description', aiContent);
 }
 </script>
 
@@ -190,7 +201,16 @@ function handleSubmit() {
 
           <!-- Rich Text Editor -->
           <div>
-            <label class="form-label">Giới thiệu</label>
+            <!-- 3. Gắn nút AI cạnh Label -->
+            <div class="flex justify-between items-center mb-1.5">
+              <label class="block text-sm font-medium text-gray-700">Giới thiệu cửa hàng</label>
+
+              <AIGenerateButton
+                contentType="store"
+                @generated="handleAIGeneratedContent"
+              />
+            </div>
+
             <div class="bg-white rounded-lg overflow-hidden border border-gray-300">
               <QuillEditor
                 :content="form.description"
