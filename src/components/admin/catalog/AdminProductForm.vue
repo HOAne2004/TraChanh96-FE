@@ -3,6 +3,8 @@ import { computed } from 'vue'
 import { formatPrice } from '@/utils/formatters'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
+import AIGenerateButton from '@/components/assistant/AIGenerateButton.vue'
+import { marked } from 'marked'
 
 const props = defineProps({
   modelValue: { type: Object, required: true }, // formData
@@ -36,6 +38,18 @@ const removeSize = (index) => formData.value.productSizes.splice(index, 1)
 // Logic Image
 const onFileChange = (e) => emit('file-change', e)
 const onUrlInput = () => emit('url-input')
+
+// 2. Hàm xử lý cho Mô tả
+const applyAIToDescription = (aiContentText) => {
+  const htmlContent = marked.parse(aiContentText);
+  formData.value.description = htmlContent;
+}
+
+const applyAIToIngredient = (aiContentText) => {
+  const htmlContent = marked.parse(aiContentText);
+  formData.value.ingredient = htmlContent;
+}
+
 </script>
 
 <template>
@@ -236,8 +250,10 @@ const onUrlInput = () => emit('url-input')
       </div>
       <div class="space-y-3">
         <div>
-          <label class="form-label">Mô tả</label>
-          <div class="form_textarea">
+          <div class="flex justify-between items-center mb-1">
+             <label class="form-label mb-0">Mô tả</label>
+             <AIGenerateButton contentType="product" @generated="applyAIToDescription" />
+          </div>          <div class="form_textarea">
             <QuillEditor
               v-model:content="formData.description"
               content-type="html"
@@ -249,8 +265,10 @@ const onUrlInput = () => emit('url-input')
           </div>
         </div>
         <div>
-          <label class="form-label">Thành phần</label>
-          <div class="form_textarea">
+            <div class="flex justify-between items-center mb-1">
+             <label class="form-label mb-0">Thành phần</label>
+             <AIGenerateButton contentType="product_ingredient" @generated="applyAIToIngredient" />
+           </div>          <div class="form_textarea">
             <QuillEditor
               v-model:content="formData.ingredient"
               content-type="html"
