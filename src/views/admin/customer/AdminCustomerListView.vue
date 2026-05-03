@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, computed, watch } from 'vue'
+import { onMounted, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 
@@ -10,8 +10,7 @@ import AdminDataTable from '@/components/admin/shared/AdminDataTable.vue'
 
 // Stores
 import { useUserStore } from '@/stores/identity/user.store'
-import { useModalStore } from '@/stores/system/modal.store'
-import { useMembershipLevelStore } from '@/stores/marketing/membershipLevel.store' // 🟢 Import Store Hạng thành viên
+import { useMembershipLevelStore } from '@/stores/marketing/membershipLevel.store'
 
 // Utils & Constants
 import { formatDate } from '@/utils/formatters'
@@ -19,11 +18,10 @@ import { getUserStatusOptions, getUserStatusConfig, USER_ROLE } from '@/constant
 
 const router = useRouter()
 const userStore = useUserStore()
-const membershipStore = useMembershipLevelStore() // 🟢
-const modalStore = useModalStore()
+const membershipStore = useMembershipLevelStore()
 
 const { users, loading, pagination } = storeToRefs(userStore)
-const { levels: membershipLevels } = storeToRefs(membershipStore) // 🟢 Lấy levels từ store
+const { levels: membershipLevels } = storeToRefs(membershipStore)
 
 // --- STATE FILTER ---
 const queryParams = reactive({
@@ -73,7 +71,7 @@ function handleCreate() {
 }
 
 async function handleAction({ type, item }) {
-  if (type === 'edit') {
+  if (type === 'edit' || type === 'row-click') {
     // Dùng PublicId để bảo mật và đúng chuẩn BE
     router.push({ name: 'admin.customer.detail', params: { id: item.publicId } })
   }

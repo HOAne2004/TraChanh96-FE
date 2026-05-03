@@ -35,8 +35,8 @@ const queryParams = reactive({
 })
 
 // Options
-const filterStatusOptions = getProductStatusOptions(true) // Ẩn "Deleted"
-const filterTypeOptions = getProductTypeOptions() // 🟢 Lấy option Loại
+const filterStatusOptions = getProductStatusOptions(true)
+const filterTypeOptions = getProductTypeOptions()
 
 // Fetch Data
 async function fetchData() {
@@ -103,7 +103,7 @@ const columns = [
 ]
 
 async function handleAction({ type, item }) {
-  if (type === 'edit' || type === 'view') {
+  if (type === 'edit' || type === 'view' || type === 'row-click') {
     router.push({ name: 'admin.products.edit', params: { id: item.id } })
     return
   }

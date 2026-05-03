@@ -130,7 +130,7 @@ const parentOptions = computed(() => {
 })
 
 const onTableAction = ({ type, item }) => {
-  if (type === 'edit') {
+  if (type === 'edit' || type === 'row-click') {
     openEditModal(item)
   } else if (type === 'delete') {
     handleDelete(item)

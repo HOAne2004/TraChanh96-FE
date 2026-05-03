@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, ref, computed, watch } from 'vue'
+import { defineProps, defineEmits, ref, computed } from 'vue'
 import EmptySearch from '@/assets/images/empty-states/empty-search.png'
 // Thêm event 'sort' để báo ra ngoài khi ở chế độ Server
 const emit = defineEmits(['change-page', 'action', 'sort'])
@@ -197,7 +197,8 @@ const displayItems = computed(() => {
         <tr
           v-for="(item, index) in displayItems"
           :key="item.id || index"
-          class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+          class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+          @click="$emit('action', { type: 'row-click', item })"
         >
           <td
             v-for="col in columns"
@@ -213,51 +214,9 @@ const displayItems = computed(() => {
           <td
             v-if="actions.length > 0 || $slots.action"
             class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium"
+            @click.stop
           >
             <div class="flex items-center justify-center gap-2">
-              <button
-                v-if="actions.includes('view')"
-                @click="$emit('action', { type: 'view', item })"
-                class="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                  />
-                </svg>
-              </button>
-              <button
-                v-if="actions.includes('edit')"
-                @click="$emit('action', { type: 'edit', item })"
-                class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-              </button>
               <button
                 v-if="actions.includes('delete')"
                 @click="$emit('action', { type: 'delete', item })"

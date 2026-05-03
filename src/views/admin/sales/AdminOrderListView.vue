@@ -6,6 +6,7 @@ import { useOrderStore } from '@/stores/sales/order.store'
 import { useStoreStore } from '@/stores/store-operations/store.store'
 import { formatDate, formatPrice } from '@/utils/formatters'
 import { useToastStore } from '@/stores/system/toast.store'
+import { useModalStore } from '@/stores/system/modal.store'
 import {
   getOrderStatusOptions,
   getOrderStatusConfig,
@@ -23,6 +24,7 @@ const storeStore = useStoreStore()
 const { stores } = storeToRefs(storeStore)
 const { orders, pagination, loading } = storeToRefs(orderStore)
 const toastStore = useToastStore()
+const modalStore = useModalStore()
 
 // --- STATE QUẢN LÝ FILTER ---
 // 🟢 [MỚI] Gom tất cả filter vào 1 object reactive
@@ -88,24 +90,57 @@ const onPageChange = (newPage) => {
   filters.pageIndex = newPage
   loadData()
 }
-
-// ... (Các hàm helper handleDeleteOrder, goToDetail, exportToExcel GIỮ NGUYÊN) ...
 const handleDeleteOrder = async (id) => {
-  /* Code cũ... */
+  const confirmed = await modalStore.confirmDelete(
+    'Bạn có chắc chắn muốn chuyển đơn hàng này vào thùng rác?', 
+    'Xóa đơn hàng'
+  )
+  if (confirmed) {
+    const success = await orderStore.deleteOrderAction(id)
+    if (success) {
+      toastStore.show({ type: 'success', message: 'Đã chuyển đơn hàng vào thùng rác' })
+    }
+  }
 }
 const goToDetail = (code) => {
   router.push({ name: 'admin.orders.detail', params: { code } })
 }
 
-// Hàm xuất Excel giữ nguyên logic cũ, chỉ map lại gọi từ template
+const handleAction = ({ type, item }) => {
+  if (type === 'row-click') {
+    goToDetail(item.orderCode || item.id)
+  }
+}
+
 const exportToExcel = () => {
-  // ... Copy y nguyên logic cũ của bạn ...
   if (!orders.value || orders.value.length === 0) {
     toastStore.show({ message: 'Không có dữ liệu', type: 'error' })
     return
   }
-  // ... (Code tạo CSV giữ nguyên) ...
-  toastStore.show({ type: 'success', message: 'Đang tải xuống...' })
+
+  // Tạo nội dung CSV
+  const headers = ['Mã đơn', 'Khách hàng', 'Số điện thoại', 'Ngày đặt', 'Tổng tiền', 'Trạng thái']
+  const rows = orders.value.map(order => [
+    order.orderCode || order.id,
+    order.recipientName || order.userName || 'Khách lẻ',
+    order.recipientPhone || '',
+    formatDate(order.createdAt),
+    order.grandTotal,
+    getOrderStatusConfig(order.status)?.label || order.status
+  ])
+
+  const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+    + [headers, ...rows].map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(",")).join("\n")
+
+  const encodedUri = encodeURI(csvContent)
+  const link = document.createElement("a")
+  link.setAttribute("href", encodedUri)
+  link.setAttribute("download", `Don_Hang_${new Date().getTime()}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+
+  toastStore.show({ type: 'success', message: 'Đã tải xuống file báo cáo' })
 }
 
 // --- CONFIG ---
@@ -195,6 +230,7 @@ onMounted(async () => {
       :loading="loading"
       :total-count="pagination.totalRecords"
       @change-page="onPageChange"
+      @action="handleAction"
     >
       <template #cell-customer="{ item }">
         <div class="flex flex-col">
@@ -233,31 +269,7 @@ onMounted(async () => {
       <template #action="{ item }">
         <div class="flex items-center justify-center gap-2">
           <button
-            @click="goToDetail(item.orderCode || item.id)"
-            class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-5 h-5"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-          </button>
-          <button
-            @click="handleDeleteOrder(item.id)"
+            @click.stop="handleDeleteOrder(item.id)"
             class="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
           >
             <svg

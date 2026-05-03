@@ -8,7 +8,7 @@ import { useProductStore } from '@/stores/catalog/product.store'
 import { formatPrice, formatCurrencyCompact, formatDate } from '@/utils/formatters' // Thêm formatDate
 
 // Constants
-import { ORDER_STATUS, ORDER_STATUS_UI } from '@/constants/order.constants'
+import { ORDER_STATUS_UI } from '@/constants/order.constants'
 import { USER_ROLE } from '@/constants/user.constants'
 
 // Components
@@ -167,6 +167,7 @@ onMounted(async () => {
         :columns="dashboardColumns"
         :loading="ordersLoading"
         :pagination="null"
+        @action="({ type, item }) => type === 'row-click' && handleViewDetail(item.orderCode || item.id)"
       >
         <template #cell-orderCode="{ item }"> #{{ item.orderCode || item.id }} </template>
 
@@ -194,15 +195,6 @@ onMounted(async () => {
           >
             {{ getStatusConfig(value).label }}
           </span>
-        </template>
-
-        <template #action="{ item }">
-          <button
-            @click="handleViewDetail(item.orderCode || item.id)"
-            class="text-green-600 hover:text-green-800 text-sm font-medium hover:underline"
-          >
-            Chi tiết
-          </button>
         </template>
       </AdminDataTable>
     </div>

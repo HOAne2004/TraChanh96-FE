@@ -98,7 +98,7 @@ const handlePageChange = (page) => {
 
 // Xử lý Action
 const handleAction = ({ type, item }) => {
-  if (type === 'edit' || type === 'view') {
+  if (type === 'edit' || type === 'view' || type === 'row-click') {
     selectedReview.value = item
     showModal.value = true
   }
