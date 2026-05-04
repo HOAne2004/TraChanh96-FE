@@ -21,7 +21,7 @@ const userAvatar = computed(() => {
 })
 
 const handleLogout = async () => {
-  await userStore.logoutAction()
+  userStore.logout()
   router.push('/')
 }
 </script>
@@ -80,7 +80,7 @@ const handleLogout = async () => {
               </p>
             </div>
             <router-link
-              to="/admin/settings/profile"
+              to="/profile"
               class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Thông tin cá nhân

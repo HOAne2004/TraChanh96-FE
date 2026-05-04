@@ -123,8 +123,7 @@ const canSubmit = computed(() => {
 // 1. Load Store Details khi targetStoreId đổi
 const displayStoreId = computed(() => {
   if (route.query.previewStoreId) return parseInt(route.query.previewStoreId)
-  if (storeStore.selectedStoreId) return storeStore.selectedStoreId
-  return targetStoreId.value
+  return targetStoreId.value || storeStore.selectedStoreId
 })
 
 // 1. Load Store Details khi displayStoreId đổi
@@ -239,6 +238,14 @@ onMounted(async () => {
 
 // --- SUBMIT HANDLER ---
 const handleAttemptSubmit = () => {
+  if (currentStore.value) {
+    const status = storeStore.getStoreStatus(currentStore.value)
+    if (!status.isOpen) {
+      toastStore.show({ type: 'error', message: `Cửa hàng đang: ${status.message}` })
+      return
+    }
+  }
+
   if (orderType.value === ORDER_TYPE.DELIVERY) {
     if (!selectedAddressId.value) {
       toastStore.show({ message: 'Vui lòng chọn địa chỉ nhận hàng.', type: 'warning' })
@@ -372,6 +379,30 @@ onUnmounted(() => {
 
 <template>
   <div class="py-8 max-w-6xl mx-auto px-4 lg:px-8 min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div
+      v-if="currentStore && !storeStore.getStoreStatus(currentStore).isOpen"
+      class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-3"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+      <div>
+        <span class="font-bold">Cửa hàng hiện không nhận đơn.</span>
+        <span class="ml-1">({{ storeStore.getStoreStatus(currentStore).message }})</span>
+      </div>
+    </div>
+    
     <h1 class="text-3xl font-bold mb-6 text-green-600 uppercase text-center">Thanh toán</h1>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">

@@ -5,6 +5,7 @@ import { useUserStore } from '@/stores/identity/user.store'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/system/toast.store'
+import { useStoreStore } from '@/stores/store-operations/store.store'
 
 import CartItemList from '@/components/customer/sales/CartItemList.vue'
 import CartSummaryPanel from '@/components/customer/sales/CartSummaryPanel.vue'
@@ -13,6 +14,7 @@ import CustomerEmptyState from '@/components/ui/EmptyState.vue'
 const cartStore = useCartStore()
 const userStore = useUserStore()
 const toastStore = useToastStore()
+const storeStore = useStoreStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -59,7 +61,10 @@ const hasItemsInActiveTab = computed(() => activeItems.value && activeItems.valu
 onMounted(async () => {
   try {
     if (userStore.token) {
-      await cartStore.fetchCart()
+      await Promise.all([
+        cartStore.fetchCart(),
+        storeStore.fetchActiveStores()
+      ])
     }
   } catch (error) {
     console.error('Lỗi tải dữ liệu ở CartView:', error)
@@ -73,6 +78,21 @@ const checkout = () => {
   if (!isLoggedIn.value) {
     toastStore.show({ type: 'warning', message: 'Vui lòng đăng nhập trước khi thanh toán!' })
     router.push('/login')
+    return
+  }
+
+  // Kiểm tra trạng thái cửa hàng trước khi thanh toán
+  const activeStore = storeStore.stores.find((s) => s.id === activeStoreId.value)
+  if (activeStore) {
+    const status = storeStore.getStoreStatus(activeStore)
+    if (!status.isOpen) {
+      toastStore.show({ type: 'error', message: `Cửa hàng đang: ${status.message}` })
+      return
+    }
+  } else {
+    toastStore.show({ type: 'warning', message: 'Không thể xác nhận trạng thái cửa hàng, vui lòng thử lại sau.' })
+    // Fetch lại để thử lần sau
+    storeStore.fetchActiveStores()
     return
   }
 

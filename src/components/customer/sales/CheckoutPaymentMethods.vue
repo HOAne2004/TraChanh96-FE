@@ -82,6 +82,7 @@ const select = (method) => {
             :src="method.imageUrl"
             class="w-10 h-10 object-contain bg-white rounded border border-gray-100 p-0.5"
             alt="Icon"
+            v-fallback="'default'"
           />
           <div
             v-else
