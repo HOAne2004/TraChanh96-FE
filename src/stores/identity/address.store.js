@@ -108,8 +108,6 @@ export const useAddressStore = defineStore('address', () => {
   }
 
   async function deleteAddress(id) {
-    if (!confirm('Bạn có chắc chắn muốn xóa địa chỉ này?')) return
-
     loading.value = true
     try {
       await addressService.delete(id)

@@ -54,16 +54,16 @@ watch(isLoggedIn, (newVal) => {
     class="fixed top-0 left-0 z-50 w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-md px-4 py-3"
   >
     <div
-      class="flex justify-between items-center gap-3 sm:grid sm:grid-cols-[auto_3fr_2fr_auto] sm:gap-4 md:gap-6"
+      class="flex justify-between items-center gap-3 lg:gap-6 w-full"
     >
-      <RouterLink to="/" class="flex justify-start items-center gap-2">
+      <RouterLink to="/" class="flex justify-start items-center gap-2 shrink-0">
         <img class="h-9 sm:h-10 md:h-12" :src="logoHeader" alt="Logo Trà Chanh 1996" />
         <span class="hidden lg:inline font-bold text-primary text-lg font-[cursive] tracking-wide"
           >Trà chanh 1996</span
         >
       </RouterLink>
 
-      <nav class="hidden sm:flex items-center justify-center gap-x-8 text-sm md:text-base">
+      <nav class="hidden lg:flex items-center justify-center gap-x-6 text-sm lg:text-base whitespace-nowrap">
         <NavLink to="/" label="Trang chủ" />
         <NavLink to="/products" label="Sản phẩm" />
         <NavLink to="/aboutUs" label="Về chúng tôi" />
@@ -71,11 +71,11 @@ watch(isLoggedIn, (newVal) => {
         <NavLink to="/franchise" label="Nhượng quyền" />
       </nav>
 
-      <div class="hidden sm:block w-full sm:w-auto">
+      <div class="hidden md:block flex-1 max-w-sm lg:max-w-md w-full mx-4">
         <SearchBar />
       </div>
 
-      <div class="flex justify-end items-center w-full sm:w-auto gap-1 sm:gap-3">
+      <div class="flex justify-end items-center gap-1 sm:gap-3 shrink-0">
         <NavLink to="/cart" variant="outline" :badge="Number(totalItems)">
           <template #icon>
             <svg
@@ -112,7 +112,7 @@ watch(isLoggedIn, (newVal) => {
 
         <Button
           @click="modalStore.openMobileMenu"
-          class="block sm:hidden p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+          class="block lg:hidden p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

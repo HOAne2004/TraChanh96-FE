@@ -10,6 +10,7 @@ import ProfileInfoForm from '@/components/customer/users/ProfileInfoForm.vue'
 import ProfileOrdersHistory from '@/components/customer/users/ProfileOrdersHistory.vue'
 import FeatureUnderConstruction from '@/components/ui/FeaturePending.vue'
 import ProfileSidebar from '@/components/customer/users/ProfileSidebar.vue'
+import TitledContainer from '@/components/ui/TitledContainer.vue'
 const userStore = useUserStore()
 const orderStore = useOrderStore()
 const router = useRouter()
@@ -42,11 +43,7 @@ onMounted(async () => {
 
 <template>
   <main class="py-10 max-w-7xl mx-auto px-4 lg:px-8">
-    <h1 class="text-4xl font-extrabold mb-8 text-center text-green-700 dark:text-green-400">
-      Hồ Sơ Cá Nhân
-    </h1>
-
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
       <div
         class="lg:col-span-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg h-fit sticky top-24 overflow-hidden border border-gray-100 dark:border-gray-700"
       >
@@ -54,12 +51,27 @@ onMounted(async () => {
       </div>
 
       <div class="lg:col-span-9 space-y-8">
-        <ProfileInfoForm v-if="activeTab === 'info'" :user="user" />
-        <ProfileOrdersHistory
+        <TitledContainer
+          v-if="activeTab === 'info'"
+          title="Thông tin hồ sơ"
+          layout="block"
+          :items="[]"
+        >
+          <ProfileInfoForm :user="user" />
+        </TitledContainer>
+
+        <TitledContainer
           v-else-if="activeTab === 'orders'"
-          :orders="orderStore.orders"
-          :is-loading="orderStore.loading"
-        />
+          title="Lịch sử đơn hàng"
+          layout="block"
+          :items="[]"
+        >
+          <ProfileOrdersHistory
+            :orders="orderStore.orders"
+            :is-loading="orderStore.loading"
+          />
+        </TitledContainer>
+
         <FeatureUnderConstruction v-else class="w-full" />
       </div>
     </div>

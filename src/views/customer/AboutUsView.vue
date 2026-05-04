@@ -149,7 +149,7 @@ const showLess = () => {
 
     <section
       v-if="yearlyHistory.length > 0"
-      class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 p-6 md:p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-xl mb-12 mx-4"
+      class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 p-6 md:p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-xl mb-12"
     >
       <div class="md:col-span-1">
         <h2 class="text-xl font-bold mb-6 border-b pb-3 text-green-600 dark:text-green-400">

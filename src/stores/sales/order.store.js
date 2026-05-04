@@ -253,8 +253,6 @@ export const useOrderStore = defineStore('order', () => {
     shippingFee.value = 0
   }
   async function deleteOrderAction(id) {
-    if (!confirm('Chuyển đơn hàng này vào thùng rác?')) return false
-
     loading.value = true
     try {
       await orderService.delete(id)

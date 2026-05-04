@@ -182,8 +182,6 @@ export const useProductStore = defineStore('product', () => {
    * [ADMIN] Xóa sản phẩm
    */
   async function deleteProduct(id) {
-    if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) return
-
     const toast = useToastStore()
     loading.value = true
     error.value = null

@@ -30,12 +30,12 @@ function removeToast(id) {
 
 <template>
   <Teleport to="body">
-  <div class="fixed top-4 right-4 z-50 space-y-3">
+  <div class="fixed top-4 right-4 z-[9999] space-y-3 pointer-events-none">
     <TransitionGroup name="toast">
       <div
         v-for="toast in toasts"
         :key="toast.id"
-        class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl shadow-xl min-w-[300px] max-w-md text-white border-l-4 transform transition-all duration-300 ease-out backdrop-blur-sm"
+        class="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-xl shadow-xl min-w-[300px] max-w-md text-white border-l-4 transform transition-all duration-300 ease-out backdrop-blur-sm"
         :class="typeClass(toast.type)"
       >
         <div class="flex items-center gap-3 flex-1">

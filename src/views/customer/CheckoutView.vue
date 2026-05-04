@@ -21,7 +21,7 @@ import { useNotificationStore } from '@/stores/marketing/notification.store'
 
 // --- COMPONENTS ---
 import OrderTypeSelector from '@/components/customer/sales/OrderTypeSelector.vue'
-import CheckoutAddressSection from '@/components/customer/sales/CheckoutAddressSection.vue'
+import UserAddressList from '@/components/customer/users/UserAddressList.vue'
 import StoreDistanceCard from '@/components/customer/store-operations/StoreDistanceCard.vue'
 import PickupTimeSelector from '@/components/customer/sales/PickupTimeSelector.vue'
 import CheckoutPaymentMethods from '@/components/customer/sales/CheckoutPaymentMethods.vue'
@@ -326,7 +326,7 @@ const handleSubmitOrder = async () => {
           createdOrder.value = resultOrder
           toastStore.show({ type: 'info', message: 'Vui lòng quét mã QR để thanh toán.' })
           showPaymentModal.value = true
-          
+
           if (notificationStore.connection) {
             notificationStore.connection.on("PaymentSuccess", async (receivedOrderId) => {
               if (createdOrder.value && createdOrder.value.id === receivedOrderId) {
@@ -386,7 +386,7 @@ onUnmounted(() => {
         />
 
         <div v-if="orderType === ORDER_TYPE.DELIVERY" class="space-y-6">
-          <CheckoutAddressSection
+          <UserAddressList
             v-model="selectedAddressId"
             :store="currentStore"
             :is-logged-in="isLoggedIn"

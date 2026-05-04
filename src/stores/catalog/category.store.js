@@ -102,8 +102,6 @@ export const useCategoryStore = defineStore('category', () => {
    * Xóa danh mục
    */
   async function deleteCategoryAction(id) {
-    if (!confirm('Bạn có chắc chắn muốn xóa danh mục này?')) return
-
     loading.value = true
     error.value = null
     try {

@@ -1,4 +1,3 @@
-// src/stores/shopTable.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import shopTableService from '@/services/store-operations/shopTable.service'
@@ -20,7 +19,7 @@ export const useShopTableStore = defineStore('shopTable', () => {
   const tablesGroupedByRoom = computed(() => {
     const groups = {}
     tables.value.forEach((table) => {
-      const roomName = table.room?.name || 'Khác'
+      const roomName = table.roomName || 'Khác'
       if (!groups[roomName]) {
         groups[roomName] = []
       }

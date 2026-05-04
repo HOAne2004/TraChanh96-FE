@@ -13,7 +13,7 @@ const cartStore = useCartStore()
 // Lấy trạng thái cần thiết
 const { isMobileMenuOpen } = storeToRefs(modalStore)
 const { isLoggedIn, user } = storeToRefs(userStore)
-const { totalQuantity } = storeToRefs(cartStore)
+const { totalItems } = storeToRefs(cartStore)
 
 // Hành động
 const closeMenu = () => modalStore.closeMobileMenu()
@@ -31,7 +31,7 @@ const navLinks = computed(() => {
   // Giá trị totalQuantity.value được truy cập trong computed function
   // Nó đảm bảo rằng nó có thể phản ứng với sự thay đổi,
   // và khi lần đầu được chạy, Vue đã setup xong các ref.
-  const cartLabel = `Giỏ hàng (${totalQuantity.value})`
+  const cartLabel = `Giỏ hàng (${totalItems.value || 0})`
 
   return [
     { to: '/', label: 'Trang chủ' },
@@ -48,19 +48,19 @@ const navLinks = computed(() => {
     <div
       v-if="isMobileMenuOpen"
       @click="closeMenu"
-      class="fixed inset-0 bg-black/50 z-[90] sm:hidden"
+      class="fixed inset-0 bg-black/50 z-[90] lg:hidden"
     ></div>
   </transition>
 
   <transition name="slide-right">
     <div
       v-if="isMobileMenuOpen"
-      class="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl z-[100] sm:hidden flex flex-col"
+      class="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl z-[100] lg:hidden flex flex-col"
     >
       <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center">
         <div v-if="isLoggedIn" class="text-sm">
           <p class="font-semibold text-green-600 dark:text-green-400">Xin chào,</p>
-          <p class="truncate">{{ user.name }}</p>
+          <p class="truncate">{{ user.username }}</p>
         </div>
         <button
           v-else
@@ -99,10 +99,10 @@ const navLinks = computed(() => {
           <span v-if="link.icon === 'cart'" class="inline-flex items-center gap-2">
             {{ link.label.split(' ')[0] }}
             <span
-              v-if="totalQuantity > 0"
+              v-if="totalItems > 0"
               class="ml-1 px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full"
             >
-              {{ totalQuantity }}
+              {{ totalItems }}
             </span>
           </span>
         </NavLink>

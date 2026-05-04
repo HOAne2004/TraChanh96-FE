@@ -75,10 +75,12 @@ const fetchCommunes = async (districtId) => {
 }
 
 /* =====================================================
- * CASCADING WATCHERS
+ * CASCADING EVENT HANDLERS
+ * Thay vì dùng Watch để clear (gây bug khi auto-fill),
+ * ta chuyển sang bắt sự kiện @change trên thẻ <select>.
  * ===================================================== */
-watch(selectedProvinceId, async (id) => {
-  const p = provinces.value.find((x) => x.id === id)
+const onProvinceChange = async () => {
+  const p = provinces.value.find((x) => x.id === selectedProvinceId.value)
   form.value.province = p?.full_name || ''
 
   selectedDistrictId.value = ''
@@ -86,21 +88,23 @@ watch(selectedProvinceId, async (id) => {
   form.value.district = ''
   form.value.commune = ''
 
-  await fetchDistricts(id)
-})
+  await fetchDistricts(selectedProvinceId.value)
+}
 
-watch(selectedDistrictId, async (id) => {
-  const d = districts.value.find((x) => x.id === id)
+const onDistrictChange = async () => {
+  const d = districts.value.find((x) => x.id === selectedDistrictId.value)
   form.value.district = d?.full_name || ''
+
   selectedCommuneId.value = ''
   form.value.commune = ''
-  await fetchCommunes(id)
-})
 
-watch(selectedCommuneId, async (id) => {
-  const c = communes.value.find((x) => x.id === id)
+  await fetchCommunes(selectedDistrictId.value)
+}
+
+const onCommuneChange = () => {
+  const c = communes.value.find((x) => x.id === selectedCommuneId.value)
   form.value.commune = c?.full_name || ''
-})
+}
 
 /* =====================================================
  * LIFECYCLE
@@ -133,13 +137,15 @@ watch(
 
       selectedProvinceId.value =
         provinces.value.find((p) => p.full_name === form.value.province)?.id || ''
-
-      await fetchDistricts(selectedProvinceId.value)
+      if (selectedProvinceId.value) {
+        await fetchDistricts(selectedProvinceId.value)
+      }
 
       selectedDistrictId.value =
         districts.value.find((d) => d.full_name === form.value.district)?.id || ''
-
-      await fetchCommunes(selectedDistrictId.value)
+      if (selectedDistrictId.value) {
+        await fetchCommunes(selectedDistrictId.value)
+      }
 
       selectedCommuneId.value =
         communes.value.find((c) => c.full_name === form.value.commune)?.id || ''
@@ -148,6 +154,7 @@ watch(
     }
   },
 )
+
 /* =====================================================
  * HELPERS
  * ===================================================== */
@@ -195,16 +202,12 @@ const validate = () => {
     ok = false
   }
 
-  if (typeof form.value.latitude !== 'number' || typeof form.value.longitude !== 'number') {
-    errors.value.location = 'Vui lòng lấy tọa độ địa chỉ'
-    ok = false
-  }
-
   if (
-    form.value.latitude < 8 ||
+    form.value.latitude !== null && form.value.longitude !== null &&
+    (form.value.latitude < 8 ||
     form.value.latitude > 24 ||
     form.value.longitude < 102 ||
-    form.value.longitude > 110
+    form.value.longitude > 110)
   ) {
     errors.value.location = 'Tọa độ không hợp lệ tại Việt Nam'
     ok = false
@@ -243,88 +246,153 @@ const buildPayload = () => {
   return payload
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (!validate()) return
 
+  // Tự động gọi Forward Geocoding nếu user chưa lấy tọa độ
   if (typeof form.value.latitude !== 'number' || typeof form.value.longitude !== 'number') {
-    toast.show({
-      type: 'warning',
-      message: 'Vui lòng lấy tọa độ trước khi lưu địa chỉ',
-    })
-    return
+    isGeocoding.value = true
+    try {
+      const q = `${form.value.commune}, ${form.value.district}, ${form.value.province}`
+      const res = await axios.get(`https://nominatim.openstreetmap.org/search`, {
+        params: { format: 'json', limit: 1, countrycodes: 'vn', q }
+      })
+      if (res.data?.length) {
+        form.value.latitude = Number(res.data[0].lat)
+        form.value.longitude = Number(res.data[0].lon)
+      } else {
+        toast.show({ type: 'warning', message: 'Không thể tìm thấy tọa độ tự động. Sẽ lưu không có tọa độ.' })
+      }
+    } catch {
+      toast.show({ type: 'warning', message: 'Lỗi khi gọi lấy tọa độ ngầm. Sẽ lưu không có tọa độ.' })
+    } finally {
+      isGeocoding.value = false
+    }
   }
 
   emit('submit', buildPayload())
 }
 
 /* =====================================================
- * GEOLOCATION (CURRENT POSITION)
+ * FUZZY MATCH (Bóc tách chuỗi để Map với ID của Esgoo)
  * ===================================================== */
-const getCurrentLocation = () => {
-  if (!navigator.geolocation) return
+const normalizeText = (text) => {
+  if (!text) return ''
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // bỏ dấu
+    .replace(/^(tinh|thanh pho|quan|huyen|phuong|xa|thi xa|thi tran|tp)\s+/g, '')
+    .trim()
+}
 
-  isLocating.value = true
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      form.value.latitude = pos.coords.latitude
-      form.value.longitude = pos.coords.longitude
-      toast.show({ type: 'success', message: 'Đã lấy tọa độ hiện tại' })
-      isLocating.value = false
-    },
-    () => {
-      toast.show({ type: 'error', message: 'Không thể lấy vị trí hiện tại' })
-      isLocating.value = false
-    },
-  )
+const fuzzyMatchLocation = async (provStr, distStr, commStr) => {
+  if (!provinces.value.length) await fetchProvinces()
+
+  const normProv = normalizeText(provStr)
+  const matchedProv = provinces.value.find(p => {
+    const np = normalizeText(p.full_name)
+    return np === normProv || np.includes(normProv) || normProv.includes(np)
+  })
+
+  if (!matchedProv) return
+
+  // ===== PROVINCE =====
+  selectedProvinceId.value = matchedProv.id
+  form.value.province = matchedProv.full_name
+
+  await fetchDistricts(matchedProv.id)
+  await nextTick() // 🔥 QUAN TRỌNG
+
+  // ===== DISTRICT =====
+  if (distStr) {
+    const normDist = normalizeText(distStr)
+
+    const matchedDist = districts.value.find(d => {
+      const nd = normalizeText(d.full_name)
+      return nd === normDist || nd.includes(normDist) || normDist.includes(nd)
+    })
+
+    if (!matchedDist) return
+
+    selectedDistrictId.value = matchedDist.id
+    form.value.district = matchedDist.full_name
+
+    await fetchCommunes(matchedDist.id)
+    await nextTick() // 🔥 QUAN TRỌNG
+
+    // ===== COMMUNE =====
+    if (commStr) {
+      const normComm = normalizeText(commStr)
+
+      const matchedComm = communes.value.find(c => {
+        const nc = normalizeText(c.full_name)
+        return nc === normComm || nc.includes(normComm) || normComm.includes(nc)
+      })
+
+      if (matchedComm) {
+        selectedCommuneId.value = matchedComm.id
+        form.value.commune = matchedComm.full_name
+      }
+    }
+  }
 }
 
 /* =====================================================
- * GEOCODING (WARD → DISTRICT → PROVINCE)
+ * GEOLOCATION (CURRENT POSITION & REVERSE GEOCODING)
  * ===================================================== */
-const geocodeAddress = async () => {
-  isGeocoding.value = true
-
-  const queries = [
-    `${form.value.commune}, ${form.value.district}, ${form.value.province}`,
-    `${form.value.district}, ${form.value.province}`,
-    `${form.value.province}`,
-  ]
-
-  try {
-    for (const q of queries) {
-      if (!q.trim()) continue
-
-      const res = await axios.get(`https://nominatim.openstreetmap.org/search`, {
-        params: {
-          format: 'json',
-          limit: 1,
-          countrycodes: 'vn',
-          q,
-        },
-      })
-
-      if (res.data?.length) {
-        form.value.latitude = Number(res.data[0].lat)
-        form.value.longitude = Number(res.data[0].lon)
-
-        toast.show({
-          type: 'success',
-          message: `Đã lấy tọa độ theo: ${q}`,
-        })
-        return
-      }
-    }
-
-    toast.show({
-      type: 'warning',
-      message: 'Không tìm thấy tọa độ phù hợp – sẽ tính phí thủ công',
-    })
-  } catch {
-    toast.show({ type: 'error', message: 'Lỗi kết nối bản đồ' })
-  } finally {
-    isGeocoding.value = false
+const getCurrentLocation = () => {
+  if (!navigator.geolocation) {
+    toast.show({ type: 'error', message: 'Trình duyệt không hỗ trợ lấy vị trí.' })
+    return
   }
+
+  isLocating.value = true
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      form.value.latitude = pos.coords.latitude
+      form.value.longitude = pos.coords.longitude
+
+      try {
+        const res = await axios.get('https://nominatim.openstreetmap.org/reverse', {
+          params: {
+            format: 'json',
+            lat: form.value.latitude,
+            lon: form.value.longitude,
+            'accept-language': 'vi'
+          }
+        })
+
+        const addr = res.data?.address
+        console.log('FULL ADDRESS:', addr)
+        if (addr) {
+          const provStr = addr.state || addr.city || addr.province || ''
+          const distStr = addr.county || addr.district || addr.town || addr.city_district || ''
+          const commStr = addr.suburb || addr.village || addr.hamlet || addr.quarter || ''
+
+          console.log('districts:', districts.value)
+          console.log('target:', distStr)
+          await fuzzyMatchLocation(provStr, distStr, commStr)
+
+          if (addr.road || addr.house_number) {
+            form.value.addressDetail = [addr.house_number, addr.road].filter(Boolean).join(' ')
+          }
+        }
+        toast.show({ type: 'success', message: 'Đã lấy vị trí hiện tại' })
+      } catch (err) {
+        toast.show({ type: 'warning', message: 'Đã lấy tọa độ nhưng không thể tự động điền địa chỉ' })
+      } finally {
+        isLocating.value = false
+      }
+    },
+    () => {
+      toast.show({ type: 'error', message: 'Không thể truy cập vị trí hiện tại (Hãy cấp quyền)' })
+      isLocating.value = false
+    },
+  )
+
 }
+
 </script>
 
 <template>
@@ -347,35 +415,35 @@ const geocodeAddress = async () => {
       <!-- Body -->
       <div class="space-y-4">
         <!-- GEO ACTIONS -->
-        <div class="grid grid-cols-2 gap-3">
+        <div class="flex">
           <button
             @click.prevent="getCurrentLocation"
             :disabled="isLocating"
-            class="py-2 px-3 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-100 font-medium text-xs border border-blue-200 disabled:opacity-60"
+            class="w-full py-2.5 px-4 bg-green-50 text-green-600 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-100 font-bold text-sm border border-blue-200 disabled:opacity-60 transition-colors"
           >
-            <span v-if="isLocating" class="animate-spin">⌛</span>
-            <span v-else>📍</span>
-            {{ form.latitude ? 'Cập nhật tọa độ hiện tại' : 'Lấy tọa độ hiện tại' }}
-          </button>
+            <span v-if="isLocating" class="animate-spin">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+              </svg>
+            </span>
+            <span v-else>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+</svg>
 
-          <button
-            @click.prevent="geocodeAddress"
-            :disabled="isGeocoding || !form.province"
-            class="py-2 px-3 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center gap-2 hover:bg-orange-100 font-medium text-xs border border-orange-200 disabled:opacity-60"
-          >
-            <span v-if="isGeocoding" class="animate-spin">⌛</span>
-            <span v-else>🔍</span>
-            Lấy tọa độ từ địa chỉ
+            </span>
+            {{ form.latitude ? 'Cập nhật lại địa chỉ hiện tại' : 'Lấy địa chỉ hiện tại' }}
           </button>
         </div>
 
         <!-- COORDINATES -->
-        <div
+        <!-- <div
           v-if="form.latitude"
           class="text-xs text-center text-green-700 font-mono bg-green-50 p-2 rounded border border-green-200"
         >
           Lat: {{ form.latitude.toFixed(6) }} | Lng: {{ form.longitude.toFixed(6) }}
-        </div>
+        </div> -->
 
         <p v-if="errors.location" class="error-msg">
           {{ errors.location }}
@@ -406,7 +474,7 @@ const geocodeAddress = async () => {
         >
           <p class="text-xs font-bold text-gray-500 uppercase">Khu vực hành chính</p>
 
-          <select v-model="selectedProvinceId" class="input cursor-pointer">
+          <select v-model="selectedProvinceId" @change="onProvinceChange" class="input cursor-pointer">
             <option value="" disabled>-- Chọn Tỉnh / Thành phố --</option>
             <option v-for="p in provinces" :key="p.id" :value="p.id">
               {{ p.full_name }}
@@ -415,6 +483,7 @@ const geocodeAddress = async () => {
 
           <select
             v-model="selectedDistrictId"
+            @change="onDistrictChange"
             class="input cursor-pointer"
             :disabled="!selectedProvinceId"
           >
@@ -426,6 +495,7 @@ const geocodeAddress = async () => {
 
           <select
             v-model="selectedCommuneId"
+            @change="onCommuneChange"
             class="input cursor-pointer"
             :disabled="!selectedDistrictId"
           >
@@ -474,7 +544,10 @@ const geocodeAddress = async () => {
       <!-- FOOTER -->
       <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
         <button @click="$emit('close')" class="btn-secondary">Hủy bỏ</button>
-        <button @click="handleSubmit" class="btn-primary">Lưu địa chỉ</button>
+        <button @click="handleSubmit" class="btn-primary flex items-center justify-center gap-2" :disabled="isGeocoding">
+          <span v-if="isGeocoding" class="animate-spin h-4 w-4 rounded-full border-2 border-white border-t-transparent"></span>
+          Lưu địa chỉ
+        </button>
       </div>
     </div>
   </div>
@@ -491,7 +564,7 @@ const geocodeAddress = async () => {
   @apply text-xs text-red-500 mt-1;
 }
 .btn-primary {
-  @apply px-6 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 font-bold shadow-lg shadow-green-200 dark:shadow-none transition-all;
+  @apply px-6 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 font-bold shadow-lg shadow-green-200 dark:shadow-none transition-all disabled:opacity-70 disabled:cursor-not-allowed;
 }
 .btn-secondary {
   @apply px-6 py-2.5 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-xl font-medium transition-colors;

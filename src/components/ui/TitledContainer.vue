@@ -8,8 +8,8 @@ const props = defineProps({
   // 3.1: Props mới như bạn đề xuất
   layout: {
     type: String,
-    default: 'horizontal', // 'horizontal' | 'grid'
-    validator: (val) => ['horizontal', 'grid'].includes(val),
+    default: 'horizontal', // 'horizontal' | 'grid' | 'block'
+    validator: (val) => ['horizontal', 'grid', 'block'].includes(val),
   },
   initialCount: {
     type: Number,
@@ -149,7 +149,11 @@ watch(
         <slot :items="visibleItems"></slot>
       </div>
 
-      <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-2 py-4">
+      <div v-else-if="layout === 'grid'" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-2 py-4">
+        <slot :items="visibleItems"></slot>
+      </div>
+
+      <div v-else-if="layout === 'block'" class="px-2 py-4 w-full">
         <slot :items="visibleItems"></slot>
       </div>
 

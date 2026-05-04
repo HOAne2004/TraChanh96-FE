@@ -2,11 +2,16 @@
 import { ref, watch, computed } from 'vue'
 import { useUserStore } from '@/stores/identity/user.store'
 import { useModalStore } from '@/stores/system/modal.store'
+import { useToastStore } from '@/stores/system/toast.store'
+import { useAddressStore } from '@/stores/identity/address.store'
 import Button from '@/components/ui/AppButton.vue'
+import UserAddressList from './UserAddressList.vue'
 import { formatPrice } from '@/utils/formatters'
 
 const userStore = useUserStore()
 const modalStore = useModalStore()
+const toastStore = useToastStore()
+const addressStore = useAddressStore()
 
 const props = defineProps({
   user: { type: Object, required: true },
@@ -43,12 +48,43 @@ const handleSubmit = async () => {
       detailAddress: form.value.detailAddress,
     }
     await userStore.updateUser(props.user.publicId || props.user.id, updateData)
-    modalStore.showToast('Cập nhật thông tin thành công!', 'success')
+    toastStore.show({ message: 'Cập nhật thông tin thành công!', type: 'success' })
     await userStore.fetchUserProfile()
   } catch (error) {
-    modalStore.showToast('Lỗi khi cập nhật thông tin.', 'error')
+    toastStore.show({
+      message: 'Lỗi khi cập nhật thông tin.',
+      type: 'error'
+    })
   } finally {
     isSaving.value = false
+  }
+}
+
+// ==========================================
+// 🟢 HANDLERS CHO SỰ KIỆN TỪ USER ADDRESS LIST
+// ==========================================
+
+const handleSetDefaultAddress = async (id) => {
+  try {
+    await addressStore.setDefault(id)
+    toastStore.show({ message: 'Đã đặt làm địa chỉ mặc định!', type: 'success' })
+    await addressStore.fetchAddresses() // Reload danh sách
+  } catch (error) {
+    toastStore.show({ message: 'Lỗi khi cập nhật địa chỉ.', type: 'error' })
+  }
+}
+
+const handleDeleteAddress = async (id) => {
+  // Xác nhận trước khi xóa
+  const confirmed = await modalStore.confirmAction('Bạn có chắc chắn muốn xóa địa chỉ này không?', 'Xác nhận xóa')
+  if (!confirmed) return
+
+  try {
+    await addressStore.deleteAddress(id)
+    toastStore.show({ message: 'Đã xóa địa chỉ thành công!', type: 'success' })
+    await addressStore.fetchAddresses()
+  } catch (error) {
+    toastStore.show({ message: 'Lỗi khi xóa địa chỉ.', type: 'error' })
   }
 }
 
@@ -193,6 +229,15 @@ const expPercentage = computed(() => {
         />
       </div>
     </form>
+
+    <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+      <UserAddressList
+        mode="profile"
+        :is-logged-in="true"
+        @set-default="handleSetDefaultAddress"
+        @delete="handleDeleteAddress"
+      />
+    </div>
 
     <div
       v-if="isMembershipModalOpen"

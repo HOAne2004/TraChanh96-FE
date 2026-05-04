@@ -8,6 +8,7 @@ export const useNewsStore = defineStore('news', () => {
   const publishedNews = ref([]) // Public list
   const currentNews = ref(null) // Chi tiết bài
   const carousel = ref([])
+  const pagination = ref(null) // Pagination state
 
   const loading = ref(false)
   const error = ref(null)
@@ -52,12 +53,18 @@ export const useNewsStore = defineStore('news', () => {
 
   // --- ACTIONS (ADMIN) ---
 
-  async function fetchAllNewsAdmin({ search = null, status = null } = {}) {
+  async function fetchAllNewsAdmin(params = { pageIndex: 1, pageSize: 10, keyword: '', status: '' }) {
     loading.value = true
     error.value = null
     try {
-      const res = await newsService.getAllAdmin({ search, status })
-      newsList.value = res.data
+      const res = await newsService.getAllAdmin(params)
+      // Dữ liệu API trả về định dạng phân trang
+      newsList.value = res.data.items || []
+      pagination.value = {
+        pageIndex: res.data.pageIndex,
+        pageSize: res.data.pageSize,
+        totalCount: res.data.totalCount
+      }
     } catch (err) {
       error.value = err.response?.data?.message || 'Lỗi tải danh sách bài viết'
     } finally {
@@ -118,6 +125,7 @@ export const useNewsStore = defineStore('news', () => {
     publishedNews,
     currentNews,
     carousel,
+    pagination,
     loading,
     error,
 
