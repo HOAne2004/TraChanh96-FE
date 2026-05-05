@@ -270,7 +270,7 @@ watch(
   <div>
     <button
       @click="toggleSidebar"
-      class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-gray-900 text-white rounded-lg shadow-lg hover:bg-gray-800 transition-colors"
+      class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-colors"
     >
       <svg
         v-if="!isSidebarOpen"
@@ -352,7 +352,7 @@ watch(
               'w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group',
               isParentActive(item)
                 ? 'bg-green-600/10 text-green-600'
-                : 'hover:bg-gray-800 hover:text-white',
+                : 'hover:bg-green-600 hover:text-white',
             ]"
           >
             <div class="flex items-center gap-3">
@@ -406,7 +406,7 @@ watch(
                   'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors',
                   isActive(sub.path)
                     ? 'bg-green-600 text-white font-medium shadow-md shadow-green-900/20'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50',
+                    : 'text-gray-400 hover:text-white hover:bg-green-500',
                 ]"
               >
                 <svg
