@@ -20,10 +20,10 @@ const timeFilter = ref('today')
 
 // --- STATE DỮ LIỆU ---
 const stats = ref({
-  revenue: 0, revenueGrowth: 0,
-  tablesInUse: 0, tablesTotal: 0,
-  ordersCount: 0, ordersGrowth: 0,
-  customersCount: 0, customersGrowth: 0,
+  revenue: 0, revenueGrowth: 0, isRevenueUp: true,
+  tablesInUse: 0, tablesTotal: 0, tablesGrowth: 0, isTablesUp: true,
+  ordersCount: 0, ordersGrowth: 0, isOrdersUp: true,
+  customersCount: 0, customersGrowth: 0, isCustomersUp: true,
   ratingAverage: 0, ratingCount: 0, ratingGrowth: 0
 })
 
@@ -83,12 +83,21 @@ const fetchDashboardData = async () => {
     stats.value = {
       revenue: data.revenue || 0,
       revenueGrowth: data.revenueGrowth > 0 ? `+${data.revenueGrowth}%` : `${data.revenueGrowth}%`,
+      isRevenueUp: (data.revenueGrowth || 0) >= 0,
+      
       tablesInUse: data.tablesInUse || 0,
       tablesTotal: data.tablesTotal || 0,
+      tablesGrowth: data.tablesGrowth || 0,
+      isTablesUp: (data.tablesGrowth || 0) >= 0,
+      
       ordersCount: data.ordersCount || 0,
       ordersGrowth: data.ordersGrowth > 0 ? `+${data.ordersGrowth}%` : `${data.ordersGrowth}%`,
+      isOrdersUp: (data.ordersGrowth || 0) >= 0,
+      
       customersCount: data.customersCount || 0,
       customersGrowth: data.customersGrowth > 0 ? `+${data.customersGrowth}%` : `${data.customersGrowth}%`,
+      isCustomersUp: (data.customersGrowth || 0) >= 0,
+      
       ratingAverage: data.ratingAverage || 0,
       ratingCount: data.ratingCount || 0,
       ratingGrowth: data.ratingGrowth > 0 ? `+${data.ratingGrowth}` : `${data.ratingGrowth}`
