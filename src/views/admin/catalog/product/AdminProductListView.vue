@@ -29,7 +29,8 @@ const queryParams = reactive({
   pageSize: 10,
   search: '',
   status: '',
-  type: '', // 🟢 Custom Filter
+  // type: '', // 🟢 Comment lại lọc theo loại
+  categoryId: '', // 🟢 Thêm lọc theo danh mục
   fromDate: '',
   toDate: '',
 })
@@ -51,7 +52,8 @@ async function fetchData() {
     toDate: queryParams.toDate || undefined,
 
     // Custom params
-    type: queryParams.type === '' ? undefined : queryParams.type,
+    // type: queryParams.type === '' ? undefined : queryParams.type,
+    categoryId: queryParams.categoryId === '' ? undefined : queryParams.categoryId,
   })
 }
 
@@ -70,7 +72,8 @@ function handleCoreFilterChange(values) {
 
 // 2. Xử lý khi Reset - Từ PageHeader emit ra
 function handleReset() {
-  queryParams.type = '' // Reset custom filter
+  // queryParams.type = '' // Reset custom filter
+  queryParams.categoryId = ''
   // Không cần gọi fetchData() vì handleCoreFilterChange sẽ chạy ngay sau đó
 }
 
@@ -80,9 +83,9 @@ function handlePageChange(page) {
   fetchData()
 }
 
-// 4. Watch Custom Filter (Type) để tự động reload
+// 4. Watch Custom Filter (CategoryId) để tự động reload
 watch(
-  () => queryParams.type,
+  () => queryParams.categoryId,
   () => {
     queryParams.page = 1
     fetchData()
@@ -131,6 +134,7 @@ onMounted(() => {
       @reset="handleReset"
     >
       <template #filter-ext>
+        <!-- 🟢 Comment lại lọc theo loại sản phẩm
         <div>
           <label class="block text-xs font-medium text-gray-500 mb-1">Loại sản phẩm</label>
           <div class="relative">
@@ -143,10 +147,28 @@ onMounted(() => {
                 {{ opt.label }}
               </option>
             </select>
+            ...
+          </div>
+        </div>
+        -->
+
+        <!-- 🟢 Lọc theo Danh mục -->
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Danh mục</label>
+          <div class="relative">
+            <select
+              v-model="queryParams.categoryId"
+              class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-green-500 appearance-none"
+            >
+              <option value="">Tất cả danh mục</option>
+              <option v-for="cat in productStore.categories" :key="cat.id" :value="cat.id">
+                {{ cat.name }}
+              </option>
+            </select>
 
             <button
-              v-if="queryParams.type !== ''"
-              @click="queryParams.type = ''"
+              v-if="queryParams.categoryId !== ''"
+              @click="queryParams.categoryId = ''"
               class="absolute right-8 top-2.5 text-gray-400 hover:text-red-500 bg-white dark:bg-gray-700"
             >
               <svg

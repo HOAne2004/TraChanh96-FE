@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProductStore } from '@/stores/catalog/product.store'
 import { useStoreStore } from '@/stores/store-operations/store.store'
+import { useRoute } from 'vue-router'
 
 import ProductFilter from '@/components/customer/catalog/ProductFilter.vue'
 import TitledContainer from '@/components/ui/TitledContainer.vue'
@@ -12,6 +13,7 @@ import StoreFilter from '@/components/customer/store-operations/StoreFilter.vue'
 
 const productStore = useProductStore()
 const storeStore = useStoreStore() // 3. Init
+const route = useRoute()
 
 const { products, categories, loading: productLoading } = storeToRefs(productStore)
 const { stores, selectedStoreId, storeMenu } = storeToRefs(storeStore) // 4. Lấy danh sách store
@@ -74,6 +76,14 @@ const displayedSections = computed(() => {
   // CASE 2: Không chọn Store (hoặc đang load) -> Dùng list gốc của Brand
   else {
     sourceProducts = products.value || []
+  }
+
+  // --- Lọc theo Từ khóa tìm kiếm (từ URL query) ---
+  const searchKeyword = (route.query.search || '').toString().toLowerCase().trim()
+  if (searchKeyword) {
+    sourceProducts = sourceProducts.filter((p) =>
+      p.name.toLowerCase().includes(searchKeyword),
+    )
   }
 
   // --- Lọc theo Category ---

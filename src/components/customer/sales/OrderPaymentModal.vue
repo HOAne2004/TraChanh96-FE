@@ -146,7 +146,7 @@ const handleConfirmClick = () => {
         </div>
 
         <div class="bg-white p-3 rounded-xl shadow-lg border border-gray-100">
-          <img :src="qrCodeUrl" alt="VietQR" class="w-56 h-56 object-contain rounded-lg" />
+          <img :src="qrCodeUrl" alt="VietQR" class="w-56 h-56 object-contain rounded-lg" v-img-fallback />
         </div>
 
         <div class="mt-6 w-full px-4">

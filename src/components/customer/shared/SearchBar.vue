@@ -42,8 +42,8 @@ const selectSuggestion = (item) => {
 const search = () => {
   if (!query.value.trim()) return
   showDropdown.value = false
-  // 👉 Điều hướng đến trang kết quả tìm kiếm
-  router.push({ path: '/search', query: { q: query.value } })
+  // 👉 Điều hướng đến trang Sản phẩm kèm query tìm kiếm
+  router.push({ name: 'products', query: { search: query.value.trim() } })
 }
 </script>
 

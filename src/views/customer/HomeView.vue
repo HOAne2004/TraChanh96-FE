@@ -32,7 +32,7 @@ const { stores } = storeToRefs(storeStore)
 onMounted(async () => {
   // Promise.allSettled tốt hơn Promise.all để 1 cái lỗi không làm chết cả trang
   await Promise.allSettled([
-    productStore.fetchProducts(),
+    productStore.fetchProducts({ pageSize: 50 }),
     newsStore.fetchPublishedNews(),
     storeStore.fetchActiveStores(),
   ])

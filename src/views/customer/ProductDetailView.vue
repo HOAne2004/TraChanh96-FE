@@ -396,13 +396,35 @@ const handleAddToCart = async (isBuyNow = false) => {
             v-html="currentProduct.description"
           ></div>
         </TitledContainer>
-        <TitledContainer v-if="currentProduct.ingredient" title="Thành phần" controls="hidden">
+
+        <DeliveryInfor v-if="policy" :policy="policy" class="mt-8" />
+      </div>
+
+      <div
+        v-if="canReview"
+        class="mt-4 p-4 bg-green-50 rounded-xl border border-green-200 flex items-center justify-between"
+      >
+        <span class="text-green-800 text-sm font-medium">Bạn đã mua sản phẩm này?</span>
+        <router-link to="/profile/orders" class="text-green-600 font-bold hover:underline text-sm"
+          >Viết đánh giá trong Đơn hàng</router-link
+        >
+      </div>
+
+      <div id="reviews-section" class="my-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <TitledContainer
+          v-if="currentProduct.ingredient"
+          title="Thành phần"
+          controls="hidden"
+          class="lg:col-span-1"
+        >
           <div
             class="text-gray-600 text-sm leading-relaxed prose prose-sm max-w-none"
             v-html="currentProduct.ingredient"
           ></div>
         </TitledContainer>
-        <DeliveryInfor v-if="policy" :policy="policy" class="mt-8" />
+        <TitledContainer title="Đánh giá sản phẩm" controls="hidden" class="lg:col-span-2">
+          <ReviewList :reviews="reviewStore.reviews" />
+        </TitledContainer>
       </div>
     </div>
 
@@ -411,21 +433,6 @@ const handleAddToCart = async (isBuyNow = false) => {
         Sản phẩm không tồn tại
       </h3>
       <Button label="Xem thực đơn" @click="router.push('/products')" />
-    </div>
-
-    <div
-      v-if="canReview"
-      class="mt-4 p-4 bg-green-50 rounded-xl border border-green-200 flex items-center justify-between"
-    >
-      <span class="text-green-800 text-sm font-medium">Bạn đã mua sản phẩm này?</span>
-      <router-link to="/profile/orders" class="text-green-600 font-bold hover:underline text-sm"
-        >Viết đánh giá trong Đơn hàng</router-link
-      >
-    </div>
-    <div id="reviews-section" class="my-12">
-      <TitledContainer title="Đánh giá sản phẩm" controls="hidden">
-        <ReviewList :reviews="reviewStore.reviews" />
-      </TitledContainer>
     </div>
   </main>
 </template>

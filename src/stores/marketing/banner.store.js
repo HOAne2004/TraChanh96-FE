@@ -69,12 +69,31 @@ export const useBannerStore = defineStore('banner', () => {
     }
   }
 
+  /**
+   * [ADMIN] Cập nhật
+   */
+  async function updateBanner(id, payload) {
+    loading.value = true
+    try {
+      const res = await bannerService.update(id, payload)
+      const index = banners.value.findIndex((b) => b.id === id)
+      if (index !== -1) banners.value[index] = res.data
+      return res.data
+    } catch (err) {
+      console.error('Lỗi cập nhật banner:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     banners,
     loading,
     error,
     fetchBanners,
     createBanner,
+    updateBanner,
     deleteBanner,
   }
 })

@@ -25,8 +25,14 @@ export default {
   },
 
   /**
+   * [ADMIN] Cập nhật banner
+   */
+  update(id, data) {
+    return api.put(`${ENDPOINT}/${id}`, data)
+  },
+
+  /**
    * [ADMIN] Xóa banner
-   * Mapping: [HttpDelete("{id}")]
    */
   delete(id) {
     return api.delete(`${ENDPOINT}/${id}`)

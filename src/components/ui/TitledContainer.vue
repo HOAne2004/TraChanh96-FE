@@ -21,14 +21,34 @@ const props = defineProps({
   linkText: { type: String, default: 'Xem thêm' },
 })
 
-// --- 3.2: Logic cho Grid Mode ---
-const expanded = ref(false)
+// --- 3.2: Logic cho Grid Mode (Load More) ---
+const currentLimit = ref(props.initialCount)
 
 const visibleItems = computed(() => {
-  if (props.layout !== 'grid') return props.items // Horizontal luôn trả về hết
-  if (expanded.value) return props.items
-  return props.items.slice(0, props.initialCount)
+  if (props.layout !== 'grid') return props.items // Horizontal/Block luôn trả về hết
+  return props.items.slice(0, currentLimit.value)
 })
+
+const hasMore = computed(() => {
+  return props.layout === 'grid' && currentLimit.value < props.items.length
+})
+
+const loadMore = () => {
+  currentLimit.value += props.initialCount
+}
+
+const collapse = () => {
+  currentLimit.value = props.initialCount
+}
+
+// Reset limit khi danh sách items thay đổi (quan trọng khi filter)
+watch(
+  () => props.items,
+  () => {
+    currentLimit.value = props.initialCount
+  },
+  { deep: false },
+)
 
 // --- Logic Scroll (Chỉ dùng cho Horizontal) ---
 const scrollContainer = ref(null)
@@ -195,9 +215,45 @@ watch(
     </div>
 
     <div
-      v-if="layout === 'grid' && items.length > initialCount"
-      class="mt-6 flex justify-center"
-    ></div>
+      v-if="hasMore || currentLimit > initialCount"
+      class="mt-8 flex flex-wrap justify-center gap-4"
+    >
+      <button
+        v-if="hasMore"
+        @click="loadMore"
+        class="group relative inline-flex items-center gap-2 px-8 py-3 bg-white dark:bg-gray-700 text-primary_hover dark:text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 active:scale-95 border border-gray-100 dark:border-gray-600"
+      >
+        <span>Xem thêm sản phẩm</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2.5"
+          stroke="currentColor"
+          class="w-5 h-5 group-hover:translate-y-0.5 transition-transform"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+        </svg>
+      </button>
+
+      <button
+        v-if="currentLimit > initialCount"
+        @click="collapse"
+        class="group relative inline-flex items-center gap-2 px-8 py-3 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-bold rounded-2xl shadow hover:shadow-md transition-all duration-300 hover:-translate-y-1 active:scale-95 border border-transparent"
+      >
+        <span>Thu gọn</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2.5"
+          stroke="currentColor"
+          class="w-5 h-5 group-hover:-translate-y-0.5 transition-transform"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+        </svg>
+      </button>
+    </div>
     <div v-if="layout === 'horizontal' && linkTo" class="mt-6 flex justify-center"></div>
   </div>
 </template>

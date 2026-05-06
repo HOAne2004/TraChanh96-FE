@@ -32,12 +32,15 @@ export const useProductStore = defineStore('product', () => {
 
   // --- GETTERS (LOGIC MỚI) ---
 
-  // 1. Top 10 Bán chạy (HOT)
+  // 1. Top 10 Bán chạy (Dùng cho section Home)
   const bestSellingProducts = computed(() => {
-    return [...products.value].sort((a, b) => (b.totalSold || 0) - (a.totalSold || 0)).slice(0, 10)
+    return [...products.value]
+      .filter((p) => (p.totalSold || 0) > 0)
+      .sort((a, b) => (b.totalSold || 0) - (a.totalSold || 0))
+      .slice(0, 10)
   })
 
-  // 2. Top 10 Mới nhất (NEW)
+  // 2. Top 10 Mới nhất (Dùng cho section Home)
   const newestProducts = computed(() => {
     return [...products.value]
       .sort(
@@ -212,13 +215,30 @@ export const useProductStore = defineStore('product', () => {
 
   // --- HELPER FUNCTIONS (Để ProductCard dùng) ---
   // Kiểm tra 1 sản phẩm có nằm trong top bán chạy không
+  // 1. Kiểm tra sản phẩm có "HOT" không
   function checkIsBestSeller(productId) {
+    const product = products.value.find((p) => p.id === productId)
+    if (!product || (product.totalSold || 0) <= 0) return false
+
+    // Phải nằm trong Top 10 bán chạy
     return bestSellingProducts.value.some((p) => p.id === productId)
   }
 
-  // Kiểm tra 1 sản phẩm có nằm trong top mới không
+  // 2. Kiểm tra sản phẩm có "NEW" không
   function checkIsNew(productId) {
-    return newestProducts.value.some((p) => p.id === productId)
+    const product = products.value.find((p) => p.id === productId)
+    if (!product) return false
+
+    // Check ngày: Trong vòng 30 ngày qua
+    const launchDate = new Date(product.launchDateTime || product.createdAt)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const isRecentlyAdded = launchDate > thirtyDaysAgo
+
+    // VÀ phải nằm trong Top 10 mới nhất
+    const isTopNew = newestProducts.value.some((p) => p.id === productId)
+
+    return isRecentlyAdded && isTopNew
   }
   return {
     products,
