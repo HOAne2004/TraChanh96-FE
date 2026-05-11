@@ -12,12 +12,30 @@ const api = axios.create({
 
 let userStore = null
 
+// --- THÊM LOGIC KHỬ TRÙNG LẶP TOAST ---
+const activeToasts = new Set()
+
+function showUniqueToast(toastStore, type, message) {
+  // Đảm bảo message là chuỗi để so sánh (tránh lỗi object)
+  const safeMessage = typeof message === 'string' ? message : JSON.stringify(message)
+
+  // Nếu thông báo này đang hiển thị rồi thì bỏ qua luôn
+  if (activeToasts.has(safeMessage)) return
+
+  // Thêm vào danh sách đang hiển thị và gọi Toast
+  activeToasts.add(safeMessage)
+  toastStore.show({ type, message: safeMessage })
+
+  // Đặt thời gian tự động xóa khỏi danh sách (ví dụ: 3000ms = 3 giây)
+  setTimeout(() => {
+    activeToasts.delete(safeMessage)
+  }, 3000)
+}
+// -------------------------------------
+
 // 1. Request Interceptor
 api.interceptors.request.use(
   (config) => {
-    // ⭐️ FIX QUAN TRỌNG: Lấy token trực tiếp từ localStorage
-    // Lý do: Store có thể chưa kịp cập nhật state ngay lập tức sau khi login,
-    // nhưng localStorage.setItem() là đồng bộ nên chắc chắn đã có dữ liệu.
     const token = localStorage.getItem('token')
 
     if (token) {
@@ -39,38 +57,35 @@ api.interceptors.response.use(
     const status = error.response?.status
     const originalRequest = error.config
 
+    // ⭐️ Xử lý lỗi BE sập hoặc mất mạng (ERR_CONNECTION_REFUSED)
+    if (error.code === 'ERR_NETWORK' || error.code === 'ERR_CONNECTION_REFUSED') {
+      showUniqueToast(toast, 'error', 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại!')
+      return Promise.reject(error)
+    }
+
     const message =
       error.response?.data?.message || error.response?.data || 'Có lỗi xảy ra, vui lòng thử lại'
 
     // 401 – Hết hạn token hoặc Unauthorized
     if (status === 401) {
-      // ⭐️ FIX: Nếu lỗi 401 xảy ra khi đang gọi API Login (do sai pass)
-      // thì TRẢ LỖI VỀ cho LoginForm xử lý, KHÔNG hiện popup hết hạn.
       if (originalRequest.url && originalRequest.url.includes('/Auth/login')) {
         return Promise.reject(error)
       }
 
-      // Các trường hợp khác (đang lướt web thì hết hạn token)
-      toast.show({
-        type: 'warning',
-        message: 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại',
-      })
+      // Dùng hàm khử trùng lặp thay vì gọi trực tiếp toast.show()
+      showUniqueToast(toast, 'warning', 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại')
 
       userStore.logout()
       modal.openLoginModal()
       return Promise.reject(error)
     }
 
-    // Nếu request cấu hình silent (không muốn hiện toast lỗi)
     if (error.config?.silent) {
       return Promise.reject(error)
     }
 
-    // Các lỗi còn lại (500, 400, 404...)
-    toast.show({
-      type: 'error',
-      message,
-    })
+    // Dùng hàm khử trùng lặp cho các lỗi còn lại
+    showUniqueToast(toast, 'error', message)
 
     return Promise.reject(error)
   },

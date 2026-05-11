@@ -1,6 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
 import { useRoomStore } from '@/stores/store-operations/room.store'
 import { useShopTableStore } from '@/stores/store-operations/shopTable.store'
 import { useToastStore } from '@/stores/system/toast.store'
@@ -11,8 +10,6 @@ const props = defineProps({
   store: { type: Object, required: true }
 })
 
-const route = useRoute()
-const router = useRouter()
 const roomStore = useRoomStore()
 const tableStore = useShopTableStore()
 const toastStore = useToastStore()
@@ -112,7 +109,10 @@ const submitRoom = async (formData) => {
     }
     showRoomModal.value = false
     await loadData()
-  } catch (error) {}
+  } catch (error) {
+    console.log(error)
+    toastStore.show({ message: 'Thêm phòng thất bại', type: 'error' })
+  }
 }
 
 const deleteRoom = async () => {
@@ -124,7 +124,10 @@ const deleteRoom = async () => {
       selectedRoomId.value = null // Reset selection
       await loadData()
     }
-  } catch (error) {}
+  } catch (error) {
+    console.log(error)
+    toastStore.show({ message: 'Xóa phòng thất bại', type: 'error' })
+  }
 }
 
 // --- LOGIC CRUD BÀN ---
@@ -150,7 +153,10 @@ const submitTable = async (formData) => {
       toastStore.show({ message: 'Thêm bàn thành công', type: 'success' })
     }
     showTableModal.value = false
-  } catch (error) {}
+  } catch (error) {
+    console.log(error)
+    toastStore.show({ message: 'Thêm bàn thất bại', type: 'error' })
+  }
 }
 
 const deleteTable = async (tableId) => {
@@ -159,7 +165,10 @@ const deleteTable = async (tableId) => {
     if (success) {
        toastStore.show({ message: 'Xóa bàn thành công', type: 'success' })
     }
-  } catch (error) {}
+  } catch (error) {
+    console.log(error)
+    toastStore.show({ message: 'Xóa bàn thất bại', type: 'error' })
+  }
 }
 </script>
 

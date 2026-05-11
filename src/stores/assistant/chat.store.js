@@ -64,6 +64,7 @@ export const useChatStore = defineStore('chat', {
           }
         }
       } catch (error) {
+        console.log('Lỗi: ', error)
         // Fallback thân thiện nếu Backend dở chứng
         this.messages.push({
           role: 'model',

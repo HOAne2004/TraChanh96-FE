@@ -7,6 +7,7 @@ import { useModalStore } from '@/stores/system/modal.store'
 import AdminPageHeader from '@/components/admin/shared/AdminPageHeader.vue'
 import AdminDataTable  from '@/components/admin/shared/AdminDataTable.vue'
 import AppButton       from '@/components/ui/AppButton.vue'
+import uploadService   from '@/services/system/upload.service'
 
 const bannerStore = useBannerStore()
 const toastStore  = useToastStore()
@@ -16,6 +17,7 @@ const modalStore  = useModalStore()
 const isModalOpen = ref(false)
 const isEditing   = ref(false)
 const currentId   = ref(null)
+const isUploading = ref(false)
 
 const form = reactive({
   imageUrl: '',
@@ -44,6 +46,28 @@ const positionOptions = [
 const fetchData = () => bannerStore.fetchBanners()
 
 onMounted(fetchData)
+
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  isUploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await uploadService.uploadFile(formData)
+    
+    // Fallback based on typical API responses
+    form.imageUrl = res.data?.url || res.data || ''
+    toastStore.show({ type: 'success', message: 'Tải ảnh lên thành công' })
+  } catch (err) {
+    console.error('Lỗi upload ảnh:', err)
+    toastStore.show({ type: 'error', message: 'Tải ảnh thất bại. Vui lòng thử lại' })
+  } finally {
+    isUploading.value = false
+    event.target.value = '' // Reset input
+  }
+}
 
 const openCreateModal = () => {
   isEditing.value = false
@@ -173,16 +197,38 @@ const handleAction = ({ type, item }) => {
         <!-- Form Content -->
         <div class="p-6 overflow-y-auto">
           <form @submit.prevent="handleSubmit" class="space-y-4">
-            <!-- Image URL -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Đường dẫn hình ảnh (URL)</label>
-              <input
-                v-model="form.imageUrl"
-                type="url"
-                required
-                placeholder="https://example.com/image.jpg"
-                class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none"
-              />
+            <div class="mb-4 space-y-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Link ảnh</label>
+                <input
+                  v-model="form.imageUrl"
+                  type="text"
+                  required
+                  class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none text-sm"
+                  placeholder="https://..."
+                />
+              </div>
+              <div class="relative">
+                <div class="absolute inset-0 flex items-center">
+                  <div class="w-full border-t border-gray-200"></div>
+                </div>
+                <div class="relative flex justify-center text-xs">
+                  <span class="bg-white px-2 text-gray-500">Hoặc tải lên</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <input
+                  type="file"
+                  @change="handleFileUpload"
+                  accept="image/*"
+                  class="block w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
+                  :disabled="isUploading"
+                />
+                <svg v-if="isUploading" class="animate-spin h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
               <div v-if="form.imageUrl" class="mt-2 w-full h-32 rounded-lg border border-dashed border-gray-300 overflow-hidden bg-gray-50 flex items-center justify-center">
                  <img :src="form.imageUrl" class="h-full object-contain" alt="Preview" />
               </div>

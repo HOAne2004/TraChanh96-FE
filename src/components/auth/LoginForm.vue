@@ -13,6 +13,7 @@ const showPassword = ref(false)
 const isLoading = ref(false)
 const postVerifyError = ref('')
 
+const resendSuccess = ref(false)
 const currentView = ref('login') // 'login' | 'verify'
 
 const modal = useModalStore()
@@ -44,6 +45,7 @@ const handleLogin = async () => {
     else if (auth.user.role === 'MANAGER') router.push('/manager')
     else                                   router.push('/')
   } catch (err) {
+    console.log('Lỗi: ', err)
     const msg = auth.error || ''
     if (msg.toLowerCase().includes('xác thực') || msg.toLowerCase().includes('kiểm tra email')) {
       // Chuyển sang OTP view – OtpVerifyForm sẽ tự resend lần đầu nếu cần
@@ -71,6 +73,7 @@ const handleVerified = async () => {
     else if (auth.user.role === 'MANAGER') router.push('/manager')
     else                                   router.push('/')
   } catch (err) {
+    console.log('Lỗi: ', err)
     postVerifyError.value = auth.error || 'Đăng nhập thất bại sau xác thực.'
   } finally {
     isLoading.value = false

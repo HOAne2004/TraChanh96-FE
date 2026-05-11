@@ -87,6 +87,7 @@ export const useProductStore = defineStore('product', () => {
       const res = await productService.getBySlug(slug)
       currentProduct.value = res.data
     } catch (err) {
+      console.error(err)
       currentProduct.value = null
       error.value = 'Sản phẩm không tồn tại'
     } finally {
@@ -101,6 +102,7 @@ export const useProductStore = defineStore('product', () => {
       const res = await productService.getById(id)
       currentProduct.value = res.data
     } catch (err) {
+      console.error(err)
       error.value = 'Không thể tải sản phẩm'
     } finally {
       loading.value = false

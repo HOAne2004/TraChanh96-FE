@@ -482,6 +482,7 @@ onUnmounted(() => {
       </div>
     </div>
     <OrderPaymentModal
+      v-if="createdOrder"
       :show="showPaymentModal"
       :order="createdOrder"
       @close="handlePaymentModalDone"
