@@ -3,8 +3,10 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStoreStore } from '@/stores/store-operations/store.store'
 import { storeToRefs } from 'pinia'
+
+import ProductCatalog from '@/components/customer/catalog/ProductCatalog.vue'
 import NavLink from '@/components/ui/NavLink.vue'
-import ProductCard from '@/components/customer/catalog/ProductCard.vue'
+
 import defaultStoreImg from '@/assets/images/others/default-store.png'
 
 // 👇 1. KHÔI PHỤC PROPS (Cho Admin Preview)
@@ -18,7 +20,6 @@ const storeStore = useStoreStore()
 const { stores, storeMenu, loading } = storeToRefs(storeStore)
 
 const isLoadingLocal = ref(false)
-const activeCategoryId = ref('all') // State cho bộ lọc danh mục
 
 // 👇 2. LOGIC DATA: Hybrid (Preview vs Real)
 const currentStore = computed(() => {
@@ -53,20 +54,11 @@ const categories = computed(() => {
 })
 
 // Lọc sản phẩm theo danh mục đang chọn
-const displayedProducts = computed(() => {
+const mappedStoreMenuProducts = computed(() => {
   // 1. Nếu là Preview Mode (Admin) -> Trả về rỗng
   if (props.isPreview) return []
-
-  // 2. Lấy danh sách gốc từ Store
-  let products = storeMenu.value || []
-
-  // 3. 🔥 SỬA LOGIC FILTER: Chỉ lọc khi activeCategoryId KHÁC 'all'
-  if (activeCategoryId.value !== 'all') {
-    products = products.filter((p) => p.categoryId === activeCategoryId.value)
-  }
-
-  // 4. Map dữ liệu để khớp với ProductCard (productId -> id)
-  return products.map((p) => ({
+  // 2. Map dữ liệu ngay từ storeMenu (không cần filter category nữa vì ProductCatalog đã làm việc này)
+  return (storeMenu.value || []).map((p) => ({
     ...p,
     id: p.id,
     basePrice: p.displayPrice || p.basePrice, // Ưu tiên giá override tại quán
@@ -355,73 +347,14 @@ const isPageLoading = computed(() => !props.isPreview && (loading.value || isLoa
           Thực đơn
         </h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
-          <div class="md:col-span-1 sticky top-24">
-            <div
-              class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"
-            >
-              <div
-                class="p-4 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600 font-bold text-gray-700 dark:text-white"
-              >
-                Danh mục món
-              </div>
-              <ul class="flex flex-col">
-                <li>
-                  <button
-                    @click="activeCategoryId = 'all'"
-                    class="w-full text-left px-4 py-3 hover:bg-green-50 dark:hover:bg-gray-700 transition-colors border-l-4"
-                    :class="
-                      activeCategoryId === 'all'
-                        ? 'border-green-500 text-green-700 font-bold bg-green-50'
-                        : 'border-transparent text-gray-600'
-                    "
-                  >
-                    Tất cả món
-                  </button>
-                </li>
-                <li v-for="cat in categories" :key="cat.id">
-                  <button
-                    @click="activeCategoryId = cat.id"
-                    class="w-full text-left px-4 py-3 hover:bg-green-50 dark:hover:bg-gray-700 transition-colors border-l-4"
-                    :class="
-                      activeCategoryId === cat.id
-                        ? 'border-green-500 text-green-700 font-bold bg-green-50'
-                        : 'border-transparent text-gray-600'
-                    "
-                  >
-                    {{ cat.name }}
-                  </button>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="md:col-span-3">
-            <div
-              v-if="displayedProducts.length === 0"
-              class="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-300"
-            >
-              <p class="text-gray-500 text-lg">Chưa có món nào trong danh mục này.</p>
-              <button
-                v-if="activeCategoryId !== 'all'"
-                @click="activeCategoryId = 'all'"
-                class="text-green-600 font-bold mt-2 hover:underline"
-              >
-                Xem tất cả món
-              </button>
-            </div>
-
-            <div v-else class="grid grid-cols-2 lg:grid-cols-3 gap-6">
-              <ProductCard
-                v-for="product in displayedProducts"
-                :key="product.productId"
-                :product="product"
-                class="h-full"
-              />
-            </div>
-          </div>
-        </div>
+        <!-- THAY THẾ GRID CŨ BẰNG PRODUCT CATALOG -->
+        <ProductCatalog
+          :products="mappedStoreMenuProducts"
+          :categories="categories"
+          :is-loading="isLoadingLocal"
+        />
       </div>
+
 
       <div
         v-else

@@ -25,7 +25,7 @@ const emit = defineEmits([
 
 <template>
   <div v-if="isDrink" class="space-y-6 mb-8">
-    <hr class="border-gray-200 dark:border-gray-700 mb-6" />
+
 
     <div v-if="sizes?.length > 0">
       <span class="block text-sm font-semibold mb-2">Kích cỡ</span>

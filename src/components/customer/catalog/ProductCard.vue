@@ -1,14 +1,14 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useCartStore } from '@/stores/sales/cart.store'
 import { useUserStore } from '@/stores/identity/user.store'
 import { useStoreStore } from '@/stores/store-operations/store.store'
 import { useProductStore } from '@/stores/catalog/product.store'
 import { useToastStore } from '@/stores/system/toast.store'
 import { resolveImage } from '@/utils/image'
 import { formatPrice, formatSold } from '@/utils/formatters'
-import { SugarLevel, IceLevel } from '@/constants/enums'
 import defaultDrink from '@/assets/images/others/default-drink.png'
+
+import ProductCustomizer from '@/components/customer/catalog/ProductCustomizer.vue'
 
 const props = defineProps({
   product: { type: Object, required: true },
@@ -16,15 +16,18 @@ const props = defineProps({
 
 // Stores & Router
 
-const cartStore = useCartStore()
 const userStore = useUserStore()
 const storeStore = useStoreStore()
 const toastStore = useToastStore()
 const productStore = useProductStore()
 
 // State
-const quantity = ref(1)
 const isAdding = ref(false)
+
+// --- STATE CHO MODAL QUICK ADD ---
+const showQuickAddModal = ref(false)
+const isLoadingDetail = ref(false)
+const fullProductDetail = ref(null)
 
 // --- COMPUTED PROPERTIES ---
 
@@ -32,15 +35,6 @@ const fullImageUrl = computed(() => resolveImage(props.product.imageUrl, default
 
 const isNew = computed(() => productStore.checkIsNew(props.product.id))
 const isBestSeller = computed(() => productStore.checkIsBestSeller(props.product.id))
-
-const defaultSize = computed(() => {
-  const sizes = props.product.availableSizes || []
-  if (sizes.length === 0) return null
-  return sizes.reduce(
-    (prev, curr) => (prev.priceModifier < curr.priceModifier ? prev : curr),
-    sizes[0],
-  )
-})
 
 // 1. Logic kiểm tra trạng thái Cửa hàng (Mở/Đóng)
 const storeStatus = computed(() => {
@@ -101,63 +95,51 @@ const handleImageError = (e) => {
   e.target.onerror = null
 }
 
-// --- METHODS ---
-
-const addToCart = async (event) => {
+// --- MỞ MODAL & FETCH DATA ---
+const openQuickAdd = async (event) => {
   event.preventDefault() // Chặn link router
 
-  // 1. Validate nhanh (dù UI đã chặn)
+  // 1. Validate cơ bản
   if (isDisabled.value) {
-    if (availabilityStatus.value) {
-      toastStore.show({ type: 'warning', message: availabilityStatus.value.label })
-    }
+    if (availabilityStatus.value) toastStore.show({ type: 'warning', message: availabilityStatus.value.label })
     return
   }
-
   if (!userStore.isLoggedIn) {
-    toastStore.show({ type: 'warning', message: 'Vui lòng đăng nhập để mua hàng' })
+    toastStore.show({ type: 'warning', message: 'Vui lòng đăng nhập để đặt món' })
     return
   }
-
   if (!storeStore.selectedStoreId) {
     toastStore.show({ type: 'warning', message: 'Vui lòng chọn cửa hàng trước khi mua' })
     return
   }
 
-  if (props.product.availableSizes?.length > 0 && !defaultSize.value) {
-    toastStore.show({ type: 'warning', message: 'Vui lòng chọn size cho sản phẩm' })
-    return
-  }
-
-  // 2. Prepare Payload
-  const itemToAdd = {
-    storeId: storeStore.selectedStoreId,
-    productId: props.product.id,
-    quantity: quantity.value,
-    sizeId: defaultSize.value?.id ?? null,
-    sugarLevelId: SugarLevel.PERCENT_100,
-    iceLevelId: IceLevel.PERCENT_100,
-    note: '',
-    toppings: [],
-  }
-
-  // 3. Call API
-  isAdding.value = true
+  // 2. Fetch chi tiết sản phẩm
+  isLoadingDetail.value = true
   try {
-    await cartStore.addToCart(itemToAdd)
-    toastStore.show({
-      type: 'success',
-      message: `Đã thêm ${props.product.name} vào giỏ hàng`,
-    })
+    // Chờ store gọi API và lưu vào state
+    await productStore.fetchProductBySlug(props.product.slug)
+    
+    // LẤY DỮ LIỆU TỪ STATE CỦA STORE THAY VÌ BIẾN RES
+    const productData = productStore.currentProduct
+
+    if (productData) {
+        fullProductDetail.value = productData 
+        showQuickAddModal.value = true // Mở Modal
+    } else {
+        throw new Error('Không tìm thấy dữ liệu')
+    }
+
   } catch (err) {
-    console.error('Lỗi thêm giỏ hàng:', err)
-    toastStore.show({
-      type: 'error',
-      message: err.response?.data?.message || 'Lỗi thêm vào giỏ hàng',
-    })
+    console.error('Lỗi Quick Add: ', err)
+    toastStore.show({ type: 'error', message: 'Không thể tải chi tiết sản phẩm.' })
   } finally {
-    isAdding.value = false
+    isLoadingDetail.value = false
   }
+}
+
+const closeQuickAdd = () => {
+  showQuickAddModal.value = false
+  fullProductDetail.value = null
 }
 </script>
 
@@ -246,7 +228,7 @@ const addToCart = async (event) => {
 
           <button
             v-if="storeStore.selectedStoreId && !isDisabled"
-            @click.stop="addToCart"
+            @click.stop="openQuickAdd"
             class="w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm active:scale-95 bg-green-100 text-green-600 hover:bg-green-600 hover:text-white"
             title="Thêm nhanh vào giỏ"
           >
@@ -295,6 +277,32 @@ const addToCart = async (event) => {
       </div>
     </router-link>
   </div>
+
+  <div v-if="showQuickAddModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
+      
+      <div class="absolute inset-0" @click.stop="closeQuickAdd"></div>
+
+      <div class="relative bg-white dark:bg-gray-800 w-full sm:w-full sm:max-w-2xl sm:rounded-3xl rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col transform transition-all">
+        
+        <button 
+          @click.stop="closeQuickAdd" 
+          class="absolute top-4 right-4 z-10 p-2 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+
+        <div class="overflow-y-auto p-6 scrollbar-hide">
+          <ProductCustomizer
+            v-if="fullProductDetail"
+            :product="fullProductDetail"
+            :is-modal="true"
+            @added-to-cart="closeQuickAdd" 
+            @buy-now="closeQuickAdd"
+          />
+        </div>
+
+      </div>
+    </div>
 </template>
 
 <style scoped>

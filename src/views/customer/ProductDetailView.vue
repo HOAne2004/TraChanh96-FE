@@ -1,20 +1,15 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 
 // Stores
 import { useProductStore } from '@/stores/catalog/product.store'
-import { useCartStore } from '@/stores/sales/cart.store'
 import { useStoreStore } from '@/stores/store-operations/store.store'
 import { useUserStore } from '@/stores/identity/user.store'
 import { usePolicyStore } from '@/stores/system/policy.store'
-import { useToastStore } from '@/stores/system/toast.store'
 import { useSizeStore } from '@/stores/catalog/size.store'
 import { useReviewStore } from '@/stores/catalog/review.store'
-// Constants
-import { SugarLevel, IceLevel } from '@/constants/enums'
-import { formatPrice } from '@/utils/formatters'
 
 // Components
 import NavLink from '@/components/ui/NavLink.vue'
@@ -25,49 +20,22 @@ import Button from '@/components/ui/AppButton.vue'
 
 // Refactored Components
 import ProductGallery from '@/components/customer/catalog/ProductGallery.vue'
-import ProductSelectors from '@/components/customer/catalog/ProductSelectors.vue'
-import ProductActions from '@/components/customer/catalog/ProductActions.vue'
+import ProductCustomizer from '@/components/customer/catalog/ProductCustomizer.vue'
 
 const route = useRoute()
 const router = useRouter()
+
 const productStore = useProductStore()
-const cartStore = useCartStore()
 const userStore = useUserStore()
 const policyStore = usePolicyStore()
 const storeStore = useStoreStore()
 const sizeStore = useSizeStore()
 const reviewStore = useReviewStore()
-const toastStore = useToastStore()
 
-const { sizes } = storeToRefs(sizeStore)
-const { currentProduct, products, loading } = storeToRefs(productStore)
+const { currentProduct, loading } = storeToRefs(productStore)
 const { policy } = storeToRefs(policyStore)
 const { canReview } = storeToRefs(reviewStore)
-const { stores, selectedStoreId, storeMenu } = storeToRefs(storeStore)
-
-// Local State
-const quantity = ref(1)
-const selectedSize = ref(null)
-const selectedSugar = ref(SugarLevel.PERCENT_100)
-const selectedIce = ref(IceLevel.PERCENT_100)
-const selectedToppings = ref([])
-const note = ref('')
-const isAdding = ref(false)
-
-// --- COMPUTED LOGIC ---
-
-// 1. Check Store Availability
-const isAvailableAtStore = computed(() => {
-  if (!selectedStoreId.value) return true
-  if (storeMenu.value.length > 0) {
-    // Check cả ID (User) lẫn ProductId (Admin) để an toàn
-    const itemInStore = storeMenu.value.find(
-      (p) => p.id === currentProduct.value.id || p.productId === currentProduct.value.id,
-    )
-    return !!itemInStore
-  }
-  return true
-})
+const { stores, selectedStoreId } = storeToRefs(storeStore)
 
 const storeStatus = computed(() => {
   if (!selectedStoreId.value) return { isOpen: true }
@@ -75,134 +43,7 @@ const storeStatus = computed(() => {
   return storeStore.getStoreStatus(store)
 })
 
-const isActionDisabled = computed(() => {
-  return (
-    isAdding.value ||
-    (selectedStoreId.value && !storeStatus.value.isOpen) ||
-    !isAvailableAtStore.value
-  )
-})
-
-const isDrink = computed(() => currentProduct.value.productType?.toLowerCase() === 'drink')
-
-const isSoldOut = computed(() => {
-  if (!selectedStoreId.value) return false
-
-  if (storeMenu.value.length > 0) {
-    const item = storeMenu.value.find(
-      (p) => p.id === currentProduct.value.id || p.productId === currentProduct.value.id,
-    )
-    // Nếu tìm thấy item trong menu nhưng có cờ isSoldOut hoặc status OutOfStock
-    if (item && (item.isSoldOut || item.storeStatus === 'OutOfStock')) {
-      return true
-    }
-  }
-  return false
-})
-
-// 2. Filter Toppings
-const availableToppings = computed(() => {
-  if (!products.value) return []
-
-  // 1. Lấy danh sách ID cho phép từ sản phẩm hiện tại (Lấy từ backend trả về)
-  const allowedIds = currentProduct.value.allowedToppingIds || []
-
-  // 2. Lọc danh sách
-  return products.value.filter((p) => {
-    // Phải là sản phẩm loại Topping
-    const isTopping =
-      p.productType?.toLowerCase() === 'topping' || p.categoryName?.toLowerCase() === 'topping'
-
-    // 🟢 [QUAN TRỌNG] Phải nằm trong danh sách Admin đã chọn
-    // (Nếu danh sách rỗng, tức là không có topping nào được chọn -> Không hiện gì)
-    const isAllowed = allowedIds.includes(p.id)
-
-    // Check store availability (Giữ nguyên)
-    let isAvailableInStore = true
-    if (selectedStoreId.value && p.storeIds) {
-      isAvailableInStore = p.storeIds.includes(selectedStoreId.value)
-    }
-
-    return isTopping && isAllowed && isAvailableInStore
-  })
-})
-
-// 🟢 [MỚI] Computed Sizes cho UI
-// Logic: Merge thông tin từ Product (PriceOverride) + Global Store (Tên Size)
-const renderedSizes = computed(() => {
-  if (!currentProduct.value || !currentProduct.value.productSizes) return []
-
-  return currentProduct.value.productSizes
-    .map((ps) => {
-      // 1. Tìm thông tin gốc từ Global Store (để lấy Tên size)
-      const globalSize = sizes.value.find((s) => s.id === ps.sizeId)
-      // Nếu size không tồn tại trong global (ví dụ đã bị xóa), bỏ qua
-      if (!globalSize) return null
-
-      // 2. Tính chênh lệch giá để hiển thị lên UI (+...)
-      // Nếu có Override -> Chênh lệch = Override - BasePrice
-      // Nếu không -> Chênh lệch = Default Modifier của Size
-      let displayDiff = 0
-      if (ps.priceOverride && Number(ps.priceOverride) > 0) {
-        displayDiff = Number(ps.priceOverride) - Number(currentProduct.value.basePrice)
-      } else {
-        displayDiff = Number(globalSize.priceModifier || 0)
-      }
-
-      // 3. Trả về Object chuẩn cho ProductSelectors
-      return {
-        id: ps.sizeId,
-        label: globalSize.name || globalSize.label || 'Size',
-        priceModifier: displayDiff, // Key này để UI hiển thị (+10.000)
-
-        // Quan trọng: Truyền kèm các field gốc để logic finalPrice dùng
-        priceOverride: ps.priceOverride,
-        originalModifier: globalSize.priceModifier,
-      }
-    })
-    .filter(Boolean)
-    .sort((a, b) => (a.originalModifier || 0) - (b.originalModifier || 0) || a.id - b.id)
-})
-
-// 3. Price Calculation
-const finalPrice = computed(() => {
-  if (!currentProduct.value) return 0
-
-  let price = Number(currentProduct.value.basePrice)
-
-  // 🟢 LOGIC MỚI: Xử lý Size
-  if (selectedSize.value) {
-    // Nếu size này có giá ghi đè (Override) -> Dùng luôn giá đó làm gốc (bỏ qua BasePrice sản phẩm)
-    if (selectedSize.value.priceOverride && Number(selectedSize.value.priceOverride) > 0) {
-      price += Number(selectedSize.value.priceOverride)
-    }
-    // Nếu không -> Dùng công thức cũ: Giá gốc + Giá Modifier
-    else {
-      // Fallback: Nếu không có override, ta dùng originalModifier (lấy từ globalSize)
-      // Lưu ý: selectedSize lúc này là object từ renderedSizes
-      price += Number(selectedSize.value.originalModifier || 0)
-    }
-  }
-
-  // Cộng thêm giá Topping
-  if (selectedToppings.value.length > 0) {
-    const toppingsTotal = selectedToppings.value.reduce((sum, t) => sum + Number(t.basePrice), 0)
-    price += toppingsTotal
-  }
-
-  return price
-})
-
-const totalPrice = computed(() => finalPrice.value * quantity.value)
-
-// --- ACTIONS ---
-
 const loadData = async () => {
-  quantity.value = 1
-  selectedSize.value = null
-  note.value = ''
-  selectedToppings.value = []
-
   await Promise.all([
     productStore.fetchProductBySlug(route.params.slug),
     storeStore.fetchActiveStores(),
@@ -211,14 +52,8 @@ const loadData = async () => {
   ])
 
   if (currentProduct.value) {
-    // Auto select menu if store selected
     if (selectedStoreId.value) {
       await storeStore.fetchStoreMenu(selectedStoreId.value)
-    }
-
-    // 🟢 [SỬA] Auto-select size đầu tiên từ danh sách đã xử lý
-    if (isDrink.value && renderedSizes.value.length > 0) {
-      selectedSize.value = renderedSizes.value[0]
     }
 
     await reviewStore.fetchReviews(currentProduct.value.id)
@@ -230,78 +65,13 @@ const loadData = async () => {
 
 onMounted(loadData)
 watch(() => route.params.slug, loadData)
-// Watch store change to fetch menu logic for validation
+
 watch(selectedStoreId, async (newId) => {
   if (newId) await storeStore.fetchStoreMenu(newId)
 })
 
-const toggleTopping = (topping) => {
-  const index = selectedToppings.value.findIndex((t) => t.id === topping.id)
-  if (index === -1) selectedToppings.value.push(topping)
-  else selectedToppings.value.splice(index, 1)
-}
-
-const handleAddToCart = async (isBuyNow = false) => {
-  // Logic validate giữ nguyên
-  if (selectedStoreId.value && !storeStatus.value.isOpen) {
-    return toastStore.show({
-      type: 'error',
-      message: `Cửa hàng đang: ${storeStatus.value.message}`,
-    })
-  }
-  if (!userStore.isLoggedIn) {
-    toastStore.show({ type: 'warning', message: 'Vui lòng đăng nhập để đặt món!' })
-    return router.push('/login')
-  }
-  if (!selectedStoreId.value)
-    return toastStore.show({ type: 'warning', message: 'Vui lòng chọn cửa hàng trước!' })
-  if (!isAvailableAtStore.value)
-    return toastStore.show({
-      type: 'error',
-      message: 'Sản phẩm này không phục vụ tại cửa hàng đã chọn.',
-    })
-
-  // Double check storeIds (Optional)
-  const productStoreIds = currentProduct.value?.storeIds
-  if (productStoreIds?.length && !productStoreIds.includes(selectedStoreId.value)) {
-    return toastStore.show({
-      type: 'error',
-      message: 'Sản phẩm này hiện không bán tại cửa hàng đã chọn',
-    })
-  }
-
-  if (!selectedSize.value && renderedSizes.value.length > 0) {
-    return toastStore.show({ type: 'warning', message: 'Vui lòng chọn kích cỡ!' })
-  }
-
-  isAdding.value = true
-  try {
-    const payload = {
-      storeId: selectedStoreId.value,
-      productId: currentProduct.value.id,
-      quantity: quantity.value,
-      sizeId: selectedSize.value?.id ?? null,
-      sugarLevelId: selectedSugar.value,
-      iceLevelId: selectedIce.value,
-      note: note.value,
-      toppings: selectedToppings.value.map((t) => ({ productId: t.id, quantity: 1 })),
-    }
-
-    await cartStore.addToCart(payload)
-
-    if (isBuyNow) {
-      router.push({ path: '/checkout', query: { storeId: selectedStoreId.value } })
-    } else {
-      toastStore.show({ type: 'success', message: 'Đã thêm món vào giỏ hàng!' })
-      quantity.value = 1
-      selectedToppings.value = []
-      note.value = ''
-    }
-  } catch (err) {
-    toastStore.show({ type: 'error', message: err.response?.data?.message || 'Có lỗi xảy ra.' })
-  } finally {
-    isAdding.value = false
-  }
+const handleBuyNow = ({ storeId }) => {
+  router.push({ path: '/checkout', query: { storeId } })
 }
 </script>
 
@@ -351,42 +121,10 @@ const handleAddToCart = async (isBuyNow = false) => {
           :stores="stores"
           v-model:selectedStoreId="selectedStoreId"
         />
-
-        <div class="space-y-4">
-          <span class="text-green-600 font-medium tracking-wide uppercase text-sm mb-2">
-            {{ currentProduct.categoryName || 'Đồ uống' }}
-          </span>
-          <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
-            {{ currentProduct.name }}
-          </h1>
-          <div class="text-3xl font-extrabold text-primary mb-6">
-            {{ formatPrice(finalPrice) }}đ
-          </div>
-
-          <ProductSelectors
-            :is-drink="isDrink"
-            :sizes="renderedSizes"
-            :available-toppings="availableToppings"
-            v-model:selected-size="selectedSize"
-            v-model:selected-sugar="selectedSugar"
-            v-model:selected-ice="selectedIce"
-            :selected-toppings="selectedToppings"
-            @toggle-topping="toggleTopping"
-          />
-
-          <ProductActions
-            v-model:quantity="quantity"
-            v-model:note="note"
-            :total-price="totalPrice"
-            :is-adding="isAdding"
-            :store-status="storeStatus"
-            :is-disabled="isActionDisabled || isSoldOut"
-            :has-selected-store="!!selectedStoreId"
-            :is-available-at-store="isAvailableAtStore"
-            :is-sold-out="isSoldOut"
-            @add-to-cart="handleAddToCart"
-          />
-        </div>
+        <ProductCustomizer
+          :product="currentProduct"
+          @buy-now="handleBuyNow"
+        />
       </div>
 
       <div class="mt-12">

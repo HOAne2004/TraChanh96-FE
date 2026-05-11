@@ -12,7 +12,7 @@ import {
 // --- SETUP STORES ---
 const categoryStore = useCategoryStore()
 const toastStore = useToastStore()
-const { categories, flatCategories, loading } = storeToRefs(categoryStore)
+const { flatCategories, loading } = storeToRefs(categoryStore)
 
 // --- STATE QUẢN LÝ ---
 const isModalOpen = ref(false)
@@ -106,7 +106,8 @@ const handleSubmit = async () => {
     isModalOpen.value = false
     // Không cần fetch lại vì action trong store đã fetch rồi
   } catch (err) {
-    // Error đã được handle trong store hoặc hiển thị ở đây
+    console.log('Lỗi: ',err)
+    toastStore.showToast({ title: 'Thất bại', message: 'Không thể xóa danh mục', type: 'error' })
   } finally {
     submitting.value = false
   }
@@ -119,6 +120,8 @@ const handleDelete = async (item) => {
     toastStore.showToast({ title: 'Thành công', message: 'Đã xóa danh mục', type: 'success' })
   } catch (err) {
     // Error handle
+    console.log('Lỗi: ',err)
+    toastStore.showToast({ title: 'Thất bại', message: 'Không thể xóa danh mục', type: 'error' })
   }
 }
 
