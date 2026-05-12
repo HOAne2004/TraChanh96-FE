@@ -72,8 +72,7 @@ const openEditModal = (item) => {
 // 4. Submit Form (Create/Update)
 const handleSubmit = async () => {
   if (!formData.name)
-    return toastStore.showToast({
-      title: 'Lỗi',
+    return toastStore.show({
       message: 'Tên danh mục không được để trống',
       type: 'error',
     })
@@ -84,30 +83,27 @@ const handleSubmit = async () => {
       name: formData.name,
       parentId: formData.parentId,
       sortOrder: formData.sortOrder,
-      status: formData.status === 'Active',
+      status: formData.status,
     }
 
     if (isEditMode.value) {
       await categoryStore.updateCategoryAction(formData.id, payload)
-      toastStore.showToast({
-        title: 'Thành công',
+      toastStore.show({
         message: 'Cập nhật danh mục thành công',
         type: 'success',
       })
     } else {
       await categoryStore.createCategoryAction(payload)
-      toastStore.showToast({
-        title: 'Thành công',
+      toastStore.show({
         message: 'Tạo danh mục mới thành công',
         type: 'success',
       })
     }
 
     isModalOpen.value = false
-    // Không cần fetch lại vì action trong store đã fetch rồi
   } catch (err) {
     console.log('Lỗi: ',err)
-    toastStore.showToast({ title: 'Thất bại', message: 'Không thể xóa danh mục', type: 'error' })
+    toastStore.show({message: err?.message || 'Có lỗi xảy ra', type: 'error' })
   } finally {
     submitting.value = false
   }
@@ -117,11 +113,11 @@ const handleSubmit = async () => {
 const handleDelete = async (item) => {
   try {
     await categoryStore.deleteCategoryAction(item.id)
-    toastStore.showToast({ title: 'Thành công', message: 'Đã xóa danh mục', type: 'success' })
+    toastStore.show({ message: 'Đã xóa danh mục', type: 'success' })
   } catch (err) {
     // Error handle
     console.log('Lỗi: ',err)
-    toastStore.showToast({ title: 'Thất bại', message: 'Không thể xóa danh mục', type: 'error' })
+    toastStore.show({ message: err?.message || 'Có lỗi xảy ra', type: 'error' })
   }
 }
 
@@ -160,8 +156,7 @@ const handleQuickStatusUpdate = async (item, event) => {
 
     await categoryStore.updateCategoryAction(item.id, payload)
 
-    toastStore.showToast({
-      title: 'Thành công',
+    toastStore.show({
       message: 'Cập nhật trạng thái thành công',
       type: 'success',
     })
