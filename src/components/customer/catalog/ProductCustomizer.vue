@@ -244,7 +244,7 @@ const handleAddToCart = async (isBuyNow = false) => {
       <div class="text-3xl font-extrabold text-primary mb-6">
         {{ formatPrice(finalPrice) }}đ
       </div>
-          <hr class="border-gray-200 dark:border-gray-700 mb-6" />
+      <hr class="border-gray-200 dark:border-gray-700 mb-6" />
     </div>
 
     <ProductSelectors
