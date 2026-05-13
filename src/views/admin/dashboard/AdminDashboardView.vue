@@ -16,7 +16,7 @@ import { useDashboardStore } from '@/stores/sales/dashboard.store'
 
 // --- UTILS & CONSTANTS ---
 import { formatPrice, formatCurrencyCompact, formatDate } from '@/utils/formatters'
-import { ORDER_STATUS_UI } from '@/constants/order.constants'
+import { getOrderStatusConfig } from '@/constants/order.constants'
 
 // --- COMPONENTS ---
 import StatCard     from '@/components/admin/sales/AdminStatCard.vue'
@@ -64,8 +64,6 @@ const dashboardColumns = [
   { key: 'status',        label: 'Trạng thái', cellClass: 'text-center',          headerClass: 'text-center' },
 ]
 
-const getStatusConfig = (statusEnum) => ORDER_STATUS_UI[statusEnum] || {}
-
 const handleViewDetail = (idOrCode) =>
   router.push({ name: 'admin.orders.detail', params: { code: idOrCode } })
 
@@ -90,6 +88,7 @@ watch(timeFilter, () => dashboardStore.fetchGlobalStats())
           <option value="week">Tuần này</option>
           <option value="month">Tháng này</option>
           <option value="year">Năm nay</option>
+          <option value="all">Toàn thời gian</option>
         </select>
         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,7 +188,6 @@ watch(timeFilter, () => dashboardStore.fetchGlobalStats())
             :key="item.id"
             class="flex items-center gap-3 group cursor-pointer p-1.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
           >
-            <!-- Rank Badge -->
             <div
               class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
               :class="
@@ -200,26 +198,29 @@ watch(timeFilter, () => dashboardStore.fetchGlobalStats())
               "
             >{{ index + 1 }}</div>
 
-            <!-- Image -->
             <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm shrink-0">
               <img :src="item.image" :alt="item.name" class="w-12 h-12 object-cover group-hover:scale-110 transition-transform duration-300" />
             </div>
 
-            <!-- Info -->
             <div class="flex-1 min-w-0">
               <h4 class="text-sm font-bold text-gray-900 dark:text-white truncate group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
                 {{ item.name }}
               </h4>
-              <p class="text-xs font-medium text-gray-500 mt-0.5">{{ item.sold }} sản phẩm</p>
+              <p class="text-xs font-medium text-gray-500 mt-0.5">
+                {{ timeFilter === 'all' ? 'Tổng đã bán' : 'Trong kỳ' }}: {{ item.sold }}
+              </p>
             </div>
 
-            <!-- Revenue -->
             <div class="text-right shrink-0">
               <div class="text-sm font-bold text-gray-900 dark:text-white">{{ formatPrice(item.revenue) }} đ</div>
             </div>
           </li>
-          <li v-if="!topProducts.length" class="flex-1 flex items-center justify-center text-gray-400 text-sm">
-            Chưa có dữ liệu
+          
+          <li v-if="!topProducts.length" class="flex-1 flex flex-col items-center justify-center text-gray-400 text-sm py-8">
+            <svg class="w-12 h-12 mb-3 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+            </svg>
+            <p>Chưa có dữ liệu bán hàng.</p>
           </li>
         </ul>
       </div>
@@ -262,11 +263,11 @@ watch(timeFilter, () => dashboardStore.fetchGlobalStats())
         <template #cell-status="{ value }">
           <span
             :class="[
-              'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border',
-              getStatusConfig(value).color,
+              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border',
+              getOrderStatusConfig(value).color,
             ]"
           >
-            {{ getStatusConfig(value).label }}
+            {{ getOrderStatusConfig(value).label }}
           </span>
         </template>
       </AdminDataTable>

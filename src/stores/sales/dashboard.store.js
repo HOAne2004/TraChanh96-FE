@@ -4,7 +4,6 @@ import { ref } from 'vue'
 import dashboardService from '@/services/sales/dashboard.service'
 
 export const useDashboardStore = defineStore('dashboard', () => {
-  // --- STATE ---
   const globalStats = ref({
     totalRevenue: 0,
     totalOrders: 0,
@@ -12,17 +11,21 @@ export const useDashboardStore = defineStore('dashboard', () => {
     totalProducts: 0,
   })
   const recentOrders = ref([])
-  const chartData = ref([])    // [{ label: '01/05', value: 123000 }, ...]
-  const topProducts = ref([])  // [{ id, name, image, sold, revenue }, ...]
+  const chartData = ref([])
+  const topProducts = ref([])
   const loading = ref(false)
-  const timeFilter = ref('week')
+  
+  // ⭐️ Đổi mặc định thành today
+  const timeFilter = ref('today')
 
-  // --- ACTIONS ---
   async function fetchGlobalStats() {
     loading.value = true
     try {
+      // Gọi service và truyền giá trị
       const res = await dashboardService.getGlobalStats(timeFilter.value)
-      const data = res.data
+      
+      // Đảm bảo lấy đúng lớp data của BE
+      const data = res.data?.data || res.data
 
       globalStats.value = {
         totalRevenue:   data.totalRevenue   ?? 0,
@@ -41,12 +44,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
   }
 
   return {
-    globalStats,
-    recentOrders,
-    chartData,
-    topProducts,
-    loading,
-    timeFilter,
-    fetchGlobalStats,
+    globalStats, recentOrders, chartData, topProducts, loading, timeFilter, fetchGlobalStats,
   }
 })

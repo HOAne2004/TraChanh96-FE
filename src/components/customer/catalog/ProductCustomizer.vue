@@ -10,7 +10,6 @@ import { useUserStore } from '@/stores/identity/user.store'
 import { useToastStore } from '@/stores/system/toast.store'
 import { useSizeStore } from '@/stores/catalog/size.store'
 
-import { SugarLevel, IceLevel } from '@/constants/enums'
 import { formatPrice } from '@/utils/formatters'
 
 import ProductSelectors from '@/components/customer/catalog/ProductSelectors.vue'

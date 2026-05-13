@@ -249,9 +249,18 @@ export const getCancelReasonOptions = () => {
 }
 
 // Lấy config từ status number
-export const getOrderStatusConfig = (statusNumber) => {
+// Lấy config từ trạng thái đơn hàng (Hỗ trợ tự động chuẩn hóa chữ hoa/chữ thường)
+export const getOrderStatusConfig = (status) => {
+  let key = status;
+  
+  // Nếu BE trả về PascalCase (VD: "Cancelled", "PendingPayment"), ta tự động chuyển thành camelCase
+  if (typeof status === 'string' && status.length > 0) {
+    key = status.charAt(0).toLowerCase() + status.slice(1);
+  }
+
   return (
-    ORDER_STATUS_UI[statusNumber] || {
+    ORDER_STATUS_UI[key] || 
+    ORDER_STATUS_UI[status] || {
       label: 'Không xác định',
       color: 'bg-gray-100 text-gray-800 border-gray-200',
       iconPath: '',
