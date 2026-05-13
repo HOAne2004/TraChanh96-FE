@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import ProductCard from '@/components/customer/catalog/ProductCard.vue'
 import defaultDrinkImage from '@/assets/images/others/default-drink.png'
 import { formatPrice } from '@/utils/formatters'
+import { ICE_LEVEL_UI, SUGAR_LEVEL_UI } from '@/constants/option.constants'
 
 const props = defineProps({
   previewProduct: { type: Object, required: true, default: () => ({}) },
@@ -21,7 +22,7 @@ const previewTab = ref('detail')
         <h3 class="font-bold text-gray-700 flex items-center gap-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 text-blue-500"
+            class="h-5 w-5 text-green-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -76,13 +77,14 @@ const previewTab = ref('detail')
           v-else
           class="w-full max-w-4xl bg-white rounded-2xl shadow-lg p-6 md:p-8 animate-fade-in"
         >
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div class="grid grid-rows-1 gap-8">
             <div
               class="aspect-square rounded-xl bg-gray-50 border border-gray-100 overflow-hidden relative group"
             >
               <img
                 :src="previewProduct.imageUrl || defaultDrinkImage"
                 class="w-full h-full object-contain"
+                v-img-fallback="'default'"
               />
               <div
                 class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded"
@@ -128,7 +130,31 @@ const previewTab = ref('detail')
                   </button>
                 </div>
               </div>
+              <div class="space-y-4 pt-4 border-t border-gray-100 border-dashed">
+                <div v-if="previewProduct.allowedSugarLevels?.length">
+                  <p class="text-sm font-medium text-gray-700 mb-2">Lượng đường:</p>
+                  <div class="flex flex-wrap gap-2">
+                    <span
+                      v-for="val in previewProduct.allowedSugarLevels" :key="`s-${val}`"
+                      class="px-3 py-1 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600"
+                    >
+                      {{ Object.values(SUGAR_LEVEL_UI).find(x => x.value === val)?.label || val }}
+                    </span>
+                  </div>
+                </div>
 
+                <div v-if="previewProduct.allowedIceLevels?.length">
+                  <p class="text-sm font-medium text-gray-700 mb-2">Lượng đá:</p>
+                  <div class="flex flex-wrap gap-2">
+                    <span
+                      v-for="val in previewProduct.allowedIceLevels" :key="`i-${val}`"
+                      class="px-3 py-1 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600"
+                    >
+                      {{ Object.values(ICE_LEVEL_UI).find(x => x.value === val)?.label || val }}
+                    </span>
+                  </div>
+                </div>
+              </div>
               <div
                 v-if="showToppingInfo"
                 class="space-y-3 pt-4 border-t border-gray-100 border-dashed"

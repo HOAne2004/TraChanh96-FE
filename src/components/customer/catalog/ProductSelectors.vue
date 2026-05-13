@@ -3,12 +3,16 @@ import { computed } from 'vue'
 import { formatPrice } from '@/utils/formatters'
 import { resolveImage } from '@/utils/image'
 import defaultImage from '@/assets/images/others/default-drink.png'
-import { SUGAR_OPTIONS, ICE_OPTIONS } from '@/constants/enums'
+import { getSugarOptions, getIceOptions } from '@/constants/option.constants'
 
 const props = defineProps({
   isDrink: { type: Boolean, default: true },
   sizes: { type: Array, default: () => [] },
   availableToppings: { type: Array, default: () => [] },
+  
+  allowedSugarLevels: { type: Array, default: () => [] },
+  allowedIceLevels: { type: Array, default: () => [] },
+  
   selectedSize: { type: Object, default: null },
   selectedSugar: { type: Number, default: null },
   selectedIce: { type: Number, default: null },
@@ -21,11 +25,25 @@ const emit = defineEmits([
   'update:selectedIce',
   'toggle-topping',
 ])
+
+// --- LOGIC LỌC TÙY CHỌN ĐƯỢC PHÉP HIỂN THỊ ---
+
+const displaySugarOptions = computed(() => {
+  const allSugar = getSugarOptions()
+  if (!props.allowedSugarLevels || props.allowedSugarLevels.length === 0) return []
+  return allSugar.filter(opt => props.allowedSugarLevels.includes(opt.value))
+})
+
+const displayIceOptions = computed(() => {
+  const allIce = getIceOptions()
+  if (!props.allowedIceLevels || props.allowedIceLevels.length === 0) return []
+  return allIce.filter(opt => props.allowedIceLevels.includes(opt.value))
+})
+
 </script>
 
 <template>
   <div v-if="isDrink" class="space-y-6 mb-8">
-
 
     <div v-if="sizes?.length > 0">
       <span class="block text-sm font-semibold mb-2">Kích cỡ</span>
@@ -37,29 +55,29 @@ const emit = defineEmits([
           class="px-4 py-2 rounded-lg border text-sm font-medium transition-all"
           :class="
             selectedSize?.id === size.id
-              ? 'bg-green-600 text-white border-green-600'
+              ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-200'
               : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:border-green-500'
           "
         >
           {{ size.label }}
-          <span v-if="size.priceModifier > 0" class="text-xs ml-1 text-gray-500"
+          <span v-if="size.priceModifier > 0" class="text-xs ml-1 font-normal" :class="selectedSize?.id === size.id ? 'text-green-100' : 'text-gray-500'"
             >(+{{ formatPrice(size.priceModifier) }})</span
           >
         </button>
       </div>
     </div>
 
-    <div>
+    <div v-if="displaySugarOptions.length > 0">
       <span class="block text-sm font-semibold mb-2">Độ ngọt</span>
       <div class="flex flex-wrap gap-3">
         <button
-          v-for="level in SUGAR_OPTIONS"
-          :key="level.id"
-          @click="emit('update:selectedSugar', level.id)"
+          v-for="level in displaySugarOptions"
+          :key="level.value"
+          @click="emit('update:selectedSugar', level.value)"
           :class="[
             'px-4 py-2 rounded-lg border text-sm font-medium transition-all',
-            selectedSugar === level.id
-              ? 'bg-green-600 text-white border-green-600'
+            selectedSugar === level.value
+              ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-200'
               : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:border-green-500',
           ]"
         >
@@ -68,17 +86,17 @@ const emit = defineEmits([
       </div>
     </div>
 
-    <div>
+    <div v-if="displayIceOptions.length > 0">
       <span class="block text-sm font-semibold mb-2">Lượng đá</span>
       <div class="flex flex-wrap gap-3">
         <button
-          v-for="level in ICE_OPTIONS"
-          :key="level.id"
-          @click="emit('update:selectedIce', level.id)"
+          v-for="level in displayIceOptions"
+          :key="level.value"
+          @click="emit('update:selectedIce', level.value)"
           :class="[
             'px-4 py-2 rounded-lg border text-sm font-medium transition-all',
-            selectedIce === level.id
-              ? 'bg-green-600 text-white border-green-600'
+            selectedIce === level.value
+              ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-200'
               : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:border-green-500',
           ]"
         >
@@ -109,7 +127,7 @@ const emit = defineEmits([
             <p class="text-xs text-gray-500">+{{ formatPrice(t.basePrice) }}</p>
           </div>
           <div
-            class="w-5 h-5 rounded-full border flex items-center justify-center"
+            class="w-5 h-5 rounded-full border flex items-center justify-center transition-colors"
             :class="
               selectedToppings.some((s) => s.id === t.id)
                 ? 'bg-green-600 border-green-600'
@@ -123,16 +141,12 @@ const emit = defineEmits([
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="3"
-                d="M5 13l4 4L19 7"
-              />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
             </svg>
           </div>
         </div>
       </div>
     </div>
+
   </div>
 </template>

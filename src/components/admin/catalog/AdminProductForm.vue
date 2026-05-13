@@ -1,26 +1,24 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { formatPrice } from '@/utils/formatters'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import AIGenerateButton from '@/components/assistant/AIGenerateButton.vue'
 import { marked } from 'marked'
+import { getIceOptions, getSugarOptions } from '@/constants/option.constants'
 
 const props = defineProps({
-  modelValue: { type: Object, required: true }, // formData
+  modelValue: { type: Object, required: true },
   categories: { type: Array, default: () => [] },
   sizes: { type: Array, default: () => [] },
-  toppings: { type: Array, default: () => [] }, // Danh sách tất cả topping
+  toppings: { type: Array, default: () => [] }, 
   typeOptions: { type: Array, default: () => [] },
   statusOptions: { type: Array, default: () => [] },
-
-  // Logic kiểm soát hiển thị
   canShowTopping: { type: Boolean, default: true },
 })
 
 const emit = defineEmits(['update:modelValue', 'file-change', 'url-input', 'blur-name'])
 
-// Proxy để update v-model
 const formData = computed({
   get: () => props.modelValue,
   set: (val) => emit('update:modelValue', val),
@@ -50,6 +48,44 @@ const applyAIToIngredient = (aiContentText) => {
   formData.value.ingredient = htmlContent;
 }
 
+// --- LOGIC YÊU CẦU 1: Lấy Placeholder giá mặc định của Size ---
+const getDefaultSizePrice = (sizeId) => {
+  if (!sizeId) return 'Ghi đè giá'
+  const sizeObj = props.sizes.find(s => s.id === sizeId)
+  const modifier = sizeObj ? Number(sizeObj.priceModifier || 0) : 0
+  const base = Number(formData.value.basePrice || 0)
+  return `Mặc định: ${formatPrice(base + modifier)}`
+}
+
+// --- LOGIC YÊU CẦU 2: Checkbox "Chọn tất cả" ---
+// Computed cho Đường
+const isAllSugarSelected = computed({
+  get: () => formData.value.allowedSugarLevels?.length === getSugarOptions().length,
+  set: (val) => { formData.value.allowedSugarLevels = val ? getSugarOptions().map(o => o.value) : [] }
+})
+
+// Computed cho Đá
+const isAllIceSelected = computed({
+  get: () => formData.value.allowedIceLevels?.length === getIceOptions().length,
+  set: (val) => { formData.value.allowedIceLevels = val ? getIceOptions().map(o => o.value) : [] }
+})
+
+// Computed cho Topping
+const isAllToppingSelected = computed({
+  get: () => props.toppings.length > 0 && formData.value.allowedToppingIds?.length === props.toppings.length,
+  set: (val) => { formData.value.allowedToppingIds = val ? props.toppings.map(t => t.id) : [] }
+})
+
+// --- LOGIC PHÂN LOẠI HIỂN THỊ ---
+const isDrink = computed(() => formData.value.productType === 'Drink')
+watch(() => formData.value.productType, (newType) => {
+  if (newType !== 'Drink') {
+    formData.value.allowedSugarLevels = []
+    formData.value.allowedIceLevels = []
+    formData.value.allowedToppingIds = []
+    formData.value.productSizes = []
+  }
+})
 </script>
 
 <template>
@@ -124,8 +160,8 @@ const applyAIToIngredient = (aiContentText) => {
         />
       </div>
 
-      <div class="space-y-2">
-        <label class="block text-xs font-medium text-gray-700">Cấu hình Size</label>
+      <div v-if="isDrink" class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Cấu hình Size</label>
         <div
           v-for="(item, index) in formData.productSizes"
           :key="index"
@@ -149,8 +185,8 @@ const applyAIToIngredient = (aiContentText) => {
           <input
             v-model="item.priceOverride"
             type="number"
-            class="w-24 px-2 py-1.5 text-xs rounded border border-gray-300 outline-none text-right"
-            placeholder="Ghi đè giá"
+            class="w-32 px-2 py-1.5 text-xs rounded border border-gray-300 outline-none text-right"
+            :placeholder="getDefaultSizePrice(item.sizeId)"
           />
           <button @click="removeSize(index)" class="text-red-400 hover:text-red-600">
             <svg
@@ -177,49 +213,74 @@ const applyAIToIngredient = (aiContentText) => {
         </button>
       </div>
     </div>
+    <div v-if="isDrink" class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 space-y-6">
+      <h3 class="text-base font-bold text-gray-800 border-b pb-2">Tùy chọn bổ sung</h3>
 
-    <div
-      v-if="canShowTopping"
-      class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 transition-all"
-    >
-      <h3 class="text-base font-bold text-gray-800 mb-4 border-b pb-2 flex justify-between">
-        Topping đi kèm
-        <span class="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded"
-          >Đã chọn: {{ formData.allowedToppingIds.length }}</span
-        >
-      </h3>
-
-      <div
-        v-if="toppings.length > 0"
-        class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[200px] overflow-y-auto pr-1"
-      >
-        <label
-          v-for="t in toppings"
-          :key="t.id"
-          class="flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-gray-50 select-none text-xs"
-          :class="
-            formData.allowedToppingIds.includes(t.id)
-              ? 'border-green-500 bg-green-50'
-              : 'border-gray-200'
-          "
-        >
-          <input
-            type="checkbox"
-            v-model="formData.allowedToppingIds"
-            :value="t.id"
-            class="w-4 h-4 text-green-600 rounded focus:ring-green-500"
-          />
-          <div class="flex-1 truncate">
-            <div class="font-medium truncate">{{ t.name }}</div>
-            <div class="text-gray-500">{{ formatPrice(t.basePrice) }}đ</div>
-          </div>
-        </label>
+      <div>
+        <div class="flex justify-between items-center mb-3">
+          <label class="font-medium text-sm text-gray-700">Mức đường cho phép</label>
+          <label class="flex items-center gap-2 text-xs text-green-600 cursor-pointer font-medium hover:bg-green-50 px-2 py-1 rounded">
+            <input type="checkbox" v-model="isAllSugarSelected" class="w-4 h-4 text-green-600 rounded focus:ring-green-500" />
+            Chọn tất cả
+          </label>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <label
+            v-for="opt in getSugarOptions()" :key="opt.value"
+            class="flex items-center gap-2 p-2 border rounded cursor-pointer select-none text-xs transition-colors"
+            :class="formData.allowedSugarLevels.includes(opt.value) ? 'border-green-500 bg-green-50 text-green-700 font-medium' : 'border-gray-200 hover:bg-gray-50'"
+          >
+            <input type="checkbox" v-model="formData.allowedSugarLevels" :value="opt.value" class="w-4 h-4 text-green-600 rounded focus:ring-green-500" />
+            {{ opt.fullLabel }}
+          </label>
+        </div>
       </div>
-      <div v-else class="text-sm text-gray-400 italic text-center py-2">
-        Chưa có topping nào trong hệ thống.
+
+      <div class="pt-4 border-t border-gray-100">
+        <div class="flex justify-between items-center mb-3">
+          <label class="font-medium text-sm text-gray-700">Mức đá cho phép</label>
+          <label class="flex items-center gap-2 text-xs text-green-600 cursor-pointer font-medium hover:bg-green-50 px-2 py-1 rounded">
+            <input type="checkbox" v-model="isAllIceSelected" class="w-4 h-4 text-green-600 rounded focus:ring-green-500" />
+            Chọn tất cả
+          </label>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <label
+            v-for="opt in getIceOptions()" :key="opt.value"
+            class="flex items-center gap-2 p-2 border rounded cursor-pointer select-none text-xs transition-colors"
+            :class="formData.allowedIceLevels.includes(opt.value) ? 'border-green-500 bg-green-50 text-green-700 font-medium' : 'border-gray-200 hover:bg-gray-50'"
+          >
+            <input type="checkbox" v-model="formData.allowedIceLevels" :value="opt.value" class="w-4 h-4 text-green-600 rounded focus:ring-green-500" />
+            {{ opt.fullLabel }}
+          </label>
+        </div>
+      </div>
+
+      <div v-if="canShowTopping" class="pt-4 border-t border-gray-100">
+        <div class="flex justify-between items-center mb-3">
+          <label class="font-medium text-sm text-gray-700">Topping đi kèm</label>
+          <label v-if="toppings.length > 0" class="flex items-center gap-2 text-xs text-green-600 cursor-pointer font-medium hover:bg-green-50 px-2 py-1 rounded">
+            <input type="checkbox" v-model="isAllToppingSelected" class="w-4 h-4 text-green-600 rounded focus:ring-green-500" />
+            Chọn tất cả ({{ toppings.length }})
+          </label>
+        </div>
+        
+        <div v-if="toppings.length > 0" class="grid grid-cols-2 lg:grid-cols-3 gap-2 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+          <label
+            v-for="t in toppings" :key="t.id"
+            class="flex items-center gap-2 p-2 border rounded cursor-pointer select-none text-xs transition-colors"
+            :class="formData.allowedToppingIds.includes(t.id) ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:bg-gray-50'"
+          >
+            <input type="checkbox" v-model="formData.allowedToppingIds" :value="t.id" class="w-4 h-4 text-green-600 rounded focus:ring-green-500 shrink-0" />
+            <div class="flex-1 truncate">
+              <div class="font-medium truncate" :class="formData.allowedToppingIds.includes(t.id) ? 'text-green-700' : 'text-gray-700'">{{ t.name }}</div>
+              <div class="text-gray-500">{{ formatPrice(t.basePrice) }}đ</div>
+            </div>
+          </label>
+        </div>
+        <div v-else class="text-sm text-gray-400 italic py-2">Chưa có topping nào trong hệ thống.</div>
       </div>
     </div>
-
     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
       <h3 class="text-base font-bold text-gray-800 mb-4 border-b pb-2">Hình ảnh & Mô tả</h3>
       <div class="mb-4 space-y-3">

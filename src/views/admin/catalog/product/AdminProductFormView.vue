@@ -53,13 +53,14 @@ const formData = reactive({
   status: PRODUCT_STATUS.ACTIVE,
   imageUrl: '',
   productSizes: [],
-  allowedToppingIds: [], // 🟢 Mảng chứa ID topping được chọn
+  allowedToppingIds: [], 
+  allowedSugarLevels: [],
+  allowedIceLevels: []
 })
 
 // Logic hiển thị Topping dựa trên Danh mục
 const canShowTopping = computed(() => {
   const category = categoryStore.categories.find((c) => c.id === formData.categoryId)
-  // Nếu chưa chọn danh mục -> Mặc định hiện (hoặc ẩn tùy bạn), ở đây dùng hàm check
   return category ? canHaveTopping(category.slug) : false
 })
 
@@ -94,12 +95,13 @@ const previewProduct = computed(() => {
         id: ps.sizeId,
         name: sizeInfo?.label || 'Size?',
         priceOverride: ps.priceOverride ? Number(ps.priceOverride) : null,
-        priceModifier: 0, // Demo placeholder
+        priceModifier: 0, 
       }
     }),
 
-    // Truyền list topping ids để preview hiển thị số lượng
     allowedToppingIds: formData.allowedToppingIds,
+    allowedSugarLevels: formData.allowedSugarLevels,
+    allowedIceLevels: formData.allowedIceLevels,
 
     storeIds: [],
     isSoldOut: false,
@@ -145,6 +147,8 @@ const initData = async () => {
           })),
           // Map Toppings (Nếu Backend đã trả về list allowedToppingIds)
           allowedToppingIds: p.allowedToppingIds || [],
+          allowedSugarLevels: p.allowedSugarLevels || [],
+          allowedIceLevels: p.allowedIceLevels || [],
         })
         imagePreview.value = p.imageUrl
       }
@@ -214,8 +218,6 @@ const handleSubmit = async () => {
       }))
       .filter((s) => s.sizeId)
 
-    // Lưu ý: Đảm bảo payload gửi lên có allowedToppingIds
-    // payload.allowedToppingIds là mảng [1, 2, 5]
 
     if (isEditMode.value) {
       await productStore.updateProduct(route.params.id, payload)
@@ -233,6 +235,8 @@ const handleSubmit = async () => {
 onMounted(() => {
   initData()
 })
+
+
 </script>
 
 <template>
@@ -249,8 +253,9 @@ onMounted(() => {
       <p class="text-gray-500 mt-2 text-sm">Đang tải dữ liệu...</p>
     </div>
 
-    <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-1">
+    <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <div class="lg:col-span-7 space-y-6">
         <AdminProductForm
           v-model="formData"
           :categories="categoryStore.categories"
@@ -265,7 +270,7 @@ onMounted(() => {
         />
       </div>
 
-      <div class="lg:col-span-2">
+      <div class="lg:col-span-5 sticky top-20">
         <AdminProductPreview
           :preview-product="previewProduct"
           :show-topping-info="canShowTopping"

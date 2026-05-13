@@ -44,11 +44,14 @@ const { sizes } = storeToRefs(sizeStore)
 // Local State
 const quantity = ref(1)
 const selectedSize = ref(null)
-const selectedSugar = ref(SugarLevel.PERCENT_100)
-const selectedIce = ref(IceLevel.PERCENT_100)
+const selectedSugar = ref(null)
+const selectedIce = ref(null)
 const selectedToppings = ref([])
 const note = ref('')
 const isAdding = ref(false)
+
+const allowedSugarLevels = computed(() => props.product?.allowedSugarLevels || [])
+const allowedIceLevels = computed(() => props.product?.allowedIceLevels || [])
 
 // Logic
 const isAvailableAtStore = computed(() => {
@@ -131,14 +134,29 @@ const renderedSizes = computed(() => {
     .sort((a, b) => (a.originalModifier || 0) - (b.originalModifier || 0) || a.id - b.id)
 })
 
-// Auto select size khi đổi product
+// --- TỰ ĐỘNG CHỌN GIÁ TRỊ MẶC ĐỊNH ---
 watch(
   () => props.product,
   () => {
+    // 1. Auto select size
     if (isDrink.value && renderedSizes.value.length > 0) {
       selectedSize.value = renderedSizes.value[0]
     } else {
       selectedSize.value = null
+    }
+
+    // 2. Auto select Đường: Ưu tiên 100%, nếu không có thì lấy cái đầu tiên
+    if (isDrink.value && allowedSugarLevels.value.length > 0) {
+      selectedSugar.value = allowedSugarLevels.value.includes(100) ? 100 : allowedSugarLevels.value[0]
+    } else {
+      selectedSugar.value = null 
+    }
+
+    // 3. Auto select Đá: Ưu tiên 100%, nếu không có thì lấy cái đầu tiên
+    if (isDrink.value && allowedIceLevels.value.length > 0) {
+      selectedIce.value = allowedIceLevels.value.includes(100) ? 100 : allowedIceLevels.value[0]
+    } else {
+      selectedIce.value = null
     }
   },
   { immediate: true }
@@ -251,6 +269,8 @@ const handleAddToCart = async (isBuyNow = false) => {
       :is-drink="isDrink"
       :sizes="renderedSizes"
       :available-toppings="availableToppings"
+      :allowed-sugar-levels="allowedSugarLevels"
+      :allowed-ice-levels="allowedIceLevels"
       v-model:selected-size="selectedSize"
       v-model:selected-sugar="selectedSugar"
       v-model:selected-ice="selectedIce"
