@@ -71,9 +71,9 @@ const onReset = () => {
   <div
     class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6"
   >
-    <div class="flex flex-col md:flex-row gap-4 justify-between items-end">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 w-full">
-        <div class="lg:col-span-1">
+    <div class="flex flex-col xl:flex-row gap-4 justify-between items-end">
+      <div class="flex flex-1 flex-wrap items-end gap-4 w-full min-w-0">
+        <div class="flex-[1_1_220px] min-w-[220px]">
           <label class="block text-xs font-medium text-gray-500 mb-1">Tìm kiếm</label>
           <div class="relative group">
             <input
@@ -116,9 +116,16 @@ const onReset = () => {
           </div>
         </div>
 
-        <slot name="custom-filters"></slot>
+        <div
+          class="contents [&>*]:contents [&>*]:flex-[1_1_220px] [&>*]:min-w-[220px] [&>*>*]:flex-[1_1_220px] [&>*>*]:min-w-[220px]"
+        >
+          <slot name="custom-filters"></slot>
+        </div>
 
-        <div v-if="statusOptions && statusOptions.length > 0">
+        <div
+          v-if="statusOptions && statusOptions.length > 0"
+          class="flex-[1_1_180px] min-w-[180px]"
+        >
           <label class="block text-xs font-medium text-gray-500 mb-1">Trạng thái</label>
           <div class="relative">
             <select
@@ -161,7 +168,7 @@ const onReset = () => {
           </div>
         </div>
 
-        <div class="relative">
+        <div class="flex-[1_1_170px] min-w-[170px] xl:ml-auto relative">
           <label class="block text-xs font-medium text-gray-500 mb-1">Từ ngày</label>
           <div class="relative">
             <input
@@ -189,8 +196,8 @@ const onReset = () => {
           </div>
         </div>
 
-        <div class="flex gap-2">
-          <div class="flex-1 relative">
+        <div class="flex flex-[1_1_220px] min-w-[220px] gap-2">
+          <div class="flex-1 min-w-[170px] relative">
             <label class="block text-xs font-medium text-gray-500 mb-1">Đến ngày</label>
             <div class="relative">
               <input
@@ -245,7 +252,7 @@ const onReset = () => {
 
       <button
         @click="$emit('export')"
-        class="shrink-0 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-700 flex items-center gap-2 shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+        class="shrink-0 w-full xl:w-auto justify-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-700 flex items-center gap-2 shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
