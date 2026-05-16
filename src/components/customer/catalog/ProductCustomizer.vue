@@ -10,6 +10,7 @@ import { useUserStore } from '@/stores/identity/user.store'
 import { useToastStore } from '@/stores/system/toast.store'
 import { useSizeStore } from '@/stores/catalog/size.store'
 
+import { SUGAR_LEVEL_UI, ICE_LEVEL_UI } from '@/constants/option.constants'
 import { formatPrice } from '@/utils/formatters'
 
 import ProductSelectors from '@/components/customer/catalog/ProductSelectors.vue'
@@ -49,8 +50,28 @@ const selectedToppings = ref([])
 const note = ref('')
 const isAdding = ref(false)
 
-const allowedSugarLevels = computed(() => props.product?.allowedSugarLevels || [])
-const allowedIceLevels = computed(() => props.product?.allowedIceLevels || [])
+const parseSugarValue = (val) => {
+  if (typeof val === 'number') return val;
+  const key = String(val).toLowerCase();
+  return SUGAR_LEVEL_UI[key]?.value || null;
+}
+
+const parseIceValue = (val) => {
+  if (typeof val === 'number') return val;
+  const key = String(val).toLowerCase();
+  return ICE_LEVEL_UI[key]?.value || null;
+}
+
+// CẬP NHẬT 2 BIẾN COMPUTED NÀY (Thay vì lấy mảng thô, ta map qua bộ dịch)
+const allowedSugarLevels = computed(() => {
+  const raw = props.product?.allowedSugarLevels || []
+  return raw.map(parseSugarValue).filter(n => n !== null)
+})
+
+const allowedIceLevels = computed(() => {
+  const raw = props.product?.allowedIceLevels || []
+  return raw.map(parseIceValue).filter(n => n !== null)
+})
 
 // Logic
 const isAvailableAtStore = computed(() => {
@@ -188,10 +209,7 @@ const toggleTopping = (topping) => {
 
 const handleAddToCart = async (isBuyNow = false) => {
   if (selectedStoreId.value && !storeStatus.value.isOpen) {
-    return toastStore.show({
-      type: 'error',
-      message: `Cửa hàng đang: ${storeStatus.value.message}`,
-    })
+    return toastStore.show({ type: 'error', message: `Cửa hàng đang: ${storeStatus.value.message}` })
   }
   if (!userStore.isLoggedIn) {
     toastStore.show({ type: 'warning', message: 'Vui lòng đăng nhập để đặt món!' })
@@ -200,17 +218,11 @@ const handleAddToCart = async (isBuyNow = false) => {
   if (!selectedStoreId.value)
     return toastStore.show({ type: 'warning', message: 'Vui lòng chọn cửa hàng trước!' })
   if (!isAvailableAtStore.value)
-    return toastStore.show({
-      type: 'error',
-      message: 'Sản phẩm này không phục vụ tại cửa hàng đã chọn.',
-    })
+    return toastStore.show({ type: 'error', message: 'Sản phẩm này không phục vụ tại cửa hàng đã chọn.' })
 
   const productStoreIds = props.product?.storeIds
   if (productStoreIds?.length && !productStoreIds.includes(selectedStoreId.value)) {
-    return toastStore.show({
-      type: 'error',
-      message: 'Sản phẩm này hiện không bán tại cửa hàng đã chọn',
-    })
+    return toastStore.show({ type: 'error', message: 'Sản phẩm này hiện không bán tại cửa hàng đã chọn' })
   }
 
   if (!selectedSize.value && renderedSizes.value.length > 0) {
@@ -230,8 +242,14 @@ const handleAddToCart = async (isBuyNow = false) => {
       toppings: selectedToppings.value.map((t) => ({ productId: t.id, quantity: 1 })),
     }
 
-    await cartStore.addToCart(payload)
+    // 1. LẤY KẾT QUẢ TRẢ VỀ TỪ STORE
+    const isSuccess = await cartStore.addToCart(payload)
 
+    // 2. NẾU THẤT BẠI (API BÁO LỖI VƯỢT QUÁ GIỚI HẠN) -> DỪNG LẠI LUÔN
+    // Không cần báo toast lỗi vì axiosClient.js đã báo giúp rồi
+    if (!isSuccess) return 
+
+    // 3. NẾU THÀNH CÔNG THÌ MỚI CHẠY TIẾP
     if (isBuyNow) {
       emit('buy-now', { storeId: selectedStoreId.value })
     } else {
@@ -241,8 +259,6 @@ const handleAddToCart = async (isBuyNow = false) => {
       note.value = ''
       emit('added-to-cart')
     }
-  } catch (err) {
-    toastStore.show({ type: 'error', message: err.response?.data?.message || 'Có lỗi xảy ra.' })
   } finally {
     isAdding.value = false
   }

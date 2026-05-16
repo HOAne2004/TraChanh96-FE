@@ -8,18 +8,22 @@ import AIChatBox from '@/components/assistant/AIChatBox.vue'
 import { useBrandStore } from '@/stores/catalog/brand.store'
 import { useCartStore } from '@/stores/sales/cart.store'
 import { useUserStore } from '@/stores/identity/user.store'
+import { useSettingStore } from '@/stores/system/setting.store'
 import { onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 
 const brandStore = useBrandStore()
-
-onMounted(() => {
-  brandStore.fetchPublicBrandInfo()
-})
-
 const cartStore = useCartStore()
 const userStore = useUserStore()
+const settingStore = useSettingStore() // Khai báo
 const { isLoggedIn } = storeToRefs(userStore)
+
+// 1. Khi load trang lần đầu (F5)
+onMounted(() => {
+  brandStore.fetchPublicBrandInfo()
+  settingStore.fetchSettings() 
+  initGlobalData()
+})
 
 // Hàm helper để load dữ liệu chung
 const initGlobalData = async () => {
@@ -30,11 +34,6 @@ const initGlobalData = async () => {
     cartStore.reset()
   }
 }
-
-// 1. Khi load trang lần đầu (F5)
-onMounted(() => {
-  initGlobalData()
-})
 
 // 2. Khi trạng thái đăng nhập thay đổi (Login/Logout tại chỗ)
 watch(isLoggedIn, () => {

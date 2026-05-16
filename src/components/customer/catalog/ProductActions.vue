@@ -2,11 +2,16 @@
 import { computed } from 'vue'
 import Button from '@/components/ui/AppButton.vue'
 import { formatPrice } from '@/utils/formatters'
-import { useModalStore } from '@/stores/system/modal.store'
 import { useToastStore } from '@/stores/system/toast.store'
 
-const modalStore = useModalStore()
+// BỔ SUNG SETTING STORE
+import { useSettingStore } from '@/stores/system/setting.store'
+import { storeToRefs } from 'pinia'
+
 const toastStore = useToastStore()
+
+// Kéo maxQuantityPerItem từ cấu hình động
+const { maxQuantityPerItem } = storeToRefs(useSettingStore())
 
 const props = defineProps({
   quantity: { type: Number, required: true },
@@ -21,19 +26,12 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:quantity', 'update:note', 'add-to-cart'])
+
 const actionLabel = computed(() => {
   if (props.isAdding) return 'Đang xử lý...'
-
-  // 1. Cửa hàng đóng cửa
   if (!props.storeStatus.isOpen) return props.storeStatus.message || 'Cửa hàng đóng cửa'
-
-  // 2. Món không bán tại quán này
   if (!props.isAvailableAtStore) return 'Không bán tại cửa hàng này'
-
-  // 3. Món hết hàng
   if (props.isSoldOut) return 'Tạm hết hàng'
-
-  // 4. Mặc định
   return 'Thêm vào giỏ'
 })
 
@@ -44,45 +42,80 @@ const buyNowLabel = computed(() => {
   return 'Mua ngay'
 })
 
-const increase = async () => {
-  if (props.quantity >= 99) {
-    toastStore.show({ type: 'warning', message: 'Bạn chỉ được chọn tối đa 99 sản phẩm.' })
+const increase = () => {
+  // Thay thế hardcode 99 bằng luật động
+  if (props.quantity >= maxQuantityPerItem.value) {
+    toastStore.show({ 
+      type: 'warning', 
+      message: `Hệ thống chỉ cho phép đặt tối đa ${maxQuantityPerItem.value} ly cho món này.` 
+    })
     return
   }
 
-  if (props.quantity === 50) {
-    const isConfirmed = await modalStore.confirmAction(
-      'Bạn đang chuẩn bị chọn số lượng lớn (hơn 50 sản phẩm). Bạn có chắc chắn muốn tiếp tục?',
-      'Cảnh báo số lượng',
-    )
-    if (!isConfirmed) return
-  }
-
+  // ĐÃ XÓA logic hỏi xác nhận khi = 50 vì ta đã có Rule động kiểm soát tối đa rồi
   emit('update:quantity', props.quantity + 1)
 }
+
 const decrease = () => {
   if (props.quantity > 1) emit('update:quantity', props.quantity - 1)
+}
+
+// BỔ SUNG: Xử lý khi khách tự gõ số lượng
+const handleQuantityInput = (event) => {
+  let val = parseInt(event.target.value, 10)
+
+  if (isNaN(val)) {
+    event.target.value = props.quantity
+    return
+  }
+
+  if (val < 1) val = 1
+  if (val > maxQuantityPerItem.value) {
+    val = maxQuantityPerItem.value
+    toastStore.show({ 
+      type: 'warning', 
+      message: `Hệ thống chỉ cho phép đặt tối đa ${maxQuantityPerItem.value} ly cho món này.` 
+    })
+  }
+
+  event.target.value = val
+  if (val !== props.quantity) {
+    emit('update:quantity', val)
+  }
 }
 </script>
 
 <template>
   <div class="pt-6 border-t dark:border-gray-700 flex flex-col gap-4 items-center">
     <div class="w-full flex gap-10 items-center">
-      <div class="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg">
+      
+      <div class="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg h-12 bg-white dark:bg-gray-800">
         <button
           @click="decrease"
-          class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+          class="px-4 h-full hover:bg-gray-100 dark:hover:bg-gray-700 transition rounded-l-lg disabled:opacity-50 flex items-center justify-center"
+          :disabled="quantity <= 1"
         >
           -
         </button>
-        <span class="px-4 font-bold min-w-[3rem] text-center">{{ quantity }}</span>
+        
+        <input
+          type="text"
+          inputmode="numeric"
+          :value="quantity"
+          @blur="handleQuantityInput($event)"
+          @keyup.enter="$event.target.blur()"
+          class="w-14 text-lg font-bold text-gray-800 dark:text-white text-center bg-transparent border-x border-gray-300 dark:border-gray-600 focus:ring-0 p-0 h-full outline-none disabled:opacity-50"
+        />
+        
         <button
           @click="increase"
-          class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+          class="px-4 h-full hover:bg-gray-100 dark:hover:bg-gray-700 transition rounded-r-lg disabled:opacity-50 flex items-center justify-center"
+          :disabled="quantity >= maxQuantityPerItem"
         >
           +
         </button>
       </div>
+
       <div class="flex-1 text-center sm:text-left">
         <span class="block text-xs text-gray-500">Tạm tính</span>
         <span class="text-2xl font-bold text-green-700">{{ formatPrice(totalPrice) }}</span>

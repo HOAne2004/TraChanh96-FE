@@ -1,11 +1,11 @@
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, watch, ref } from 'vue'
 import { formatPrice } from '@/utils/formatters'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import AIGenerateButton from '@/components/assistant/AIGenerateButton.vue'
 import { marked } from 'marked'
-import { getIceOptions, getSugarOptions } from '@/constants/option.constants'
+import { getIceOptions, getSugarOptions, SUGAR_LEVEL_UI, ICE_LEVEL_UI  } from '@/constants/option.constants'
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
@@ -25,11 +25,14 @@ const formData = computed({
 })
 
 // Logic Size
-const usedSizeIds = computed(() => formData.value.productSizes.map((i) => i.sizeId))
-const canAddMoreSize = computed(() => formData.value.productSizes.length < props.sizes.length)
+const usedSizeIds = computed(() => formData.value.productSizes?.map((i) => i.sizeId) || [])
+const canAddMoreSize = computed(() => (formData.value.productSizes?.length || 0) < props.sizes.length)
 
 const addSize = () => {
-  if (canAddMoreSize.value) formData.value.productSizes.push({ sizeId: '', priceOverride: '' })
+  if (canAddMoreSize.value) {
+    if(!formData.value.productSizes) formData.value.productSizes = []
+    formData.value.productSizes.push({ sizeId: '', priceOverride: '' })
+  }
 }
 const removeSize = (index) => formData.value.productSizes.splice(index, 1)
 
@@ -37,7 +40,7 @@ const removeSize = (index) => formData.value.productSizes.splice(index, 1)
 const onFileChange = (e) => emit('file-change', e)
 const onUrlInput = () => emit('url-input')
 
-// 2. Hàm xử lý cho Mô tả
+// Hàm xử lý cho Mô tả
 const applyAIToDescription = (aiContentText) => {
   const htmlContent = marked.parse(aiContentText);
   formData.value.description = htmlContent;
@@ -48,7 +51,6 @@ const applyAIToIngredient = (aiContentText) => {
   formData.value.ingredient = htmlContent;
 }
 
-// --- LOGIC YÊU CẦU 1: Lấy Placeholder giá mặc định của Size ---
 const getDefaultSizePrice = (sizeId) => {
   if (!sizeId) return 'Ghi đè giá'
   const sizeObj = props.sizes.find(s => s.id === sizeId)
@@ -57,20 +59,70 @@ const getDefaultSizePrice = (sizeId) => {
   return `Mặc định: ${formatPrice(base + modifier)}`
 }
 
-// --- LOGIC YÊU CẦU 2: Checkbox "Chọn tất cả" ---
-// Computed cho Đường
+// ========================================================
+// LOGIC CHUẨN HOÁ DỮ LIỆU TỪ API (ĐÃ FIX TYPE MISMATCH)
+// ========================================================
+
+const sugarOptionsList = getSugarOptions()
+const iceOptionsList = getIceOptions()
+
+// 1. Bộ dịch Chuỗi Enum của C# sang Số nguyên của UI (Tái sử dụng Constants)
+const parseSugarValue = (val) => {
+  if (typeof val === 'number') return val;
+  // val từ C# là "S30", toLowerCase thành "s30", tìm trong SUGAR_LEVEL_UI sẽ ra object có value = 30
+  const key = String(val).toLowerCase(); 
+  return SUGAR_LEVEL_UI[key]?.value || null;
+}
+
+const parseIceValue = (val) => {
+  if (typeof val === 'number') return val;
+  // val từ C# là "None", toLowerCase thành "none", tìm trong ICE_LEVEL_UI sẽ ra object có value = 1
+  const key = String(val).toLowerCase(); 
+  return ICE_LEVEL_UI[key]?.value || null;
+}
+
+// 2. Deep Watcher xử lý ngay khi có Data từ BE trả về
+watch(
+  () => formData.value,
+  (val) => {
+    if (val) {
+      // Xử lý Đường
+      const currentSugar = val.allowedSugarLevels || []
+      const mappedSugar = currentSugar.map(parseSugarValue).filter(n => n !== null)
+      // So sánh để tránh lặp vô hạn (Infinite Loop)
+      if (JSON.stringify(currentSugar) !== JSON.stringify(mappedSugar)) {
+        val.allowedSugarLevels = mappedSugar
+      }
+
+      // Xử lý Đá
+      const currentIce = val.allowedIceLevels || []
+      const mappedIce = currentIce.map(parseIceValue).filter(n => n !== null)
+      if (JSON.stringify(currentIce) !== JSON.stringify(mappedIce)) {
+        val.allowedIceLevels = mappedIce
+      }
+
+      // Xử lý Topping (Topping ID vốn là số, chỉ cần ép kiểu Number)
+      const currentTopping = val.allowedToppingIds || []
+      const mappedTopping = currentTopping.map(Number).filter(n => !isNaN(n))
+      if (JSON.stringify(currentTopping) !== JSON.stringify(mappedTopping)) {
+        val.allowedToppingIds = mappedTopping
+      }
+    }
+  },
+  { immediate: true, deep: true }
+)
+
+// 3. Computed cho Checkbox "Chọn tất cả" (Tác động thẳng vào formData)
 const isAllSugarSelected = computed({
-  get: () => formData.value.allowedSugarLevels?.length === getSugarOptions().length,
-  set: (val) => { formData.value.allowedSugarLevels = val ? getSugarOptions().map(o => o.value) : [] }
+  get: () => sugarOptionsList.length > 0 && formData.value.allowedSugarLevels?.length === sugarOptionsList.length,
+  set: (val) => { formData.value.allowedSugarLevels = val ? sugarOptionsList.map(o => o.value) : [] }
 })
 
-// Computed cho Đá
 const isAllIceSelected = computed({
-  get: () => formData.value.allowedIceLevels?.length === getIceOptions().length,
-  set: (val) => { formData.value.allowedIceLevels = val ? getIceOptions().map(o => o.value) : [] }
+  get: () => iceOptionsList.length > 0 && formData.value.allowedIceLevels?.length === iceOptionsList.length,
+  set: (val) => { formData.value.allowedIceLevels = val ? iceOptionsList.map(o => o.value) : [] }
 })
 
-// Computed cho Topping
 const isAllToppingSelected = computed({
   get: () => props.toppings.length > 0 && formData.value.allowedToppingIds?.length === props.toppings.length,
   set: (val) => { formData.value.allowedToppingIds = val ? props.toppings.map(t => t.id) : [] }
@@ -213,7 +265,8 @@ watch(() => formData.value.productType, (newType) => {
         </button>
       </div>
     </div>
-    <div v-if="isDrink" class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 space-y-6">
+    
+  <div v-if="isDrink" class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 space-y-6">
       <h3 class="text-base font-bold text-gray-800 border-b pb-2">Tùy chọn bổ sung</h3>
 
       <div>
@@ -281,6 +334,7 @@ watch(() => formData.value.productType, (newType) => {
         <div v-else class="text-sm text-gray-400 italic py-2">Chưa có topping nào trong hệ thống.</div>
       </div>
     </div>
+
     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
       <h3 class="text-base font-bold text-gray-800 mb-4 border-b pb-2">Hình ảnh & Mô tả</h3>
       <div class="mb-4 space-y-3">

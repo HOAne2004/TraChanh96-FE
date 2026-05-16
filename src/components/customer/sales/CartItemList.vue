@@ -1,9 +1,13 @@
 <script setup>
-import { resolveImage } from '@/utils/image'
-import defaultDrink from '@/assets/images/others/default-drink.png' // Import ảnh default
 import { useRouter } from 'vue-router'
+import { useToastStore } from '@/stores/system/toast.store' 
+import { storeToRefs } from 'pinia' 
+import {formatPrice} from '@/utils/formatters'
+import { useSettingStore } from '@/stores/system/setting.store'
 
 const router = useRouter()
+const { maxQuantityPerItem } = storeToRefs(useSettingStore())
+const toastStore = useToastStore() 
 
 const props = defineProps({
   cartItems: {
@@ -17,37 +21,22 @@ const props = defineProps({
   loading: Boolean,
 })
 
-// Format tiền
-const formatCurrency = (val) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
 
-// Hàm xử lý ảnh an toàn
-const getItemImage = (url) => resolveImage(url, defaultDrink)
 
-// Giá 1 ly (đơn giá, không nhân qty)
 const getUnitPrice = (item) => {
-  // basePrice là giá 1 ly (đã bao gồm size modifier)
   return item.basePrice || 0
 }
 
-// Giá toppings cho 1 ly
-const getToppingUnitPrice = (topping) => {
-  return topping.basePrice || 0
-}
-
-// Tổng tiền cả dòng (đã bao gồm qty) - backend đã tính sẵn trong finalPrice
 const getItemTotalPrice = (item) => {
   return item.finalPrice || 0
 }
-
-// Hiển thị toppings kèm đơn giá mỗi cái
 const getToppingsDisplay = (toppings) => {
   if (!toppings || !Array.isArray(toppings) || toppings.length === 0) {
     return ''
   }
   return toppings
     .map((t) => {
-      const priceText = t.basePrice ? ` (${formatCurrency(t.basePrice)})` : ''
+      const priceText = t.basePrice ? ` (${formatPrice(t.basePrice)})` : ''
       return `${t.productName || ''}${priceText}`
     })
     .join(', ')
@@ -70,6 +59,39 @@ const navigateToProduct = (slug) => {
 }
 
 const emit = defineEmits(['update-quantity', 'remove-item', 'clear-cart'])
+
+const handleQuantityInput = (item, event) => {
+  // Lấy giá trị khách gõ và ép về số nguyên (xóa bỏ số thập phân nếu có)
+  let val = parseInt(event.target.value, 10)
+
+  // 1. Chống nhập chữ (NaN) -> Trả về số lượng hiện tại
+  if (isNaN(val)) {
+    event.target.value = item.quantity
+    return
+  }
+
+  // 2. Chống số âm và số 0 -> Ép về 1 (nếu muốn xóa thì phải bấm nút thùng rác)
+  if (val < 1) {
+    val = 1
+  }
+
+  // 3. Chống nhập quá giới hạn từng món
+  if (val > maxQuantityPerItem.value) {
+    val = maxQuantityPerItem.value
+    toastStore.show({ 
+      type: 'warning', 
+      message: `Hệ thống chỉ cho phép đặt tối đa ${maxQuantityPerItem.value} ly cho món này.` 
+    })
+  }
+
+  // Ép ô input hiển thị lại con số đã được "nắn" chuẩn
+  event.target.value = val
+
+  // 4. Chỉ gọi API update nếu con số thực sự có thay đổi
+  if (val !== item.quantity) {
+    emit('update-quantity', item.id, val)
+  }
+}
 </script>
 
 <template>
@@ -93,10 +115,10 @@ const emit = defineEmits(['update-quantity', 'remove-item', 'clear-cart'])
     >
       <div class="flex-shrink-0 mx-auto sm:mx-0">
         <img
-          :src="getItemImage(item.imageUrl)"
+          :src="item.imageUrl"
           :alt="item.productName"
           class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-lg border border-gray-100 dark:border-gray-600 transition-transform group-hover:scale-105"
-          v-fallback="'drink'"
+          v-img-fallback="'drink'"
         />
       </div>
 
@@ -108,10 +130,10 @@ const emit = defineEmits(['update-quantity', 'remove-item', 'clear-cart'])
             </h3>
             <div class="flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-end mt-1 sm:mt-0 min-w-fit">
               <span class="text-xs sm:text-sm text-gray-500">
-                {{ formatCurrency(getUnitPrice(item)) }} / ly
+                {{ formatPrice(getUnitPrice(item)) }} / ly
               </span>
               <span class="font-bold text-green-600 text-sm sm:text-base">
-                {{ formatCurrency(getItemTotalPrice(item)) }}
+                {{ formatPrice(getItemTotalPrice(item)) }}
               </span>
             </div>
           </div>
@@ -143,19 +165,25 @@ const emit = defineEmits(['update-quantity', 'remove-item', 'clear-cart'])
               @click.stop="emit('update-quantity', item.id, item.quantity - 1)"
               class="px-3 h-full hover:bg-gray-100 dark:hover:bg-gray-700 rounded-l-lg text-gray-500 transition disabled:opacity-50 flex items-center justify-center"
               :disabled="loading || item.quantity <= 1"
-              aria-label="Giảm số lượng"
             >
               -
             </button>
-            <span
-              class="px-3 text-sm font-bold text-gray-800 dark:text-white min-w-[2rem] text-center flex items-center justify-center border-x border-gray-100 dark:border-gray-600 h-full"
-            >
-              {{ item.quantity }}
-            </span>
+
+            <input
+              type="text"
+              inputmode="numeric"
+              :value="item.quantity"
+              :disabled="loading"
+              @blur="handleQuantityInput(item, $event)"
+              @keyup.enter="$event.target.blur()"
+              class="w-12 text-sm font-bold text-gray-800 dark:text-white text-center bg-transparent border-x border-gray-100 dark:border-gray-600 focus:ring-0 p-0 h-full outline-none disabled:opacity-50"
+              title="Nhập số lượng"
+            />
+
             <button
               @click.stop="emit('update-quantity', item.id, item.quantity + 1)"
-              class="px-3 h-full hover:bg-gray-100 dark:hover:bg-gray-700 rounded-r-lg text-gray-500 transition flex items-center justify-center"
-              aria-label="Tăng số lượng"
+              class="px-3 h-full hover:bg-gray-100 dark:hover:bg-gray-700 rounded-r-lg text-gray-500 transition disabled:opacity-50 flex items-center justify-center"
+              :disabled="loading || item.quantity >= maxQuantityPerItem"
             >
               +
             </button>
