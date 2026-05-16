@@ -4,6 +4,8 @@ import { useChatStore } from '@/stores/assistant/chat.store'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 
+import { formatPrice } from '@/utils/formatters'
+
 import AIChatbox from '@/assets/images/others/ai-chatbox.png'
 
 const chatStore = useChatStore()
@@ -19,6 +21,11 @@ let startY = 0
 let initialX = 0
 let initialY = 0
 let dragMoved = false
+
+const isExpanded = ref(false) 
+const toggleExpand = () => {
+  isExpanded.value = !isExpanded.value
+}
 
 const onMouseDown = (e) => {
   if (e.type === 'mousedown' && e.button !== 0) return;
@@ -160,6 +167,51 @@ const renderMarkdown = (text) => {
   const parsedHtml = marked.parse(text, { breaks: true })
   return DOMPurify.sanitize(parsedHtml)
 }
+// Hàm BÓC TÁCH tin nhắn AI thành các Block
+const parseMessageContent = (content) => {
+  if (!content) return [];
+  const blocks = [];
+  
+  // Regex tìm thẻ [ProductCard ...] hoặc [StoreCard ...]
+  const regex = /\[(ProductCard|StoreCard)\s+([^\]]+)\]/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(content)) !== null) {
+    // 1. Nếu có text đứng TRƯỚC thẻ -> Đẩy vào mảng dạng text
+    if (match.index > lastIndex) {
+      blocks.push({
+        type: 'text',
+        content: content.slice(lastIndex, match.index)
+      });
+    }
+
+    // 2. Bóc tách các thuộc tính bên trong thẻ (id="1" name="...")
+    const type = match[1]; // 'ProductCard' hoặc 'StoreCard'
+    const attrsString = match[2];
+    const attrRegex = /(\w+)="([^"]*)"/g;
+    const attrs = {};
+    let attrMatch;
+    
+    while ((attrMatch = attrRegex.exec(attrsString)) !== null) {
+      attrs[attrMatch[1]] = attrMatch[2];
+    }
+
+    // Đẩy thẻ vào mảng
+    blocks.push({ type, data: attrs });
+    lastIndex = regex.lastIndex;
+  }
+
+  // 3. Đẩy phần text còn sót lại (nếu có)
+  if (lastIndex < content.length) {
+    blocks.push({
+      type: 'text',
+      content: content.slice(lastIndex)
+    });
+  }
+
+  return blocks;
+}
 </script>
 
 <template>
@@ -187,22 +239,35 @@ const renderMarkdown = (text) => {
     <div
       v-if="chatStore.isOpen"
       :class="[
-        'absolute w-[350px] h-[450px] bg-white dark:bg-gray-800 rounded-xl shadow-lg flex flex-col overflow-hidden border dark:border-gray-700',
+        'absolute bg-white dark:bg-gray-800 rounded-xl shadow-lg flex flex-col overflow-hidden border dark:border-gray-700 transition-all duration-300',
+        isExpanded ? 'w-[450px] h-[600px] max-w-[95vw] max-h-[90vh]' : 'w-[350px] h-[450px]',
         position.x < windowWidth / 2 ? 'left-0 origin-bottom-left' : 'right-0 origin-bottom-right',
         position.y < 480 ? 'top-full mt-4 origin-top' : 'bottom-full mb-4 origin-bottom'
       ]"
     >
       <!-- Header -->
-      <div class="bg-green-500 text-white p-3 flex justify-between items-center">
-        <div class="flex items-center gap-4">
-          <img :src="AIChatbox" alt="Trợ lý ảo" class="w-10 h-10 rounded-full">
-          <h4 class="font-semibold m-0">Trợ lý AI</h4>
+      <div class="bg-green-500 text-white p-3 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-3">
+          <img :src="AIChatbox" alt="Trợ lý ảo" class="w-9 h-9 rounded-full bg-white">
+          <h4 class="font-semibold m-0 text-sm">Trợ lý AI 1996</h4>
         </div>
-        <button @click="chatStore.toggleChat" class="bg-transparent border-none text-white cursor-pointer text-base hover:opacity-80">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-          </svg>
-        </button>
+
+        <div class="flex items-center gap-2">
+          <button @click="toggleExpand" class="bg-transparent border-none text-white cursor-pointer hover:opacity-80 p-1" :title="isExpanded ? 'Thu nhỏ' : 'Mở rộng'">
+            <svg v-if="!isExpanded" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" />
+            </svg>
+          </button>
+
+          <button @click="chatStore.toggleChat" class="bg-transparent border-none text-white cursor-pointer hover:opacity-80 p-1" title="Đóng chat">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       <!-- Khung hiển thị tin nhắn -->
@@ -213,19 +278,70 @@ const renderMarkdown = (text) => {
           :class="[
             'p-2.5 px-3.5 rounded-2xl max-w-[80%] leading-relaxed break-words',
             msg.role === 'user'
-              ? 'self-end bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 rounded-br-md'
-              : 'self-start bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-bl-md text-gray-800 dark:text-gray-100'
+              ? 'max-w-[80%] self-end bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 rounded-br-md'
+              : 'max-w-[92%] self-start bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-bl-md text-gray-800 dark:text-gray-100'
           ]"
         >
           <!-- User Message -->
           <div v-if="msg.role === 'user'">{{ msg.content }}</div>
 
           <!-- AI Message (Markdown) -->
-          <div
-            v-else
-            class="markdown-body"
-            v-html="renderMarkdown(msg.content)"
-          ></div>
+          <div v-else class="flex flex-col gap-2 w-full">
+            <template v-for="(block, bIdx) in parseMessageContent(msg.content)" :key="bIdx">
+              
+              <div 
+                v-if="block.type === 'text'" 
+                class="markdown-body" 
+                v-html="renderMarkdown(block.content)"
+              ></div>
+
+              <div 
+                v-else-if="block.type === 'ProductCard'" 
+                :title="block.data.name"
+                class="flex items-center gap-3 p-2 bg-white dark:bg-gray-800 border border-green-200 dark:border-gray-600 rounded-lg shadow-sm w-[260px] cursor-pointer hover:border-green-500 hover:shadow-md transition-all mt-1 mb-1"
+              >
+                <img 
+                  :src="block.data.image" 
+                  class="w-16 h-16 object-cover rounded-md border border-gray-100" 
+                  alt="Product Image" 
+                  v-img-fallback="'drink'"
+                />
+                <div class="flex-1 overflow-hidden">
+                  <h5 class="font-bold text-sm text-gray-800 dark:text-white m-0 truncate">{{ block.data.name }}</h5>
+                  <div class="text-green-600 dark:text-green-400 font-bold text-sm mt-0.5">
+                    {{ formatPrice(block.data.price) }}
+                  </div>
+                  <div class="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                    <span>🔥 Đã bán:</span>
+                    <span class="font-medium">{{ block.data.sales || 0 }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div 
+                v-else-if="block.type === 'StoreCard'" 
+                :title="block.data.name"
+                class="flex items-center gap-3 p-2.5 bg-orange-50 dark:bg-gray-800 border border-orange-200 dark:border-gray-600 rounded-lg shadow-sm w-[280px] mt-1 mb-1"
+              >
+                <img 
+                  :src="block.data.image" 
+                  class="w-14 h-14 object-cover rounded-full border-2 border-white shadow-sm" 
+                  alt="Store Image" 
+                  v-img-fallback="'store'"
+                />
+                <div class="flex-1 overflow-hidden text-sm">
+                  <h5 class="font-bold text-orange-600 dark:text-orange-400 m-0 truncate">🏠 {{ block.data.name }}</h5>
+                  <div class="text-gray-600 dark:text-gray-300 text-xs mt-1 truncate" :title="block.data.address">
+                    📍 {{ block.data.address }}
+                  </div>
+                  <div class="text-gray-500 text-xs mt-0.5">
+                    ⏰ {{ block.data.time }}
+                  </div>
+                </div>
+              </div>
+
+            </template>
+          </div>
         </div>
 
         <!-- Hiệu ứng typing -->
