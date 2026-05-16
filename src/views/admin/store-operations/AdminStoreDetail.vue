@@ -7,7 +7,7 @@ import StoreInfoTab from '@/components/admin/store-operations/StoreInfoTab.vue'
 import StoreOverviewTab from '@/components/admin/store-operations/StoreOverviewTab.vue'
 import StoreMenuTab from '@/components/admin/store-operations/StoreMenuTab.vue'
 import StoreRoomsTab from '@/components/admin/store-operations/StoreRoomsTab.vue'
-import StoreStaffTab from '@/components/admin/store-operations/StoreStaffTab.vue'
+import StoreStaffTab from '@/components/admin/store-operations/stafftab/StoreStaffTab.vue'
 import StoreReservationTab from '@/components/admin/store-operations/StoreReservationTab.vue'
 
 const route = useRoute()
@@ -64,7 +64,7 @@ onMounted(fetchStoreData)
 </script>
 
 <template>
-  <div class="p-6 bg-gray-50 min-h-screen">
+  <div class="px-6 bg-gray-50 min-h-screen">
     <!-- Header -->
     <div class="mb-6 flex items-center justify-between">
       <div class="flex items-center gap-4">
