@@ -30,7 +30,7 @@ watch(
 const availableReasons = computed(() => {
   return Object.entries(CANCEL_REASON_UI)
     .map(([key, value]) => ({
-      id: Number(key),
+      id: key,
       label: value.label,
       type: value.type,
     }))

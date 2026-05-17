@@ -38,7 +38,7 @@ const timelineSteps = computed(() => {
   if (isPickup.value) {
     // Luồng Đến lấy
     return [
-      { status: ORDER_STATUS.PENDING_PAYMENT, label: 'Chờ TT' },
+      { status: ORDER_STATUS.NEW, label: 'Đặt đơn' },
       { status: ORDER_STATUS.CONFIRMED, label: 'Xác nhận' },
       { status: ORDER_STATUS.PREPARING, label: 'Pha chế' },
       { status: ORDER_STATUS.READY, label: 'Sẵn sàng' },
@@ -94,19 +94,8 @@ const isCurrentStep = (stepStatus) => {
 
 <template>
   <div class="px-2 py-4">
-    <!-- Cancelled Banner -->
-    <div
-      v-if="isCancelled"
-      class="flex items-center justify-center gap-2 py-3 px-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 font-semibold"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      Đơn hàng đã bị hủy
-    </div>
-
     <!-- Normal Timeline -->
-    <div v-else class="flex items-start justify-between w-full">
+    <div v-if="!Canceled" class="flex items-start justify-between w-full">
       <div
         v-for="(step, index) in timelineSteps"
         :key="step.status"

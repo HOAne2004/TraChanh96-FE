@@ -336,7 +336,7 @@ const handleSubmitOrder = async () => {
 
           if (notificationStore.connection) {
             notificationStore.connection.on("PaymentSuccess", async (receivedOrderId) => {
-              if (createdOrder.value && createdOrder.value.id === receivedOrderId) {
+              if (createdOrder.value && createdOrder.value.id == receivedOrderId) {
                 toastStore.show({ type: 'success', message: 'Thanh toán thành công! Cảm ơn bạn.' })
                 showPaymentModal.value = false
                 router.replace({ name: 'order-detail', params: { code: createdOrder.value.orderCode } })

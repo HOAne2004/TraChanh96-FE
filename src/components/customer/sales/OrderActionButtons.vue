@@ -78,8 +78,10 @@ const showPickupQrBtn = computed(() => {
   const s = normalizeStatus(props.order.status)
   const hasCode = !!props.order.pickupCode
   const isValidStatus = [
+    ORDER_STATUS.READY,
     ORDER_STATUS.CONFIRMED,
     ORDER_STATUS.PREPARING,
+    ORDER_STATUS.READY,
     ORDER_STATUS.RECEIVED,
   ].includes(s)
 

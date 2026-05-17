@@ -40,7 +40,7 @@ const handleLinkClick = () => {
       class="px-4 py-3 bg-gray-50/80 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700"
     >
       <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Tài khoản</p>
-      <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ user?.email }}</p>
+      <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ user?.username }}</p>
     </div>
 
     <div v-else class="mb-6 px-2">

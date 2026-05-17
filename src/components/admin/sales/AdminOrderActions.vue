@@ -122,66 +122,43 @@ const onVerifyPickup = () => {
       </button>
 
       <div v-if="order.status === ORDER_STATUS.PREPARING">
-        <div
-          class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600"
-        >
+        <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+          
           <div v-if="order.orderType === 'delivery'" class="space-y-3">
-            <div
-              class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600"
-            >
-              <h2 class="text-green-600 font-semibold">Giao hàng</h2>
-              <label class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block"
-                >Chọn Shipper</label
-              >
-              <div class="flex gap-2">
-                <select
-                  v-model="selectedShipperId"
-                  class="flex-1 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded focus:ring-green-500"
-                >
-                  <option value="" disabled>-- Chọn nhân viên --</option>
-                  <option v-for="s in shipperOptions" :key="s.id" :value="s.id">
-                    {{ s.username }} <span v-if="s.phone"> ({{ s.phone }})</span>
-                  </option>
-                </select>
-                <button
-                  @click="onAssignShipper"
-                  :disabled="!selectedShipperId || isProcessing"
-                  class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
-                >
-                  Gán
-                </button>
-              </div>
+            <h2 class="text-green-600 font-semibold">Giao hàng</h2>
+            <label class="text-xs font-medium text-gray-500 mb-1 block">Chọn Shipper</label>
+            <div class="flex gap-2">
+              <select v-model="selectedShipperId" class="flex-1 text-sm border-gray-300 rounded focus:ring-green-500">
+                <option value="" disabled>-- Chọn nhân viên --</option>
+                <option v-for="s in shipperOptions" :key="s.id" :value="s.id">{{ s.username }}</option>
+              </select>
+              <button @click="onAssignShipper" :disabled="!selectedShipperId || isProcessing" class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">Gán</button>
             </div>
           </div>
 
-          <div
-            v-else-if="order.orderType === 'pickup'"
-            class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
-          >
-            <label
-              class="text-xs font-bold text-green-700 dark:text-green-300 mb-2 block uppercase"
+          <div v-else>
+            <button
+              @click="onUpdateStatus(ORDER_STATUS.READY)"
+              :disabled="isProcessing"
+              class="w-full py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
             >
-              Xác thực khách nhận
-            </label>
-            <div class="flex gap-2">
-              <input
-                v-model="pickupCodeInput"
-                type="text"
-                placeholder="Nhập mã (VD: 839201)"
-                class="flex-1 text-sm border-gray-300 rounded px-2 py-1 focus:ring-green-500 dark:bg-gray-800 dark:text-white"
-              />
-              <button
-                @click="onVerifyPickup"
-                :disabled="!pickupCodeInput || isProcessing"
-                class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 transition-colors font-bold"
-              >
-                Xác thực
-              </button>
-            </div>
-            <p class="text-[10px] text-green-500 mt-1 italic">
-              *Hỏi khách mã lấy đồ trên ứng dụng của họ
-            </p>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Pha chế xong (Báo sẵn sàng)
+            </button>
           </div>
+        </div>
+      </div>
+
+      <div v-if="order.status === ORDER_STATUS.READY">
+        <div v-if="order.orderType === 'pickup'" class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+          <label class="text-xs font-bold text-green-700 dark:text-green-300 mb-2 block uppercase">Xác thực khách nhận (Mã QR)</label>
+          <div class="flex gap-2">
+            <input v-model="pickupCodeInput" type="text" placeholder="Nhập mã (VD: 839201)" class="flex-1 text-sm border-gray-300 rounded px-2 py-1 focus:ring-green-500 dark:bg-gray-800" />
+            <button @click="onVerifyPickup" :disabled="!pickupCodeInput || isProcessing" class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 font-bold">Xác thực</button>
+          </div>
+          <p class="text-[10px] text-green-500 mt-1 italic">*Hỏi khách mã lấy đồ trên ứng dụng của họ</p>
         </div>
       </div>
 

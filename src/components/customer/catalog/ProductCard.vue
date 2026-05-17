@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/identity/user.store'
 import { useStoreStore } from '@/stores/store-operations/store.store'
 import { useProductStore } from '@/stores/catalog/product.store'
@@ -15,7 +16,7 @@ const props = defineProps({
 })
 
 // Stores & Router
-
+const router = useRouter()
 const userStore = useUserStore()
 const storeStore = useStoreStore()
 const toastStore = useToastStore()
@@ -96,8 +97,7 @@ const handleImageError = (e) => {
 }
 
 // --- MỞ MODAL & FETCH DATA ---
-const openQuickAdd = async (event) => {
-  event.preventDefault() // Chặn link router
+const openQuickAdd = async () => {
 
   // 1. Validate cơ bản
   if (isDisabled.value) {
@@ -113,17 +113,23 @@ const openQuickAdd = async (event) => {
     return
   }
 
+  if (productStore.currentProduct && productStore.currentProduct.slug === props.product.slug) {
+    fullProductDetail.value = productStore.currentProduct
+    showQuickAddModal.value = true
+    return
+  }
+
   // 2. Fetch chi tiết sản phẩm
   isLoadingDetail.value = true
   try {
     // Chờ store gọi API và lưu vào state
     await productStore.fetchProductBySlug(props.product.slug)
-    
+
     // LẤY DỮ LIỆU TỪ STATE CỦA STORE THAY VÌ BIẾN RES
     const productData = productStore.currentProduct
 
     if (productData) {
-        fullProductDetail.value = productData 
+        fullProductDetail.value = productData
         showQuickAddModal.value = true // Mở Modal
     } else {
         throw new Error('Không tìm thấy dữ liệu')
@@ -135,6 +141,12 @@ const openQuickAdd = async (event) => {
   } finally {
     isLoadingDetail.value = false
   }
+}
+
+const handleBuyNow = (payload) => {
+  closeQuickAdd() // Tắt modal
+  // Chuyển hướng sang Checkout kèm theo ID cửa hàng để CheckoutView load đúng giỏ hàng
+  router.push({ path: '/checkout', query: { storeId: payload.storeId } })
 }
 
 const closeQuickAdd = () => {
@@ -229,7 +241,7 @@ const closeQuickAdd = () => {
 
           <button
             v-if="storeStore.selectedStoreId && !isDisabled"
-            @click.stop="openQuickAdd"
+            @click.prevent.stop="openQuickAdd"
             class="w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm active:scale-95 bg-green-100 text-green-600 hover:bg-green-600 hover:text-white"
             title="Thêm nhanh vào giỏ"
           >
@@ -280,13 +292,13 @@ const closeQuickAdd = () => {
   </div>
 
   <div v-if="showQuickAddModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
-      
+
       <div class="absolute inset-0" @click.stop="closeQuickAdd"></div>
 
       <div class="relative bg-white dark:bg-gray-800 w-full sm:w-full sm:max-w-2xl sm:rounded-3xl rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col transform transition-all">
-        
-        <button 
-          @click.stop="closeQuickAdd" 
+
+        <button
+          @click.stop="closeQuickAdd"
           class="absolute top-4 right-4 z-10 p-2 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -297,11 +309,10 @@ const closeQuickAdd = () => {
             v-if="fullProductDetail"
             :product="fullProductDetail"
             :is-modal="true"
-            @added-to-cart="closeQuickAdd" 
-            @buy-now="closeQuickAdd"
+            @added-to-cart="closeQuickAdd"
+            @buy-now="handleBuyNow"
           />
         </div>
-
       </div>
     </div>
 </div>

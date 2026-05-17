@@ -211,6 +211,23 @@ const handleSignalRNotification = async (notification) => {
   }
 }
 
+const autoCancelMinutes = ref(5)
+
+// 1. VIẾT LẠI HÀM LẮNG NGHE SIGNALR DÀNH RIÊNG CHO TRẠNG THÁI ĐƠN
+const handleOrderStatusChanged = async (orderId, newStatusStr) => {
+  // So sánh ID (Dùng == để an toàn kiểu dữ liệu)
+  if (currentOrder.value && currentOrder.value.id == orderId) {
+    // Gọi API fetch lại toàn bộ chi tiết đơn để lấy luôn lý do hủy, giờ hủy...
+    await orderStore.fetchOrderDetail(currentOrder.value.orderCode)
+    
+    // Nếu đơn bị hủy, dọn dẹp bộ đếm
+    if (currentOrder.value.status === ORDER_STATUS.CANCELLED) {
+      if (timerInterval) clearInterval(timerInterval)
+      isExpired.value = true
+    }
+  }
+}
+
 // --- LIFECYCLE HOOK MỚI ---
 onMounted(async () => {
   if (notificationStore.connection) {
@@ -244,26 +261,40 @@ onMounted(async () => {
   if (route.params.code) {
     await orderStore.fetchOrderDetail(route.params.code)
 
-    if ([ORDER_STATUS.NEW, ORDER_STATUS.PENDING_PAYMENT].includes(currentOrder.value.status)) {
-      startCountdown()
+   if (currentOrder.value.status === ORDER_STATUS.PENDING_PAYMENT) {
+      startCountdown() 
     }
   }
 
   if (notificationStore.connection) {
     notificationStore.connection.on("PaymentSuccess", async (receivedOrderId) => {
-      // Nếu cái OrderId backend báo về TRÙNG với đơn hàng đang mở trên màn hình
-      if (currentOrder.value && currentOrder.value.id === receivedOrderId) {
-
-        // 1. Bật Toast báo hỷ!
+      if (currentOrder.value && currentOrder.value.id == receivedOrderId) {
         toastStore.show({ type: 'success', message: 'Thanh toán thành công! Cảm ơn bạn.' })
-
-        // 2. Gập cái Modal QR lại (nếu đang mở)
         showPaymentModal.value = false
-
-        // 3. Tải lại dữ liệu đơn hàng (để cờ IsPaid bật xanh và mất nút Thanh toán)
         await orderStore.fetchOrderDetail(currentOrder.value.orderCode)
       }
     });
+
+    notificationStore.connection.on("OrderStatusChanged", async (receivedOrderId) => {
+      // Nếu ID đơn hàng thay đổi trùng với đơn mình đang xem
+      if (currentOrder.value?.id == receivedOrderId) {
+        // Tải lại dữ liệu mới nhất để cập nhật trạng thái (status)
+        const updatedOrder = await orderStore.fetchOrderDetail(currentOrder.value.orderCode)
+
+        // Nếu đơn bị chuyển sang Hủy hoặc Hoàn thành → dừng đếm ngược
+        if (updatedOrder.status === ORDER_STATUS.CANCELLED || updatedOrder.status === ORDER_STATUS.COMPLETED) {
+          if (timerInterval) clearInterval(timerInterval)
+        }
+
+        // Bật Toast báo động cho User
+        toastStore.show({
+          type: 'info', 
+          message: 'Đơn hàng đã có cập nhật trạng thái mới!'
+        })
+      }
+    });
+
+
   }
 })
 
@@ -272,6 +303,7 @@ onUnmounted(() => {
   if (notificationStore.connection) {
     notificationStore.connection.off('ReceiveNotification', handleSignalRNotification)
     notificationStore.connection.off('PaymentSuccess')
+    notificationStore.connection.off('OrderStatusChanged')
   }
 })
 
@@ -313,6 +345,7 @@ onUnmounted(() => {
             Đặt lúc: {{ formatDate(currentOrder.createdAt) }}
           </p>
         </div>
+
         <div
           v-if="
             !isExpired &&
@@ -321,50 +354,25 @@ onUnmounted(() => {
           class="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-xl flex items-center justify-between shadow-sm animate-pulse"
         >
           <div class="flex flex-col items-left w-full">
-            <!-- Dòng trên: Icon + Text + Thời gian -->
             <div class="flex flex-row items-center gap-2 mb-1">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span class="text-sm font-medium">Tự hủy sau:</span>
               <span class="text-xl font-bold font-mono">{{ timeLeft }}</span>
             </div>
-
-            <!-- Dòng dưới: Chú thích -->
             <span class="text-xs text-gray-500 ml-7">
-              Đơn hàng sẽ tự hủy khi chưa được nhân viên xác nhận
+              Đơn hàng sẽ tự hủy khi chưa được xác nhận
             </span>
           </div>
         </div>
 
         <div
-          :class="`px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 ${statusMeta.color}`"
+          :class="`px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 shrink-0 ${statusMeta.color}`"
         >
           <span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                :d="statusMeta.iconPath"
-              />
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="statusMeta.iconPath" />
             </svg>
           </span>
           {{ statusMeta.label }}
@@ -372,6 +380,24 @@ onUnmounted(() => {
       </div>
 
       <div
+        v-if="currentOrder.status === ORDER_STATUS.CANCELLED"
+        class="bg-red-50 border border-red-200 text-red-800 px-5 py-4 rounded-xl shadow-sm"
+      >
+        <div class="flex items-center gap-2 mb-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+          <span class="font-bold text-base">Đơn hàng đã bị hủy</span>
+        </div>
+        <p class="text-sm ml-7">
+          <span class="font-semibold">Lý do:</span> 
+          {{ currentOrder.cancelReason || 'Không rõ lý do' }} 
+          <span v-if="currentOrder.cancelNote"> - {{ currentOrder.cancelNote }}</span>
+        </p>
+      </div>
+
+      <div
+        v-if="currentOrder.status !== ORDER_STATUS.CANCELLED"
         class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 overflow-x-auto border border-gray-100 dark:border-gray-700"
       >
         <OrderTimeline :current-status="currentOrder.status" :order-type="currentOrder.orderType" />
