@@ -136,19 +136,6 @@ export const adminRoutes = [
         component: () => import('@/views/admin/hr/AdminStaffDetailView.vue'),
         meta: { title: 'Hồ sơ Nhân viên' },
       },
-      {
-        path: 'manager',
-        name: 'admin.manager',
-        component: () => import('@/views/admin/hr/AdminManagerListView.vue'),
-        meta: { title: 'Quản lý' },
-      },
-      {
-        path: 'manager/:id',
-        name: 'admin.manager.detail',
-        component: () => import('@/views/admin/hr/AdminManagerDetailView.vue'),
-        meta: { title: 'Hồ sơ Quản lý' },
-      },
-
       // --- 6. MARKETING ---
       {
         path: 'notifications',

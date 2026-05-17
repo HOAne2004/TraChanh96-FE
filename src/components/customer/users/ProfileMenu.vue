@@ -78,13 +78,12 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
           <span class="font-bold text-sm">{{ user?.username?.charAt(0).toUpperCase() }}</span>
         </div>
 
-        <div class="hidden lg:block text-left mr-1">
-          <p
-            class="text-sm font-semibold text-gray-700 dark:text-gray-200 leading-none max-w-[100px] truncate"
-          >
+        <div class="hidden 2xl:block text-left mr-1 min-w-0">
+          <p class="text-sm font-semibold text-gray-700 dark:text-gray-200 leading-none max-w-[80px] truncate">
             {{ user?.username || 'Khách' }}
           </p>
         </div>
+
 
         <svg
           xmlns="http://www.w3.org/2000/svg"

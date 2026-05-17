@@ -2,6 +2,10 @@
 import { ref, reactive, watch, computed } from 'vue'
 import { useStaffStore } from '@/stores/identity/staff.store'
 import { useToastStore } from '@/stores/system/toast.store'
+import { useStoreStore } from '@/stores/store-operations/store.store'
+import { storeToRefs } from 'pinia'
+
+import { getPositionOptions, getSalaryTypeOptions, STAFF_POSITIONS } from '@/constants/staff.constants'
 
 const props = defineProps({
   isOpen: { type: Boolean, required: true },
@@ -14,20 +18,12 @@ const emit = defineEmits(['close', 'refresh'])
 
 const staffStore = useStaffStore()
 const toastStore = useToastStore()
+const storeStore = useStoreStore()
 const submitting = ref(false)
 
-const POSITIONS = [
-  { value: 10, backendKey: 'StoreManager', label: 'Quản lý cửa hàng' },
-  { value: 11, backendKey: 'Barista', label: 'Nhân viên pha chế' },
-  { value: 12, backendKey: 'Cashier', label: 'Nhân viên thu ngân' },
-  { value: 13, backendKey: 'Server', label: 'Nhân viên phục vụ' },
-  { value: 14, backendKey: 'Security', label: 'Bảo vệ' },
-]
-
-const SALARY_TYPES = [
-  { value: 1, label: 'FullTime' }, 
-  { value: 2, label: 'PartTime' }
-]
+const positionOptions = getPositionOptions()
+const salaryOptions = getSalaryTypeOptions()
+const { stores: storeList } = storeToRefs(storeStore)
 
 const isEditMode = computed(() => !!props.staffData)
 
@@ -37,49 +33,65 @@ const formData = reactive({
   phone: '',     
   password: '',  
   fullName: '',
-  position: 11, 
-  salaryType: 2, 
+  position: STAFF_POSITIONS.BARISTA, 
+  salaryType: 1, 
   baseSalary: '',
   hourlySalary: '',
   citizenId: '',
-  address: ''
+  address: '',
+  selectedStoreId: null
+})
+
+const isStoreRole = computed(() => {
+  return formData.position >= 10; // Các chức vụ từ Quản lý trở xuống
 })
 
 // Cập nhật dữ liệu mỗi khi mở Modal
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
     if (props.staffData) {
-      const posObj = POSITIONS.find(p => p.label === props.staffData.position)
-      const salObj = SALARY_TYPES.find(p => p.label === props.staffData.salaryType)
-      
+      const posObj = positionOptions.find(p => p.backendKey === props.staffData.position)
+      const isHourly = !!props.staffData.hourlySalary
+
       Object.assign(formData, {
         id: props.staffData.id,
         email: props.staffData.email || '',
         phone: props.staffData.phone || '',
         password: '', // Không hiển thị pass cũ
         fullName: props.staffData.fullName || '',
-        position: posObj ? posObj.value : 11,
-        salaryType: salObj ? salObj.value : 2,
-        baseSalary: props.staffData.baseSalary || '',
-        hourlySalary: props.staffData.hourlySalary || '',
+        position: posObj ? posObj.value : STAFF_POSITIONS.BARISTA,
+        salaryType: isHourly ? 2 : 1,
+        baseSalary: isHourly ? null : (props.staffData.baseSalary || ''),
+        hourlySalary: isHourly ? (props.staffData.hourlySalary || '') : null,
         citizenId: props.staffData.citizenId || '',
-        address: props.staffData.address || ''
+        address: props.staffData.address || '',
+        selectedStoreId: props.staffData.storeId || props.storeId || ''
       })
     } else {
       // Reset form khi Thêm mới
       Object.assign(formData, {
         id: null, email: '', phone: '', password: '', fullName: '', 
-        position: 11, salaryType: 2, baseSalary: '', hourlySalary: '', citizenId: '', address: ''
+        position: STAFF_POSITIONS.BARISTA,
+        salaryType: 1, 
+        baseSalary: '',
+        hourlySalary: '',
+        citizenId: '',
+        address: '',
+        selectedStoreId: props.storeId || ''
       })
     }
   }
+})
+// Auto clear storeId nếu chọn chức vụ văn phòng
+watch(() => formData.position, (newPos) => {
+  if (newPos < 10) formData.selectedStoreId = null
 })
 
 const handleSubmit = async () => {
   submitting.value = true
   try {
     const payload = {
-      storeId: props.storeId,
+      storeId: isStoreRole.value ? (props.storeId || formData.selectedStoreId) : null,
       email: formData.email.trim(),
       phone: formData.phone?.trim() || null,
       password: formData.password?.trim() || null,
@@ -90,6 +102,10 @@ const handleSubmit = async () => {
       address: formData.address?.trim() || null,
       baseSalary: Number(formData.salaryType) === 1 ? (Number(formData.baseSalary) || null) : null,
       hourlySalary: Number(formData.salaryType) === 2 ? (Number(formData.hourlySalary) || null) : null,
+    }
+    
+    if (isStoreRole.value && !payload.storeId) {
+      return toastStore.show({ message: 'Vui lòng chọn cơ sở làm việc', type: 'error' })
     }
 
     if (isEditMode.value) {
@@ -104,7 +120,7 @@ const handleSubmit = async () => {
     emit('close')   // Đóng modal
   } catch (error) {
     console.error(error)
-    let errorMsg = 'Kiểm tra lại dữ liệu nhập (Lỗi 400)'
+    let errorMsg = 'Lỗi 400: Kiểm tra lại dữ liệu nhập'
     if (error.response?.data?.errors) {
         const firstKey = Object.keys(error.response.data.errors)[0]
         errorMsg = error.response.data.errors[firstKey][0]
@@ -133,6 +149,7 @@ const handleSubmit = async () => {
 
       <form @submit.prevent="handleSubmit" class="flex flex-col flex-1 overflow-hidden">
         
+        
         <div class="p-6 overflow-y-auto space-y-5 flex-1">
           <div v-if="!isEditMode" class="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-4">
             <h4 class="text-sm font-black text-blue-900 uppercase tracking-wider mb-2">Tài khoản đăng nhập hệ thống</h4>
@@ -152,6 +169,15 @@ const handleSubmit = async () => {
             </div>
           </div>
 
+          <div v-if="isStoreRole && !props.storeId"> 
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nơi làm việc <span class="text-red-500">*</span></label>
+            <select v-model="formData.selectedStoreId" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 text-sm">
+              <option value="" disabled>-- Chọn cửa hàng --</option>
+              <option v-for="store in storeList" :key="store.id" :value="store.id">
+                {{ store.name }}
+              </option>
+            </select>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên <span class="text-red-500">*</span></label>
@@ -167,7 +193,7 @@ const handleSubmit = async () => {
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Chức vụ <span class="text-red-500">*</span></label>
               <select v-model="formData.position" class="w-full px-3 py-2 border rounded-lg focus:ring-green-500 text-sm">
-                <option v-for="pos in POSITIONS" :key="pos.value" :value="pos.value" :disabled="pos.value === 1 && isManagerLimitReached && (!isEditMode || formData.position !== 1)">
+                <option v-for="pos in positionOptions" :key="pos.value" :value="pos.value" :disabled="pos.value === 1 && isManagerLimitReached && (!isEditMode || formData.position !== 1)">
                   {{ pos.label }} {{ (pos.value === 1 && isManagerLimitReached && (!isEditMode || formData.position !== 1)) ? '(Đã đầy)' : '' }}
                 </option>
               </select>
@@ -175,7 +201,7 @@ const handleSubmit = async () => {
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Hình thức lương <span class="text-red-500">*</span></label>
               <select v-model="formData.salaryType" class="w-full px-3 py-2 border rounded-lg focus:ring-green-500 text-sm">
-                <option v-for="type in SALARY_TYPES" :key="type.value" :value="type.value">{{ type.label }}</option>
+                <option v-for="type in salaryOptions" :key="type.value" :value="type.value">{{ type.label }}</option>
               </select>
             </div>
           </div>
@@ -190,7 +216,9 @@ const handleSubmit = async () => {
               <input v-model="formData.hourlySalary" type="number" required class="w-full px-3 py-2 border rounded-lg focus:ring-green-500 text-sm" placeholder="Ví dụ: 25000" />
             </div>
           </div>
-          
+
+
+
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Địa chỉ thường trú</label>
             <textarea v-model="formData.address" rows="2" class="w-full px-3 py-2 border rounded-lg focus:ring-green-500 text-sm"></textarea>

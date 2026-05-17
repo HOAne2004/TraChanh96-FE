@@ -75,7 +75,7 @@ watch(isLoggedIn, (newVal) => {
         <SearchBar />
       </div>
 
-      <div class="flex justify-end items-center gap-1 sm:gap-3 shrink-0">
+      <div class="flex justify-end items-center gap-1 sm:gap-3 shrink min-w-0">
         <NavLink to="/cart" variant="outline" :badge="Number(totalItems)">
           <template #icon>
             <svg
