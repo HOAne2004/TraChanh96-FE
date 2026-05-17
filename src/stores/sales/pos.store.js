@@ -168,15 +168,20 @@ export const usePosStore = defineStore('pos', () => {
       tableId: orderType.value === ORDER_TYPE.AT_COUNTER ? selectedTableId.value : null,
 
       items: cartItems.value.map((item) => ({
-        productId: item.productId,
+        productId: item.product.id,
         quantity: item.quantity,
-        sizeId: item.options.sizeId,
-        sugarLevelId: item.options.sugarLevelId,
-        iceLevelId: item.options.iceLevelId,
-        note: item.note,
+        sizeId: item.options?.sizeId,
+        sugarLevel: item.options?.sugar,
+        iceLevel: item.options?.ice,
+        note: item.note || '',
+        toppings: item.toppings?.map(t => ({
+          productId: t.id,
+          quantity: 1
+        })) || []
       })),
     }
 
+    console.log('Nội dung order', payload)
     try {
       const { data } = await orderService.createAtCounter(payload)
       clearCart()

@@ -9,10 +9,10 @@ const props = defineProps({
   isDrink: { type: Boolean, default: true },
   sizes: { type: Array, default: () => [] },
   availableToppings: { type: Array, default: () => [] },
-  
+
   allowedSugarLevels: { type: Array, default: () => [] },
   allowedIceLevels: { type: Array, default: () => [] },
-  
+
   selectedSize: { type: Object, default: null },
   selectedSugar: { type: Number, default: null },
   selectedIce: { type: Number, default: null },
@@ -43,7 +43,7 @@ const displayIceOptions = computed(() => {
 </script>
 
 <template>
-  <div v-if="isDrink" class="space-y-6 mb-8">
+  <div v-if="isDrink" class="space-y-2 mb-2">
 
     <div v-if="sizes?.length > 0">
       <span class="block text-sm font-semibold mb-2">Kích cỡ</span>

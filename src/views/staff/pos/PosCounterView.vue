@@ -40,6 +40,17 @@ const currentStoreId = computed(() => {
   return storeStore.currentStore?.id || userStore.user?.staff?.storeId || null
 })
 
+const currentStoreObj = computed(() => {
+  if (storeStore.currentStore) return storeStore.currentStore
+  if (currentStoreId.value) return storeStore.stores.find((s) => s.id === currentStoreId.value)
+  return null
+})
+
+const hasTables = computed(() => {
+  const store = currentStoreObj.value
+  return store?.tables && store.tables.length > 0
+})
+
 // Dropdown State
 const isCategoryDropdownOpen = ref(false)
 const categoryDropdownRef = ref(null)
@@ -270,7 +281,7 @@ const handlePrintBill = (order) => {
 <template>
   <div class="flex h-full bg-white overflow-hidden">
     <div class="flex-1 flex flex-col border-r border-gray-200">
-      <div class="p-4 border-b border-gray-100 flex space-x-4 bg-white shadow-sm z-10">
+      <div class="p-4 border-b border-gray-100 flex space-x-4 bg-white shadow-sm relative z-50">
         <div class="relative flex-1">
           <span class="absolute inset-y-0 left-0 flex items-center pl-3">
             <svg
@@ -509,12 +520,14 @@ const handlePrintBill = (order) => {
         <div class="bg-gray-100 p-1 rounded-lg flex text-xs font-medium">
           <button
             @click="posStore.orderType = ORDER_TYPE.AT_COUNTER"
-            class="px-3 py-1.5 rounded-md transition-all"
+            :disabled="!hasTables"
+            class="px-3 py-1.5 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             :class="
               posStore.orderType === ORDER_TYPE.AT_COUNTER
                 ? 'bg-white text-green-600 shadow-sm'
                 : 'text-gray-500'
             "
+            :title="!hasTables ? 'Quán chưa cấu hình bàn' : ''"
           >
             Tại bàn
           </button>
@@ -529,6 +542,19 @@ const handlePrintBill = (order) => {
           >
             Mang về
           </button>
+        </div>
+      </div>
+
+      <div v-if="posStore.orderType === ORDER_TYPE.AT_COUNTER" class="px-4 py-2 border-b border-gray-100 bg-gray-50 shrink-0">
+        <div class="relative">
+          <input 
+            type="text" 
+            placeholder="Tìm kiếm bàn..." 
+            class="w-full py-1.5 pl-8 pr-3 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all" 
+          />
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
         </div>
       </div>
 

@@ -24,7 +24,7 @@ const props = defineProps({
   isModal: {
     type: Boolean,
     default: false,
-  },
+  }
 })
 
 const emit = defineEmits(['added-to-cart', 'buy-now'])
@@ -134,23 +134,16 @@ const renderedSizes = computed(() => {
   if (!props.product || !props.product.productSizes) return []
   return props.product.productSizes
     .map((ps) => {
-      const globalSize = sizes.value.find((s) => s.id === ps.sizeId)
-      if (!globalSize) return null
-      let displayDiff = 0
-      if (ps.priceOverride && Number(ps.priceOverride) > 0) {
-        displayDiff = Number(ps.priceOverride) - Number(props.product.basePrice)
-      } else {
-        displayDiff = Number(globalSize.priceModifier || 0)
-      }
+      const displayDiff = Number(ps.finalPrice) - Number(props.product.basePrice)
+
       return {
         id: ps.sizeId,
-        label: globalSize.name || globalSize.label || 'Size',
+        label: ps.sizeLabel || 'Size',
         priceModifier: displayDiff,
         priceOverride: ps.priceOverride,
-        originalModifier: globalSize.priceModifier,
+        originalModifier: displayDiff,
       }
     })
-    .filter(Boolean)
     .sort((a, b) => (a.originalModifier || 0) - (b.originalModifier || 0) || a.id - b.id)
 })
 
@@ -169,7 +162,7 @@ watch(
     if (isDrink.value && allowedSugarLevels.value.length > 0) {
       selectedSugar.value = allowedSugarLevels.value.includes(100) ? 100 : allowedSugarLevels.value[0]
     } else {
-      selectedSugar.value = null 
+      selectedSugar.value = null
     }
 
     // 3. Auto select Đá: Ưu tiên 100%, nếu không có thì lấy cái đầu tiên
@@ -247,7 +240,7 @@ const handleAddToCart = async (isBuyNow = false) => {
 
     // 2. NẾU THẤT BẠI (API BÁO LỖI VƯỢT QUÁ GIỚI HẠN) -> DỪNG LẠI LUÔN
     // Không cần báo toast lỗi vì axiosClient.js đã báo giúp rồi
-    if (!isSuccess) return 
+    if (!isSuccess) return
 
     // 3. NẾU THÀNH CÔNG THÌ MỚI CHẠY TIẾP
     if (isBuyNow) {

@@ -17,6 +17,14 @@ const emit = defineEmits(['close', 'confirm'])
 const paymentStore = usePaymentMethodStore()
 const { activeMethods } = storeToRefs(paymentStore)
 
+const posPaymentMethods = computed(() => {
+  return activeMethods.value.filter(m => {
+    const type = String(m.paymentType).toLowerCase()
+    // Chỉ giữ lại COD (Tiền mặt) và Transfer (VietQR)
+    return type === 'cod' || type === '1' || type === 'banktransfer' || type === '2'
+  })
+})
+
 // State local
 const selectedMethod = ref(null)
 const customerPay = ref(0)
@@ -139,7 +147,7 @@ const handleConfirm = () => {
             >
             <div class="grid grid-cols-1 gap-3">
               <button
-                v-for="method in activeMethods"
+                v-for="method in posPaymentMethods"
                 :key="method.id"
                 @click="selectedMethod = method"
                 class="flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left group active:scale-[0.98]"
