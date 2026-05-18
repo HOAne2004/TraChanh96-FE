@@ -8,7 +8,6 @@ import { useCartStore } from '@/stores/sales/cart.store'
 import { useStoreStore } from '@/stores/store-operations/store.store'
 import { useUserStore } from '@/stores/identity/user.store'
 import { useToastStore } from '@/stores/system/toast.store'
-import { useSizeStore } from '@/stores/catalog/size.store'
 
 import { SUGAR_LEVEL_UI, ICE_LEVEL_UI } from '@/constants/option.constants'
 import { formatPrice } from '@/utils/formatters'
@@ -34,12 +33,10 @@ const productStore = useProductStore()
 const cartStore = useCartStore()
 const userStore = useUserStore()
 const storeStore = useStoreStore()
-const sizeStore = useSizeStore()
 const toastStore = useToastStore()
 
 const { products } = storeToRefs(productStore)
 const { stores, selectedStoreId, storeMenu } = storeToRefs(storeStore)
-const { sizes } = storeToRefs(sizeStore)
 
 // Local State
 const quantity = ref(1)

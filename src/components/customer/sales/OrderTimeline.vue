@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { ORDER_STATUS, ORDER_STATUS_UI } from '@/constants/order.constants'
+import { ORDER_STATUS} from '@/constants/order.constants'
 
 const props = defineProps({
   currentStatus: { type: [Number, String], required: true },

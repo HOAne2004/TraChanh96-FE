@@ -150,12 +150,16 @@ const startCountdown = () => {
   if (!currentOrder.value) return
 
   let dateStr = currentOrder.value.createdAt
-  if (!dateStr.endsWith('Z')) {
-    dateStr += 'Z'
-  }
+  if (!dateStr.endsWith('Z')) dateStr += 'Z'
 
   const createdTime = new Date(dateStr).getTime()
-  const expireTime = createdTime + 5 * 60 * 1000 // 5 phút
+
+  let timeoutMinutes = 5 // Mặc định 5 phút cho đơn Chờ thanh toán
+  if (currentOrder.value.status === ORDER_STATUS.NEW) {
+    timeoutMinutes = 30 // 30 phút chờ quán xác nhận
+  }
+
+  const expireTime = createdTime + timeoutMinutes * 60 * 1000
 
   const calculate = () => {
     const now = new Date().getTime()
@@ -173,7 +177,6 @@ const startCountdown = () => {
   }
 
   calculate()
-
   if (!isExpired.value) {
     timerInterval = setInterval(calculate, 1000)
   }
@@ -211,99 +214,86 @@ const handleSignalRNotification = async (notification) => {
   }
 }
 
-const autoCancelMinutes = ref(5)
+// =========================================================
+// 1. CHUẨN HÓA CÁC HÀM LẮNG NGHE SIGNALR (CÓ TÊN RÕ RÀNG)
+// =========================================================
+const handleOrderStatusChanged = async (receivedOrderId) => {
+  if (currentOrder.value && currentOrder.value.id == receivedOrderId) {
+    // Lưu lại trạng thái cũ để so sánh
+    const oldStatus = currentOrder.value.status;
 
-// 1. VIẾT LẠI HÀM LẮNG NGHE SIGNALR DÀNH RIÊNG CHO TRẠNG THÁI ĐƠN
-const handleOrderStatusChanged = async (orderId, newStatusStr) => {
-  // So sánh ID (Dùng == để an toàn kiểu dữ liệu)
-  if (currentOrder.value && currentOrder.value.id == orderId) {
-    // Gọi API fetch lại toàn bộ chi tiết đơn để lấy luôn lý do hủy, giờ hủy...
-    await orderStore.fetchOrderDetail(currentOrder.value.orderCode)
-    
-    // Nếu đơn bị hủy, dọn dẹp bộ đếm
-    if (currentOrder.value.status === ORDER_STATUS.CANCELLED) {
+    const updatedOrder = await orderStore.fetchOrderDetail(currentOrder.value.orderCode)
+
+    if ([ORDER_STATUS.CANCELLED, ORDER_STATUS.COMPLETED, ORDER_STATUS.RECEIVED].includes(updatedOrder.status)) {
       if (timerInterval) clearInterval(timerInterval)
       isExpired.value = true
     }
+
+    // 🟢 CHỈ HIỆN TOAST NẾU TRẠNG THÁI THỰC SỰ THAY ĐỔI
+    // (Tránh backend bị lỗi bắn 2 lần cùng 1 trạng thái)
+    if (updatedOrder.status !== oldStatus) {
+      toastStore.show({
+        type: 'info',
+        message: 'Đơn hàng đã có cập nhật trạng thái mới!'
+      })
+    }
+  }
+}
+// Tách hàm PaymentSuccess ra riêng thay vì dùng hàm ẩn danh
+const handlePaymentSuccess = async (receivedOrderId) => {
+  if (currentOrder.value && currentOrder.value.id == receivedOrderId) {
+    toastStore.show({ type: 'success', message: 'Thanh toán thành công! Cảm ơn bạn.' })
+    showPaymentModal.value = false
+    await orderStore.fetchOrderDetail(currentOrder.value.orderCode)
   }
 }
 
-// --- LIFECYCLE HOOK MỚI ---
+// =========================================================
+// 2. LIFECYCLE HOOKS (OFF TRƯỚC - ON SAU)
+// =========================================================
 onMounted(async () => {
-  if (notificationStore.connection) {
-    notificationStore.connection.on('ReceiveNotification', handleSignalRNotification)
-  }
-
   // 1. Đón kết quả trả về từ VNPay (query trên URL)
   const paymentStatus = route.query.payment
   if (paymentStatus) {
     if (paymentStatus === 'success') {
-      toastStore.show({
-        message: 'Thanh toán VNPay thành công! Cảm ơn bạn.',
-        type: 'success'
-      })
+      toastStore.show({ message: 'Thanh toán VNPay thành công! Cảm ơn bạn.', type: 'success' })
     } else if (paymentStatus === 'failed') {
-      toastStore.show({
-        message: 'Thanh toán thất bại hoặc đã bị hủy.',
-        type: 'error'
-      })
+      toastStore.show({ message: 'Thanh toán thất bại hoặc đã bị hủy.', type: 'error' })
     }
-
-    // Xóa URL Params đi để user f5 trang không bị hiện Toast lại
-    router.replace({
-      name: route.name,
-      params: route.params,
-      query: {}
-    })
+    router.replace({ name: route.name, params: route.params, query: {} })
   }
 
   // 2. Fetch data đơn hàng
   if (route.params.code) {
     await orderStore.fetchOrderDetail(route.params.code)
 
-   if (currentOrder.value.status === ORDER_STATUS.PENDING_PAYMENT) {
-      startCountdown() 
+    if ([ORDER_STATUS.PENDING_PAYMENT, ORDER_STATUS.NEW].includes(currentOrder.value.status)) {
+      startCountdown()
     }
   }
 
+  // 3. ĐĂNG KÝ SIGNALR BẢO MẬT (CHỐNG LẶP)
   if (notificationStore.connection) {
-    notificationStore.connection.on("PaymentSuccess", async (receivedOrderId) => {
-      if (currentOrder.value && currentOrder.value.id == receivedOrderId) {
-        toastStore.show({ type: 'success', message: 'Thanh toán thành công! Cảm ơn bạn.' })
-        showPaymentModal.value = false
-        await orderStore.fetchOrderDetail(currentOrder.value.orderCode)
-      }
-    });
+    // 🟢 BƯỚC 1: XÓA SẠCH LẮNG NGHE CŨ CỦA COMPONENT NÀY (NẾU CÓ)
+    notificationStore.connection.off('ReceiveNotification', handleSignalRNotification)
+    notificationStore.connection.off("OrderStatusChanged", handleOrderStatusChanged)
+    notificationStore.connection.off("PaymentSuccess", handlePaymentSuccess)
 
-    notificationStore.connection.on("OrderStatusChanged", async (receivedOrderId) => {
-      // Nếu ID đơn hàng thay đổi trùng với đơn mình đang xem
-      if (currentOrder.value?.id == receivedOrderId) {
-        // Tải lại dữ liệu mới nhất để cập nhật trạng thái (status)
-        const updatedOrder = await orderStore.fetchOrderDetail(currentOrder.value.orderCode)
-
-        // Nếu đơn bị chuyển sang Hủy hoặc Hoàn thành → dừng đếm ngược
-        if (updatedOrder.status === ORDER_STATUS.CANCELLED || updatedOrder.status === ORDER_STATUS.COMPLETED) {
-          if (timerInterval) clearInterval(timerInterval)
-        }
-
-        // Bật Toast báo động cho User
-        toastStore.show({
-          type: 'info', 
-          message: 'Đơn hàng đã có cập nhật trạng thái mới!'
-        })
-      }
-    });
-
-
+    // 🟢 BƯỚC 2: BẮT ĐẦU LẮNG NGHE MỚI
+    notificationStore.connection.on('ReceiveNotification', handleSignalRNotification)
+    notificationStore.connection.on("OrderStatusChanged", handleOrderStatusChanged)
+    notificationStore.connection.on("PaymentSuccess", handlePaymentSuccess)
   }
 })
 
 onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval)
+
   if (notificationStore.connection) {
+    // Chỉ truyền đúng tên hàm để tháo gỡ (Không ảnh hưởng đến component khác)
     notificationStore.connection.off('ReceiveNotification', handleSignalRNotification)
-    notificationStore.connection.off('PaymentSuccess')
-    notificationStore.connection.off('OrderStatusChanged')
+    notificationStore.connection.off('PaymentSuccess', handlePaymentSuccess)
+    notificationStore.connection.off('OrderStatusChanged', handleOrderStatusChanged)
   }
 })
 
@@ -362,7 +352,10 @@ onUnmounted(() => {
               <span class="text-xl font-bold font-mono">{{ timeLeft }}</span>
             </div>
             <span class="text-xs text-gray-500 ml-7">
-              Đơn hàng sẽ tự hủy khi chưa được xác nhận
+              {{ currentOrder.status === ORDER_STATUS.PENDING_PAYMENT
+              ? 'Đơn hàng sẽ tự hủy nếu chưa được thanh toán'
+              : 'Đơn hàng sẽ tự hủy nếu chưa được quán xác nhận'
+              }}
             </span>
           </div>
         </div>
@@ -390,8 +383,8 @@ onUnmounted(() => {
           <span class="font-bold text-base">Đơn hàng đã bị hủy</span>
         </div>
         <p class="text-sm ml-7">
-          <span class="font-semibold">Lý do:</span> 
-          {{ currentOrder.cancelReason || 'Không rõ lý do' }} 
+          <span class="font-semibold">Lý do:</span>
+          {{ currentOrder.cancelReason || 'Không rõ lý do' }}
           <span v-if="currentOrder.cancelNote"> - {{ currentOrder.cancelNote }}</span>
         </p>
       </div>

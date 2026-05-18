@@ -4,7 +4,6 @@ import { formatPrice } from '@/utils/formatters'
 import { storeToRefs } from 'pinia'
 import { useProductStore } from '@/stores/catalog/product.store'
 import { useToastStore } from '@/stores/system/toast.store'
-import { useModalStore } from '@/stores/system/modal.store'
 import { getIceOptions, getSugarOptions, SUGAR_LEVEL_UI, ICE_LEVEL_UI } from '@/constants/option.constants'
 
 const props = defineProps({
@@ -15,7 +14,6 @@ const props = defineProps({
 const emit = defineEmits(['close', 'add-to-cart'])
 
 const toastStore = useToastStore()
-const modalStore = useModalStore()
 const productStore = useProductStore()
 
 // Lấy danh sách toàn bộ sản phẩm để móc Topping ra
